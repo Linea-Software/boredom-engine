@@ -169,7 +169,13 @@ export class FakeCaptcha {
 
         const footer = document.createElement("div");
         footer.className = "boredom-captcha-footer";
-        footer.innerHTML = `<span>reCAPTCHA imitation</span><span>Privacy - Terms</span>`;
+        const imitation = document.createElement("span");
+        imitation.innerText = "CAPTCHA";
+        const privacy = document.createElement("span");
+        privacy.innerText = "Privacy - Terms";
+
+        footer.appendChild(imitation);
+        footer.appendChild(privacy);
         box.appendChild(footer);
 
         this.overlay.appendChild(box);
