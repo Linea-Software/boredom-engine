@@ -4,9 +4,16 @@
  * @version 1.0.0
  */
 
-import { onMount } from "$common";
+import { onMount, injectCss } from "$common";
 
 onMount(() => {
+    injectCss(`
+        [is-shorts],
+        ytd-mini-guide-renderer #items ytd-mini-guide-entry-renderer:nth-child(2) {
+            display: none !important;
+        }
+    `);
+
     // use an observer to remove #shorts-inner-container
     const observer = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
