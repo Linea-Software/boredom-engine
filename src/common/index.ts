@@ -12,6 +12,50 @@ export function onMount(callback: () => void): void {
 }
 
 /**
+ * Adds a delay to the fetch request.
+ * @param delay The delay in milliseconds.
+ */
+export function addDelayToFetch(delay: number): void {
+    const originalFetch = window.fetch;
+
+    window.fetch = Object.assign(
+        async (
+            input: RequestInfo | URL,
+            init?: RequestInit
+        ): Promise<Response> => {
+            await new Promise((resolve) => setTimeout(resolve, delay));
+            return originalFetch(input, init);
+        },
+        originalFetch
+    );
+}
+
+/**
+ * Adds packet loss to the fetch request.
+ * @param percentage The percentage of packet loss (0-100).
+ */
+export function addPacketLossToFetch(percentage: number): void {
+    const originalFetch = window.fetch;
+
+    window.fetch = Object.assign(
+        async (
+            input: RequestInfo | URL,
+            init?: RequestInit
+        ): Promise<Response> => {
+            const random = Math.random() * 100;
+            if (random < percentage) {
+                return new Response("", {
+                    status: 500,
+                    statusText: "Internal Server Error",
+                });
+            }
+            return originalFetch(input, init);
+        },
+        originalFetch
+    );
+}
+
+/**
  * Sets the grayscale filter on a given HTML element.
  * @param element The HTML element to apply the filter to.
  * @param percentage The percentage of grayscale to apply (0-100).
