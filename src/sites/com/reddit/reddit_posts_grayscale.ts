@@ -9,7 +9,6 @@ onMount(() => {
     const css = `
         img, video, shreddit-player {
             filter: grayscale(100%) !important;
-            -webkit-filter: grayscale(100%) !important;
         }
     `;
     injectCss(css);
