@@ -4,28 +4,53 @@
  * @version 1.0.0
  */
 
-import { onMount, injectCss } from "$common";
+import { onMount, injectCss, getElementByXpath } from "$common";
 
 onMount(() => {
     injectCss(`
-        [is-shorts],
-        ytd-mini-guide-renderer #items ytd-mini-guide-entry-renderer:nth-child(2) {
+        [is-shorts] {
             display: none !important;
         }
     `);
 
-    // use an observer to remove #shorts-inner-container
-    const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-            if (mutation.addedNodes.length > 0) {
-                const shortsContainer = document.getElementById(
-                    "shorts-inner-container"
-                );
-                if (shortsContainer) {
-                    shortsContainer.remove();
+    const removeShortsElements = () => {
+        // Remove the main shorts container
+        const shortsContainer = document.getElementById(
+            "shorts-inner-container"
+        );
+        if (shortsContainer) {
+            shortsContainer.remove();
+        }
+
+        // Remove Shorts entry from guide/mini-guide (div#items)
+        const itemsDivs = document.querySelectorAll("div#items");
+        itemsDivs.forEach((itemsDiv) => {
+            const children = Array.from(itemsDiv.children);
+            children.forEach((child) => {
+                // Check for title="Shorts" in anchor
+                if (child.querySelector('a[title="Shorts"]')) {
+                    child.remove();
+                    return;
                 }
-            }
+
+                // Check for text "Shorts" in formatted string
+                const titleSpan = child.querySelector(
+                    "yt-formatted-string.title"
+                );
+                if (titleSpan && titleSpan.textContent?.trim() === "Shorts") {
+                    child.remove();
+                }
+            });
         });
+    };
+
+    // use an observer to remove dynamic elements
+    const observer = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+            if (mutation.addedNodes.length > 0) {
+                removeShortsElements();
+            }
+        }
     });
 
     observer.observe(document.body, {
@@ -33,9 +58,6 @@ onMount(() => {
         subtree: true,
     });
 
-    // remove the container if it exists
-    const shortsContainer = document.getElementById("shorts-inner-container");
-    if (shortsContainer) {
-        shortsContainer.remove();
-    }
+    // Initial check
+    removeShortsElements();
 });
