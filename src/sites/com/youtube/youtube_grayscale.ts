@@ -7,9 +7,8 @@ import { onMount, injectCss } from "$common";
 
 onMount(() => {
     const css = `
-        .video-stream.html5-main-video,
-        .html5-video-container,
-        .reel-video-in-sequence-thumbnail {
+        video,
+        img {
             filter: grayscale(100%) !important;
         }
     `;

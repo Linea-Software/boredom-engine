@@ -55,10 +55,9 @@ export async function buildTampermonkey() {
         // e.g. generic -> *
 
         let matchCondition = "false";
-        let scriptName = relPath;
 
         if (pathParts[0] === "generic") {
-            matchCondition = "true";
+            matchCondition = "false";
         } else {
             // Reverse Domain Name Notation
             // pathParts: ['com', 'reddit'] -> domainParts: ['reddit', 'com'] -> host: reddit.com

@@ -7,7 +7,8 @@ import { onMount, injectCss } from "$common";
 
 onMount(() => {
     const css = `
-        .tw-image {
+        video,
+        img {
             filter: grayscale(100%) !important;
             -webkit-filter: grayscale(100%) !important;
         }
