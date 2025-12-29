@@ -3,7 +3,7 @@
  * @description Makes Reddit media grayscale to reduce dopamine.
  * @version 1.0.0
  */
-import { onMount, injectCss } from "../../../common";
+import { onMount, injectCss } from "$common";
 
 onMount(() => {
     const css = `

@@ -3,7 +3,7 @@
  * @description Removes the featured carousel from the Twitch homepage.
  * @version 1.0.0
  */
-import { onMount, getElementByXpath } from "../../../common";
+import { onMount, getElementByXpath } from "$common";
 
 onMount(() => {
     const targetPath =

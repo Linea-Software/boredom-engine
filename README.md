@@ -1,15 +1,31 @@
-# boredom-engine
+# Boredom Engine
 
-To install dependencies:
+A set of scripts designed to make the web less dopaminic and more boring.
+
+This project uses **Bun** and **TypeScript** to generate and manage userscripts/styles that modify the appearance and behavior of popular websites to reduce their addictive nature.
+
+## Development
+
+### Install Dependencies
 
 ```bash
 bun install
 ```
 
-To run:
+### Build Scripts
+
+To build the scripts and generate the metadata:
 
 ```bash
-bun run index.ts
+bun run build
 ```
 
-This project was created using `bun init` in bun v1.3.3. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+(Or `bun run index.ts` if that is the main entry point currently).
+
+## Project Structure
+
+Scripts are organized using Reverse Domain Name Notation in `src/sites`:
+- `src/sites/com/youtube/...`
+- `src/sites/tv/twitch/...`
+
+Common utilities are located in `src/common`.

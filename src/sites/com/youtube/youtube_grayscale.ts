@@ -3,7 +3,7 @@
  * @description Turns the YouTube video player grayscale.
  * @version 1.0.0
  */
-import { setGrayscale, onMount } from "../../../common";
+import { setGrayscale, onMount } from "$common";
 
 onMount(() => {
     const videoElement = document.querySelector<HTMLElement>(
