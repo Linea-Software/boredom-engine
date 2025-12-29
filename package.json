@@ -1,17 +1,17 @@
 {
-  "name": "boredom-engine",
-  "module": "index.ts",
-  "type": "module",
-  "private": true,
-  "scripts": {
-    "build": "bun scripts/build.ts"
-  },
-  "devDependencies": {
-    "@types/bun": "latest",
-    "esbuild": "^0.27.2",
-    "typedoc": "^0.28.15"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
-  }
+    "name": "boredom-engine",
+    "license": "MIT",
+    "type": "module",
+    "private": true,
+    "scripts": {
+        "build": "bun scripts/build.ts"
+    },
+    "devDependencies": {
+        "@types/bun": "latest",
+        "esbuild": "^0.27.2",
+        "typedoc": "^0.28.15"
+    },
+    "peerDependencies": {
+        "typescript": "^5"
+    }
 }
