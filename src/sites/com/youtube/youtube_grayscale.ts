@@ -1,18 +1,18 @@
 /**
  * @name YouTube Grayscale
- * @description Turns the YouTube video player grayscale.
- * @version 1.0.0
+ * @description Turns the YouTube video player and Shorts grayscale to reduce visual stimulation.
+ * @version 1.1.0
  */
-import { setGrayscale, onMount } from "$common";
+import { onMount, injectCss } from "$common";
 
 onMount(() => {
-    const videoElement = document.querySelector<HTMLElement>(
-        ".video-stream.html5-main-video"
-    );
+    const css = `
+        .video-stream.html5-main-video,
+        .html5-video-container,
+        .reel-video-in-sequence-thumbnail {
+            filter: grayscale(100%) !important;
+        }
+    `;
 
-    if (videoElement) {
-        setGrayscale(videoElement, 100);
-    } else {
-        console.error("Video element not found!");
-    }
+    injectCss(css);
 });
