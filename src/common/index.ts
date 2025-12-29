@@ -138,3 +138,17 @@ export function getElementByXpath(xpath: string): HTMLElement | null {
     );
     return result.singleNodeValue as HTMLElement | null;
 }
+
+/**
+ * Applies grayscale filter to media elements using CSS injection.
+ * @param additionalSelectors Optional array of additional CSS selectors to apply grayscale to.
+ */
+export function applyMediaGrayscale(additionalSelectors: string[] = []): void {
+    const selectors = ["video", "img", ...additionalSelectors];
+    const css = `
+        ${selectors.join(",\n        ")} {
+            filter: grayscale(100%) !important;
+        }
+    `;
+    injectCss(css);
+}

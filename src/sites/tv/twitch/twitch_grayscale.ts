@@ -3,15 +3,8 @@
  * @description Applies a grayscale filter to Twitch thumbnails and images.
  * @version 1.0.0
  */
-import { onMount, injectCss } from "$common";
+import { onMount, applyMediaGrayscale } from "$common";
 
 onMount(() => {
-    const css = `
-        video,
-        img {
-            filter: grayscale(100%) !important;
-            -webkit-filter: grayscale(100%) !important;
-        }
-    `;
-    injectCss(css);
+    applyMediaGrayscale();
 });

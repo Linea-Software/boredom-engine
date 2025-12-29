@@ -3,15 +3,8 @@
  * @description Turns the YouTube video player and Shorts grayscale to reduce visual stimulation.
  * @version 1.1.0
  */
-import { onMount, injectCss } from "$common";
+import { onMount, applyMediaGrayscale } from "$common";
 
 onMount(() => {
-    const css = `
-        video,
-        img {
-            filter: grayscale(100%) !important;
-        }
-    `;
-
-    injectCss(css);
+    applyMediaGrayscale();
 });
