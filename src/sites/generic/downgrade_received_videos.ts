@@ -6,5 +6,5 @@
 import { onMount, downgradeVideos } from "$common";
 
 onMount(() => {
-    downgradeVideos(0.4); // 40% resolution for extreme blockiness
+    downgradeVideos(0.4); // 40% resolution
 });
