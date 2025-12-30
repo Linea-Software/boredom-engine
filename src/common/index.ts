@@ -116,6 +116,144 @@ export function setAudioDelay(
 }
 
 /**
+ * Intercepts fetch requests and downgrades images.
+ * @param quality The quality of the image (0-1).
+ */
+export function downgradeFetchImages(quality: number): void {
+    const originalFetch = window.fetch;
+
+    window.fetch = Object.assign(
+        async (
+            input: RequestInfo | URL,
+            init?: RequestInit
+        ): Promise<Response> => {
+            const response = await originalFetch(input, init);
+
+            const contentType = response.headers.get("content-type");
+            if (!response.ok || !contentType?.startsWith("image/")) {
+                return response;
+            }
+
+            // Clone to avoid consuming the original response body if processing fails
+            const clone = response.clone();
+
+            try {
+                const blob = await clone.blob();
+                const bitmap = await createImageBitmap(blob);
+
+                const width = bitmap.width;
+                const height = bitmap.height;
+
+                let newBlob: Blob | null = null;
+
+                if (typeof OffscreenCanvas !== "undefined") {
+                    const canvas = new OffscreenCanvas(width, height);
+                    const ctx = canvas.getContext("2d");
+                    if (ctx) {
+                        ctx.drawImage(bitmap, 0, 0);
+                        newBlob = await canvas.convertToBlob({
+                            type: "image/jpeg",
+                            quality: quality,
+                        });
+                    }
+                } else {
+                    const canvas = document.createElement("canvas");
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext("2d");
+                    if (ctx) {
+                        ctx.drawImage(bitmap, 0, 0);
+                        newBlob = await new Promise((resolve) =>
+                            canvas.toBlob(resolve, "image/jpeg", quality)
+                        );
+                    }
+                }
+
+                if (newBlob) {
+                    return new Response(newBlob, {
+                        status: response.status,
+                        statusText: response.statusText,
+                        headers: response.headers,
+                    });
+                }
+            } catch (error) {
+                console.warn(
+                    "Boredom Engine: Failed to downgrade image",
+                    error
+                );
+            }
+
+            return response;
+        },
+        originalFetch
+    );
+}
+
+/**
+ * Downgrades videos by overlaying a low-resolution canvas.
+ * @param quality Resolution multiplier (0-1). e.g. 0.1 for 10% resolution.
+ */
+export function downgradeVideos(quality: number): void {
+    const processed = new WeakSet<HTMLVideoElement>();
+
+    setInterval(() => {
+        const videos = document.querySelectorAll<HTMLVideoElement>("video");
+        videos.forEach((video) => {
+            if (processed.has(video)) return;
+            processed.add(video);
+
+            const canvas = document.createElement("canvas");
+            canvas.style.position = "absolute";
+            canvas.style.pointerEvents = "none";
+            canvas.style.imageRendering = "pixelated";
+            canvas.style.zIndex = "10"; // Sit above video, potentially below custom controls
+
+            // Attempt to ensure parent is positioned to anchor the canvas
+            const parent = video.parentElement;
+            if (parent) {
+                const parentStyle = window.getComputedStyle(parent);
+                if (parentStyle.position === "static") {
+                    parent.style.position = "relative";
+                }
+                parent.insertBefore(canvas, video.nextSibling);
+
+                // Match video size initially
+                canvas.style.width = "100%";
+                canvas.style.height = "100%";
+                canvas.style.top = "0";
+                canvas.style.left = "0";
+
+                const ctx = canvas.getContext("2d", { alpha: false });
+                if (!ctx) return;
+                ctx.imageSmoothingEnabled = false;
+
+                const render = () => {
+                    if (!video.videoWidth || !video.videoHeight) {
+                        requestAnimationFrame(render);
+                        return;
+                    }
+
+                    // Update internal resolution to match video source * quality
+                    const w = Math.floor(video.videoWidth * quality);
+                    const h = Math.floor(video.videoHeight * quality);
+
+                    if (canvas.width !== w || canvas.height !== h) {
+                        canvas.width = w;
+                        canvas.height = h;
+                        ctx.imageSmoothingEnabled = false; // Reset on resize
+                    }
+
+                    ctx.drawImage(video, 0, 0, w, h);
+                    requestAnimationFrame(render);
+                };
+
+                render();
+            }
+        });
+    }, 1000);
+}
+
+/**
  * Injects a CSS string into the document head.
  * @param css The CSS string to inject.
  */
