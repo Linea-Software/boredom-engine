@@ -10,7 +10,16 @@ onMount(() => {
         document.querySelector<HTMLMediaElement>(".html5-main-video") ||
         document.querySelector<HTMLMediaElement>("video");
     if (video) {
-        setAudioDelay(video, 2);
+        const ctx = setAudioDelay(video, 2);
+
+        // Used to sync the audio delay with the fake video buffer
+        if (ctx) {
+            video.addEventListener("BoredomFakeBufferStart", () => {
+                if (ctx.state === "running") {
+                    ctx.suspend();
+                }
+            });
+        }
     } else {
         console.warn("YouTube Audio Delay: No video element found.");
     }

@@ -35,6 +35,8 @@ onMount(() => {
         if (Math.random() < 0.05) {
             isBuffering = true;
 
+            video.dispatchEvent(new CustomEvent("BoredomFakeBufferStart"));
+
             spinner.style.display = "block";
             spinner.style.zIndex = "1000";
             spinner.style.visibility = "visible";

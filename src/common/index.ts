@@ -72,7 +72,7 @@ export function setGrayscale(element: HTMLElement, percentage: number): void {
 export function setAudioDelay(
     element: HTMLMediaElement,
     delaySeconds: number
-): void {
+): AudioContext | undefined {
     try {
         const AudioContext =
             window.AudioContext || (window as any).webkitAudioContext;
@@ -105,11 +105,13 @@ export function setAudioDelay(
         updateState();
 
         console.log(`Audio delayed by ${delaySeconds}s.`);
+        return ctx;
     } catch (error) {
         console.error(
             "Failed to set audio delay (likely CORS or already connected):",
             error
         );
+        return undefined;
     }
 }
 
