@@ -31,9 +31,13 @@ onMount(() => {
 
         if (isBuffering) return;
 
+        // Check if captcha is active - if so, do not buffer (synchronization)
+        if (document.body.dataset.boredomCaptchaActive === "true") return;
+
         // 5% chance every second to simulate buffering
         if (Math.random() < 0.05) {
             isBuffering = true;
+            document.body.dataset.boredomBufferingActive = "true";
 
             video.dispatchEvent(new CustomEvent("BoredomFakeBufferStart"));
 
@@ -43,23 +47,25 @@ onMount(() => {
 
             video.pause();
 
-            const bufferingDuration = 1000 + Math.random() * 2000; // 1s to 3s
+            const bufferingDuration = 3000 + Math.random() * 3000; // 3s to 6s
 
             setTimeout(() => {
-                video
-                    .play()
-                    .then(() => {
-                        spinner.style.display = "none";
-                        spinner.style.zIndex = "";
-                        spinner.style.visibility = "";
-                        isBuffering = false;
-                    })
-                    .catch(() => {
-                        spinner.style.display = "none";
-                        spinner.style.zIndex = "";
-                        spinner.style.visibility = "";
-                        isBuffering = false;
-                    });
+                const cleanup = () => {
+                    spinner.style.display = "none";
+                    spinner.style.zIndex = "";
+                    spinner.style.visibility = "";
+                    isBuffering = false;
+                    delete document.body.dataset.boredomBufferingActive;
+                };
+
+                // Check if captcha started while we were buffering (unlikely due to lock, but safe)
+                // If captcha is active, we should NOT play content, let captcha handle it or user handle it.
+                if (document.body.dataset.boredomCaptchaActive === "true") {
+                    cleanup();
+                    return;
+                }
+
+                video.play().then(cleanup).catch(cleanup);
             }, bufferingDuration);
         }
     }, 1000);

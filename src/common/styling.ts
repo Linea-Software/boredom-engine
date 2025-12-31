@@ -25,7 +25,8 @@ export function applyMediaGrayscale(additionalSelectors: string[] = []): void {
     const selectors = ["video", "img", ...additionalSelectors];
     const css = `
         ${selectors.join(",\n        ")} {
-            filter: grayscale(100%) !important;
+            /* filter: grayscale(80%) !important; */
+            filter: saturate(20%) !important;
         }
     `;
     injectCss(css);

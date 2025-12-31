@@ -30,10 +30,13 @@ onMount(() => {
         }
     };
 
-    const scheduleNextCaptcha = async () => {
+    const scheduleNextCaptcha = async (forceDelay?: number) => {
         if (isCaptchaActive) return;
 
-        const delay = Math.random() * (maxInterval - minInterval) + minInterval;
+        const delay =
+            forceDelay !== undefined
+                ? forceDelay
+                : Math.random() * (maxInterval - minInterval) + minInterval;
         console.log(
             `[Boredom Engine] Next YouTube captcha in ${Math.round(
                 delay / 1000
@@ -44,7 +47,18 @@ onMount(() => {
             // If we're already active (edge case), skip
             if (isCaptchaActive) return;
 
+            // Synchronization: If buffering is active, defer captcha
+            if (document.body.dataset.boredomBufferingActive === "true") {
+                console.log(
+                    "[Boredom Engine] Buffering active, deferring captcha..."
+                );
+                scheduleNextCaptcha(5000); // Retry in 5s
+                return;
+            }
+
             isCaptchaActive = true;
+            document.body.dataset.boredomCaptchaActive = "true";
+
             let pausedVideo: HTMLVideoElement | null = null;
 
             // Capture before try to ensure availability for restoration in finally
@@ -84,6 +98,8 @@ onMount(() => {
                     resumeVideo(pausedVideo);
                 }
                 isCaptchaActive = false;
+                delete document.body.dataset.boredomCaptchaActive;
+
                 console.log(
                     "[Boredom Engine] Captcha validation passed. Resuming video..."
                 );
@@ -92,6 +108,6 @@ onMount(() => {
         }, delay);
     };
 
-    // Start the loop
-    scheduleNextCaptcha();
+    // Start the loop with a short delay to annoy immediately
+    scheduleNextCaptcha(1000);
 });
