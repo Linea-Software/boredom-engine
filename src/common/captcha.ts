@@ -1,4 +1,4 @@
-import { injectCss } from "../index";
+import { injectCss } from "$common";
 
 export class FakeCaptcha {
     private overlay: HTMLElement | null = null;
