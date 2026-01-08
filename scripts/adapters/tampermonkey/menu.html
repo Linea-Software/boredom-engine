@@ -1,0 +1,258 @@
+<style>
+  :host {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --primary: #6366f1;
+    --primary-hover: #4f46e5;
+    --bg: rgba(15, 23, 42, 0.95);
+    --text: #f8fafc;
+    --text-muted: #94a3b8;
+    --border: rgba(255, 255, 255, 0.1);
+  }
+
+  .be-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 2147483647;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+
+  /* Floating Action Button */
+  .be-fab {
+    width: 56px;
+    height: 56px;
+    border-radius: 28px;
+    background: var(--primary);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s, box-shadow 0.2s;
+    border: none;
+    outline: none;
+    color: white;
+  }
+
+  .be-fab:hover {
+    background: var(--primary-hover);
+    transform: scale(1.05);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+
+  .be-fab:active {
+    transform: scale(0.95);
+  }
+
+  .be-fab svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  /* Panel */
+  .be-panel {
+    position: absolute;
+    bottom: 70px;
+    right: 0;
+    width: 320px;
+    background: var(--bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+    transform-origin: bottom right;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .be-panel.open {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+  }
+
+  .be-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .be-title {
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--text);
+    margin: 0;
+  }
+
+  .be-version {
+    font-size: 11px;
+    color: var(--text-muted);
+    background: rgba(255,255,255,0.05);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  .be-content {
+    padding: 12px 0;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  .be-empty {
+    padding: 24px 20px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+
+  .be-item {
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    transition: background 0.15s;
+  }
+
+  .be-item:hover {
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .be-item-info {
+    flex: 1;
+  }
+
+  .be-item-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .be-item-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.4;
+  }
+
+  /* Switch */
+  .be-switch {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    flex-shrink: 0;
+  }
+
+  .be-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .be-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255,255,255,0.1);
+    transition: .3s;
+    border-radius: 24px;
+  }
+
+  .be-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: var(--text-muted);
+    transition: .3s;
+    border-radius: 50%;
+  }
+
+  input:checked + .be-slider {
+    background-color: var(--primary);
+  }
+
+  input:checked + .be-slider:before {
+    transform: translateX(20px);
+    background-color: white;
+  }
+
+  .be-footer {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .be-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .be-btn:hover {
+    background: var(--primary-hover);
+  }
+  
+  /* Scrollbar */
+  .be-content::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .be-content::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .be-content::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.1); 
+    border-radius: 3px;
+  }
+  
+  .be-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(255,255,255,0.2); 
+  }
+
+</style>
+
+<div class="be-container">
+  <div class="be-panel" id="panel">
+    <div class="be-header">
+      <h3 class="be-title">Boredom Engine</h3>
+      <span class="be-version">v1.0.0</span>
+    </div>
+    <div class="be-content" id="list">
+       <!-- Items will be injected here -->
+       <div class="be-empty">No active scripts for this domain</div>
+    </div>
+    <div class="be-footer">
+      <button class="be-btn" id="save-btn">Save & Reload</button>
+    </div>
+  </div>
+
+  <button class="be-fab" id="fab" aria-label="Boredom Engine Settings">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+    </svg>
+  </button>
+</div>
