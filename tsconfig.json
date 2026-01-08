@@ -15,7 +15,9 @@
         "types": ["bun-types"],
         "paths": {
             "$common": ["./src/common"],
-            "$common/*": ["./src/common/*"]
+            "$common/*": ["./src/common/*"],
+            "$scripts": ["./scripts"],
+            "$scripts/*": ["./scripts/*"]
         }
     },
     "include": ["src/**/*", "scripts/**/*"]
