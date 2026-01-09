@@ -1,17 +1,44 @@
 /**
  * @name Twitch Remove Featured Carousel
  * @description Removes the featured carousel from the Twitch homepage.
- * @version 1.0.0
+ * @version 1.2.0
  */
-import { onMount, getElementByXpath } from "$common";
+import { onMount, injectCss } from "$common";
 
 onMount(() => {
-    const targetPath =
-        '//*[@id="root"]/div[1]/div[1]/div[2]/main/div[1]/div/div/div[1]';
-    const element = getElementByXpath(targetPath);
+    // Inject style to hide it immediately for better performance/UX
+    injectCss(`
+        [data-a-target="front-page-carousel"],
+        .front-page-carousel {
+            display: none !important;
+        }
+    `);
 
-    if (element) {
-        console.log("Removing Twitch featured carousel.");
-        element.remove();
-    }
+    const removeCarousel = () => {
+        const selectors = [
+            '[data-a-target="front-page-carousel"]',
+            '.front-page-carousel'
+        ];
+
+        for (const selector of selectors) {
+            const elements = document.querySelectorAll(selector);
+            elements.forEach(el => {
+                console.log("Removing Twitch featured carousel:", selector);
+                el.remove();
+            });
+        }
+    };
+
+    // Run immediately
+    removeCarousel();
+
+    // Run on mutations because Twitch is an SPA
+    const observer = new MutationObserver(() => {
+        removeCarousel();
+    });
+
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+    });
 });

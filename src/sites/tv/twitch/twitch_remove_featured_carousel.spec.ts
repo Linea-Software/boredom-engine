@@ -12,12 +12,16 @@ test('Twitch Remove Featured Carousel', async ({ page }) => {
 
     await injectScript(page, scriptPath);
     await page.goto('https://www.twitch.tv/');
-    await page.waitForTimeout(1000);
+    // Wait for potential carousel load
+    await page.waitForTimeout(2000);
 
-    // Verify the element is NOT present (either removed or never existed)
-    // The target XPath from the script
-    const targetXpath = '//*[@id="root"]/div[1]/div[1]/div[2]/main/div[1]/div/div/div[1]';
-    const elementCount = await page.locator(targetXpath).count();
+    // Selectors that should NOT be visible
+    const selectors = [
+        '[data-a-target="front-page-carousel"]',
+        '.front-page-carousel'
+    ];
 
-    expect(elementCount).toBe(0);
+    for (const selector of selectors) {
+        await expect(page.locator(selector)).toBeHidden();
+    }
 });
