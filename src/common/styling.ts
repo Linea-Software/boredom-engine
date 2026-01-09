@@ -17,8 +17,12 @@ export function setGrayscale(element: HTMLElement, percentage: number): void {
     element.style.filter = `grayscale(${percentage}%)`;
 }
 
+// Shared filter string to allowing stacking of effects (saturation + blur)
+export const COMMON_MEDIA_FILTER =
+    "saturate(var(--boredom-saturate, 100%)) blur(var(--boredom-blur, 0px))";
+
 /**
- * Applies grayscale filter to media elements using CSS injection.
+ * Applies grayscale/desaturation filter to media elements using CSS injection.
  * @param additionalSelectors Optional array of additional CSS selectors to apply grayscale to.
  */
 export function applyMediaDesaturation(
@@ -26,9 +30,11 @@ export function applyMediaDesaturation(
 ): void {
     const selectors = ["video", "img", ...additionalSelectors];
     const css = `
+        :root {
+            --boredom-saturate: 20%;
+        }
         ${selectors.join(",\n        ")} {
-            /* filter: grayscale(80%) !important; */
-            filter: saturate(20%) !important;
+            filter: ${COMMON_MEDIA_FILTER} !important;
         }
     `;
     injectCss(css);

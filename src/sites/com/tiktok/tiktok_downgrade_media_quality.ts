@@ -6,8 +6,6 @@
 import { onMount, downgradeVideos, downgradeFetchImages } from "$common";
 
 onMount(() => {
-    // Apply 5% resolution quality for a very pixelated effect
-    downgradeVideos(0.05);
-
+    downgradeVideos(0.9);
     downgradeFetchImages(0.25);
 });

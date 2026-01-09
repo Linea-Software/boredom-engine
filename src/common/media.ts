@@ -1,3 +1,5 @@
+import { injectCss, COMMON_MEDIA_FILTER } from "./styling";
+
 /**
  * Adds a delay to the audio playback of a media element.
  * @param element The media element (video or audio) to delay.
@@ -50,65 +52,18 @@ export function setAudioDelay(
 }
 
 /**
- * Downgrades videos by overlaying a low-resolution canvas.
- * @param quality Resolution multiplier (0-1). e.g. 0.1 for 10% resolution.
+ * Downgrades videos by applying a CSS blur filter.
+ * This relies on the browser's built-in rendering engine (CSS) rather than a canvas overlay.
+ * @param quality Quality multiplier (0-1). 1 is perfect, 0 is max blur.
  */
 export function downgradeVideos(quality: number): void {
-    const processed = new WeakSet<HTMLVideoElement>();
-
-    setInterval(() => {
-        const videos = document.querySelectorAll<HTMLVideoElement>("video");
-        videos.forEach((video) => {
-            if (processed.has(video)) return;
-            processed.add(video);
-
-            const canvas = document.createElement("canvas");
-            canvas.style.position = "absolute";
-            canvas.style.pointerEvents = "none";
-            canvas.style.imageRendering = "pixelated";
-            canvas.style.zIndex = "10"; // Sit above video, potentially below custom controls
-
-            // Attempt to ensure parent is positioned to anchor the canvas
-            const parent = video.parentElement;
-            if (parent) {
-                const parentStyle = window.getComputedStyle(parent);
-                if (parentStyle.position === "static") {
-                    parent.style.position = "relative";
-                }
-                parent.insertBefore(canvas, video.nextSibling);
-
-                // Match video size initially
-                canvas.style.width = "100%";
-                canvas.style.height = "100%";
-                canvas.style.top = "0";
-                canvas.style.left = "0";
-
-                const ctx = canvas.getContext("2d", { alpha: false });
-                if (!ctx) return;
-                ctx.imageSmoothingEnabled = false;
-
-                const render = () => {
-                    if (!video.videoWidth || !video.videoHeight) {
-                        requestAnimationFrame(render);
-                        return;
-                    }
-
-                    // Update internal resolution to match video source * quality
-                    const w = Math.floor(video.videoWidth * quality);
-                    const h = Math.floor(video.videoHeight * quality);
-
-                    if (canvas.width !== w || canvas.height !== h) {
-                        canvas.width = w;
-                        canvas.height = h;
-                        ctx.imageSmoothingEnabled = false; // Reset on resize
-                    }
-
-                    ctx.drawImage(video, 0, 0, w, h);
-                    requestAnimationFrame(render);
-                };
-
-                render();
-            }
-        });
-    }, 1000);
+    const blurPx = (1 - quality) * 20; // Scale 0-1 to 0-20px blur
+    injectCss(`
+        :root {
+            --boredom-blur: ${blurPx}px;
+        }
+        video {
+            filter: ${COMMON_MEDIA_FILTER} !important;
+        }
+    `);
 }
