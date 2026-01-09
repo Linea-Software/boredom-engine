@@ -17,12 +17,12 @@ onMount(() => {
     const removeCarousel = () => {
         const selectors = [
             '[data-a-target="front-page-carousel"]',
-            '.front-page-carousel'
+            ".front-page-carousel",
         ];
 
         for (const selector of selectors) {
             const elements = document.querySelectorAll(selector);
-            elements.forEach(el => {
+            elements.forEach((el) => {
                 console.log("Removing Twitch featured carousel:", selector);
                 el.remove();
             });
@@ -36,6 +36,28 @@ onMount(() => {
     const observer = new MutationObserver(() => {
         removeCarousel();
     });
+
+    // Ensure any media inside is muted/paused (even if hidden or about to be removed)
+    setInterval(() => {
+        const selectors = [
+            '[data-a-target="front-page-carousel"]',
+            ".front-page-carousel",
+        ];
+
+        for (const selector of selectors) {
+            const containers = document.querySelectorAll(selector);
+            containers.forEach((container) => {
+                const mediaElements =
+                    container.querySelectorAll("video, audio");
+                mediaElements.forEach((media) => {
+                    if (media instanceof HTMLMediaElement) {
+                        if (!media.paused) media.pause();
+                        if (!media.muted) media.muted = true;
+                    }
+                });
+            });
+        }
+    }, 500);
 
     observer.observe(document.body, {
         childList: true,

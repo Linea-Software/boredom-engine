@@ -19,7 +19,7 @@ onMount(() => {
             border-top: 5px solid #fff;
             border-radius: 50%;
             animation: boredom-spin 1s linear infinite;
-            z-index: 9999;
+            z-index: 2147483647;
             pointer-events: none;
             display: none;
         }
@@ -47,7 +47,12 @@ onMount(() => {
             const spinner = document.createElement("div");
             spinner.className = "boredom-tiktok-spinner";
             if (video.parentElement) {
-                // video.parentElement.style.position = "relative"; // Ensure positioning context
+                const parentStyle = window.getComputedStyle(
+                    video.parentElement
+                );
+                if (parentStyle.position === "static") {
+                    video.parentElement.style.position = "relative";
+                }
                 video.parentElement.appendChild(spinner);
             }
 
@@ -57,15 +62,21 @@ onMount(() => {
                 if (isBuffering || video.paused) return;
 
                 // 20% chance every check to buffer
+                // The check runs every 1s, so 5% probability per second is roughly equal to checks
                 if (Math.random() < 0.05) {
                     isBuffering = true;
                     video.pause();
                     spinner.style.display = "block";
 
                     const delay = 3000 + Math.random() * 5000; // 3-8 seconds
-                    setTimeout(() => {
+                    setTimeout(async () => {
                         spinner.style.display = "none";
-                        video.play().catch(() => {});
+                        try {
+                            await video.play();
+                        } catch (e) {
+                            // If play fails, it might be due to user interaction or detachment.
+                            // We can try to force it or just ignore.
+                        }
                         isBuffering = false;
                     }, delay);
                 }
