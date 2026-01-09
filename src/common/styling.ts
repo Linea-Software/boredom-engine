@@ -21,7 +21,9 @@ export function setGrayscale(element: HTMLElement, percentage: number): void {
  * Applies grayscale filter to media elements using CSS injection.
  * @param additionalSelectors Optional array of additional CSS selectors to apply grayscale to.
  */
-export function applyMediaGrayscale(additionalSelectors: string[] = []): void {
+export function applyMediaDesaturation(
+    additionalSelectors: string[] = []
+): void {
     const selectors = ["video", "img", ...additionalSelectors];
     const css = `
         ${selectors.join(",\n        ")} {

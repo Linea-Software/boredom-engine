@@ -3,8 +3,8 @@
  * @description Makes Reddit media grayscale to reduce dopamine.
  * @version 1.0.0
  */
-import { onMount, applyMediaGrayscale } from "$common";
+import { onMount, applyMediaDesaturation } from "$common";
 
 onMount(() => {
-    applyMediaGrayscale(["shreddit-player"]);
+    applyMediaDesaturation(["shreddit-player"]);
 });
