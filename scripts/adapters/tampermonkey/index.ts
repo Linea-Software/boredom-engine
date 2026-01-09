@@ -1,6 +1,7 @@
 import { build } from "esbuild";
+import { rmSync } from "node:fs";
 import { readdir, readFile, writeFile } from "node:fs/promises";
-import { join, dirname, sep } from "node:path";
+import { join } from "node:path";
 
 async function getFiles(dir: string): Promise<string[]> {
     const dirents = await readdir(dir, { withFileTypes: true });
@@ -71,43 +72,154 @@ export async function buildTampermonkey() {
     // Escape backticks for template literal inclusion
     menuHtml = menuHtml.replace(/`/g, "\\`").replace(/\${/g, "\\${");
 
-    const scriptsData: any[] = [];
+    // Prepare Intermediate Directory
+    const distDir = join(process.cwd(), "dist");
+    const intermediateDir = join(distDir, "tm_intermediate");
 
-    for (const fullPath of tsFiles) {
+    // Ensure Clean Directory
+    // (Node 14+ recursive mkdir)
+    await import("fs").then((fs) => {
+        if (fs.existsSync(intermediateDir)) {
+            fs.rmSync(intermediateDir, { recursive: true });
+        }
+        fs.mkdirSync(intermediateDir, { recursive: true });
+    });
+
+    const scriptModules: {
+        variable: string;
+        path: string;
+        metadata: any;
+        matchExpr: string;
+    }[] = [];
+
+    // Helper to process Imports
+    function processScriptContent(content: string) {
+        const lines = content.split("\n");
+        const imports: string[] = [];
+        const body: string[] = [];
+
+        let insideMultiLineImport = false;
+
+        for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed.startsWith("import ") || insideMultiLineImport) {
+                imports.push(line);
+                if (
+                    trimmed.includes("from") &&
+                    (trimmed.includes('"') || trimmed.includes("'"))
+                ) {
+                    insideMultiLineImport = false;
+                } else if (
+                    trimmed.startsWith("import ") &&
+                    !trimmed.includes("from")
+                ) {
+                    // side-effect import or incomplete
+                    if (trimmed.includes('"') || trimmed.includes("'")) {
+                        // side effect import like import "foo";
+                        insideMultiLineImport = false;
+                    } else {
+                        insideMultiLineImport = true;
+                    }
+                }
+            } else {
+                body.push(line);
+            }
+        }
+        return { imports: imports.join("\n"), body: body.join("\n") };
+    }
+
+    for (let i = 0; i < tsFiles.length; i++) {
+        const fullPath = tsFiles[i];
         const normalizedFullPath = fullPath.replace(/\\/g, "/");
         const normalizedSrcSites = srcSitesDir.replace(/\\/g, "/");
         const relPath = normalizedFullPath.slice(normalizedSrcSites.length + 1);
-
-        console.log(`Processing ${relPath}...`);
 
         const rawContent = await readFile(fullPath, "utf-8");
         const metadata = extractMetadata(rawContent);
         const matchCondition = getMatchCondition(relPath);
 
-        let result;
-        try {
-            result = await build({
-                entryPoints: [fullPath],
-                bundle: true,
-                write: false,
-                platform: "browser",
-                target: "es2020",
-                minify: true,
-            });
-        } catch (e) {
-            console.error(`FAILED to build ${relPath}`);
-            throw e;
-        }
+        const { imports, body } = processScriptContent(rawContent);
 
-        if (result.outputFiles && result.outputFiles.length > 0) {
-            const code = result.outputFiles[0].text;
-            scriptsData.push({
-                id: relPath,
-                ...metadata,
-                matchCondition, // String representation of boolean expression
-                code,
-            });
-        }
+        const wrappedContent = `
+${imports}
+
+export const metadata = ${JSON.stringify(metadata)};
+export const matchCondition = (host: string) => ${matchCondition};
+
+export default function() {
+${body}
+}
+`;
+        // Flatten path for intermediate filename
+        const safeName = relPath.replace(/[\/\\]/g, "_").replace(".ts", "");
+        const moduleFileName = `script_${i}_${safeName}.ts`;
+        const modulePath = join(intermediateDir, moduleFileName);
+
+        await writeFile(modulePath, wrappedContent);
+
+        scriptModules.push({
+            variable: `script_${i}`,
+            path: `./${moduleFileName}`,
+            metadata,
+            matchExpr: matchCondition,
+        });
+    }
+
+    // Generate Entry Point
+    const entryPath = join(intermediateDir, "index.ts");
+
+    const clientImportPath = "../../scripts/adapters/tampermonkey/client.ts";
+
+    const entryContent = `
+import { main } from "${clientImportPath}";
+
+// Import Scripts
+${scriptModules
+    .map(
+        (m) =>
+            `import ${m.variable}, { metadata as ${m.variable}_meta, matchCondition as ${m.variable}_match } from "${m.path}";`
+    )
+    .join("\n")}
+
+const scripts = [
+    ${scriptModules
+        .map(
+            (m) => `
+    {
+        id: "${m.metadata.name}", // Use name or other ID
+        name: ${m.variable}_meta.name,
+        description: ${m.variable}_meta.description,
+        version: ${m.variable}_meta.version,
+        matches: ${m.variable}_match,
+        execute: ${m.variable}
+    }`
+        )
+        .join(",\n")}
+];
+
+const menuHtml = \`${menuHtml}\`;
+
+// Run Client
+main(scripts, menuHtml);
+`;
+
+    await writeFile(entryPath, entryContent);
+
+    // Bundle
+    let bundleCode = "";
+    try {
+        const result = await build({
+            entryPoints: [entryPath],
+            bundle: true,
+            write: false,
+            platform: "browser",
+            target: "es2020",
+            minify: true,
+        });
+        bundleCode = result.outputFiles[0].text;
+    } catch (e) {
+        console.error("Bundle failed", e);
+        throw e;
     }
 
     const header = `
@@ -126,79 +238,10 @@ export async function buildTampermonkey() {
 // ==/UserScript==
 `;
 
-    // Build Client Runtime
-    const clientPath = join(
-        process.cwd(),
-        "scripts/adapters/tampermonkey/client.ts"
-    );
-    let clientCode = "";
-    try {
-        const clientResult = await build({
-            entryPoints: [clientPath],
-            bundle: true,
-            write: false,
-            platform: "browser",
-            target: "es2020",
-            minify: true,
-            format: "iife", // IIFE format for isolation, but we need to export 'main' or attach it to global to call it?
-            // Actually, if we use iife with a global name, we can call it.
-            globalName: "BoredomClient",
-        });
-        clientCode = clientResult.outputFiles[0].text;
-    } catch (e) {
-        console.error("Failed to build client runtime", e);
-        throw e;
-    }
-
-    const runtime = `
-(function() {
-    'use strict';
-    
-    // --- Scripts Definition ---
-    const scripts = [
-        ${scriptsData
-            .map(
-                (s) => `
-        {
-            id: "${s.id}",
-            name: "${s.name}",
-            description: "${s.description.replace(/"/g, '\\"')}",
-            version: "${s.version}",
-            matches: (host) => ${s.matchCondition},
-            execute: function() {
-                try {
-                    // IIFE for isolation
-                    (function() {
-                        ${s.code}
-                    })();
-                } catch (e) {
-                    console.error("[BoredomEngine] Error executing ${
-                        s.name
-                    }:", e);
-                }
-            }
-        }`
-            )
-            .join(",")}
-    ];
-
-    const menuHtml = \`${menuHtml}\`;
-
-    // --- Client Runtime ---
-    ${clientCode}
-
-    // Initialize
-    // Since we used globalName='BoredomClient', the IIFE exposes 'BoredomClient' to the scope.
-    if (typeof BoredomClient !== 'undefined' && BoredomClient.main) {
-        BoredomClient.main(scripts, menuHtml);
-    } else {
-        console.error("BoredomClient runtime failed to load.");
-    }
-
-})();
-`;
-
-    const finalContent = header + runtime;
+    const finalContent = header + "\n" + bundleCode;
     await writeFile("dist/tampermonkey.js", finalContent);
     console.log("Tampermonkey bundle generated at dist/tampermonkey.js");
+
+    // cleanup
+    rmSync(intermediateDir, { recursive: true });
 }
