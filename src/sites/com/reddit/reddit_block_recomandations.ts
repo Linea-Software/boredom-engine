@@ -6,13 +6,23 @@
 import { onMount, getElementByXpath } from "$common";
 
 onMount(() => {
-    if (window.location.pathname != "" && window.location.pathname != "/") {
-        return;
-    }
+    const observer = new MutationObserver(() => {
+        // Dynamically check for the path name for changes
+        if (
+            window.location.pathname !== "/" &&
+            window.location.pathname !== ""
+        ) {
+            return;
+        }
 
-    const element = getElementByXpath('//*[@id="subgrid-container"]/div[1]');
-    if (element) {
-        console.log("Blocking recommendation element.");
-        element.remove();
-    }
+        const element = getElementByXpath(
+            '//*[@id="subgrid-container"]/div[1]'
+        );
+        if (element) {
+            console.log("Blocking recommendation element.");
+            element.hidden = true;
+        }
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
 });
