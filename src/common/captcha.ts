@@ -213,6 +213,53 @@ export class FakeCaptcha {
                 font-family: Arial, sans-serif;
                 flex-direction: column;
             }
+
+            @media (prefers-color-scheme: dark) {
+                .boredom-captcha-overlay {
+                    background: #121212;
+                }
+                .boredom-instruction {
+                    color: #e0e0e0;
+                }
+                .fkrc-checkbox-window {
+                    background-color: #222;
+                    border-color: #444;
+                    box-shadow: 0 0 4px 1px rgba(0,0,0,0.5);
+                }
+                .fkrc-checkbox {
+                    background-color: #333;
+                    border-color: #555;
+                }
+                .fkrc-checkbox:hover {
+                    border-color: #666;
+                }
+                .fkrc-im-not-a-robot {
+                    color: #eee;
+                }
+                .fkrc-checkbox-desc {
+                    color: #aaa;
+                }
+                .fkrc-spinner {
+                    border-color: #222;
+                    border-top-color: #4a90e2;
+                }
+                .fkrc-verifywin-window {
+                    background-color: #222;
+                    border-color: #444;
+                    box-shadow: 5px 6px 7px -3px rgba(0,0,0,0.5);
+                }
+                .fkrc-verifywin-window-arrow {
+                    border-right-color: #444;
+                }
+                .fkrc-verifywin-main {
+                    background: #1a1a1a;
+                    color: #bbb;
+                }
+                .fkrc-verifywin-footer {
+                    border-top-color: #444;
+                    color: #aaa;
+                }
+            }
         `);
     }
 
