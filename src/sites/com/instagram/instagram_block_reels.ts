@@ -3,14 +3,14 @@
  * @description Blocks Instagram reels elements and fetch requests on the reels page.
  * @version 1.0.0
  */
-import { onMount, blockFetchRequests } from "$common";
+import { onMount, blockNetworkRequests } from "$common";
 
 onMount(() => {
     if (
         window.location.pathname.startsWith("/reels") ||
         window.location.pathname.includes("/reels/")
     ) {
-        blockFetchRequests();
+        blockNetworkRequests();
     }
 
     const reelsIcon = document.querySelector(

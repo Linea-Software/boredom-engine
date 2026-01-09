@@ -4,8 +4,8 @@
  * @version 1.0.0
  */
 
-import { addDelayToFetch, onMount } from "$common";
+import { addDelayToNetwork, onMount } from "$common";
 
 onMount(() => {
-    addDelayToFetch(2000); // 2 seconds delay
+    addDelayToNetwork(2000); // 2 seconds delay
 });
