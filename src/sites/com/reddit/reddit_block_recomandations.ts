@@ -6,6 +6,10 @@
 import { onMount, getElementByXpath } from "$common";
 
 onMount(() => {
+    if (window.location.pathname != "" && window.location.pathname != "/") {
+        return;
+    }
+
     const element = getElementByXpath('//*[@id="subgrid-container"]/div[1]');
     if (element) {
         console.log("Blocking recommendation element.");
