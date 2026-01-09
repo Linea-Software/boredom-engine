@@ -68,7 +68,7 @@ onMount(() => {
             try {
                 pausedVideo = pauseVideo();
 
-                // Surface level URL spoofing (cannot change domain due to SOP, using path instad)
+                // Surface level URL spoofing (cannot change domain due to SOP, using path instead)
                 const randomToken =
                     Math.random().toString(36).substring(2, 15) +
                     Math.random().toString(36).substring(2, 15);

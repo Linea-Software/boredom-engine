@@ -10,6 +10,8 @@ const LAST_ACTIVE_KEY = "be_yt_last_active";
 
 function performLogout() {
     console.log("User inactive for 15 minutes. Logging out...");
+    // Update last active time to prevent immediate re-trigger loop when returning to home page
+    localStorage.setItem(LAST_ACTIVE_KEY, Date.now().toString());
     window.location.href = "https://www.youtube.com/logout";
 }
 

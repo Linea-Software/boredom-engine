@@ -7,9 +7,19 @@
     --text: #f8fafc;
     --text-muted: #94a3b8;
     --border: rgba(255, 255, 255, 0.1);
+    
+    /* Ensure the host is consistently positioned on top but allow critical overlays */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 0;
+    z-index: 100000;
+    pointer-events: none;
   }
 
   .be-container {
+    pointer-events: auto;
     position: fixed;
     bottom: 24px;
     right: 24px;
@@ -106,6 +116,7 @@
     padding: 12px 0;
     max-height: 400px;
     overflow-y: auto;
+    flex: 1; /* specific fix for flexbox parent if needed */
   }
 
   .be-empty {

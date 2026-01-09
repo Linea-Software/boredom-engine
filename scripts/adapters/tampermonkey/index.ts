@@ -13,20 +13,27 @@ async function getFiles(dir: string): Promise<string[]> {
     return files.flat();
 }
 
-function extractMetadata(code: string): { name: string; description: string; version: string } {
+function extractMetadata(code: string): {
+    name: string;
+    description: string;
+    version: string;
+} {
     const nameMatch = code.match(/@name\s+(.*)/);
     const descMatch = code.match(/@description\s+(.*)/);
     const versionMatch = code.match(/@version\s+(.*)/);
 
     return {
         name: nameMatch ? nameMatch[1].trim() : "Unknown Script",
-        description: descMatch ? descMatch[1].trim() : "No description provided.",
+        description: descMatch
+            ? descMatch[1].trim()
+            : "No description provided.",
         version: versionMatch ? versionMatch[1].trim() : "1.0.0",
     };
 }
 
 function getMatchCondition(relPath: string): string {
-    const pathParts = dirname(relPath).split("/");
+    // We normalized relPath to use forward slashes, so we can split by /
+    const pathParts = relPath.split("/").slice(0, -1);
 
     if (pathParts[0] === "generic") {
         return "false";
@@ -37,7 +44,6 @@ function getMatchCondition(relPath: string): string {
     const domainParts = [...pathParts].reverse();
     const host = domainParts.join(".");
 
-    // Match exact host or subdomain
     return `(host === "${host}" || host.endsWith(".${host}"))`;
 }
 
@@ -45,14 +51,22 @@ export async function buildTampermonkey() {
     console.log("Starting Tampermonkey adapter build...");
     const srcSitesDir = join(process.cwd(), "src/sites");
     const files = await getFiles(srcSitesDir);
-    const tsFiles = files.filter((f) => f.endsWith(".ts") && !f.endsWith(".spec.ts") && !f.endsWith(".test.ts"));
+    const tsFiles = files.filter(
+        (f) =>
+            f.endsWith(".ts") &&
+            !f.endsWith(".spec.ts") &&
+            !f.endsWith(".test.ts")
+    );
     console.log("Files to build:", tsFiles);
 
     const packageJsonPath = join(process.cwd(), "package.json");
     const packageJson = JSON.parse(await readFile(packageJsonPath, "utf-8"));
 
     // Load Menu HTML
-    const menuHtmlPath = join(process.cwd(), "scripts/adapters/tampermonkey/menu.html");
+    const menuHtmlPath = join(
+        process.cwd(),
+        "scripts/adapters/tampermonkey/menu.html"
+    );
     let menuHtml = await readFile(menuHtmlPath, "utf-8");
     // Escape backticks for template literal inclusion
     menuHtml = menuHtml.replace(/`/g, "\\`").replace(/\${/g, "\\${");
@@ -91,7 +105,7 @@ export async function buildTampermonkey() {
                 id: relPath,
                 ...metadata,
                 matchCondition, // String representation of boolean expression
-                code
+                code,
             });
         }
     }
@@ -113,7 +127,10 @@ export async function buildTampermonkey() {
 `;
 
     // Build Client Runtime
-    const clientPath = join(process.cwd(), "scripts/adapters/tampermonkey/client.ts");
+    const clientPath = join(
+        process.cwd(),
+        "scripts/adapters/tampermonkey/client.ts"
+    );
     let clientCode = "";
     try {
         const clientResult = await build({
@@ -133,14 +150,15 @@ export async function buildTampermonkey() {
         throw e;
     }
 
-
     const runtime = `
 (function() {
     'use strict';
     
     // --- Scripts Definition ---
     const scripts = [
-        ${scriptsData.map(s => `
+        ${scriptsData
+            .map(
+                (s) => `
         {
             id: "${s.id}",
             name: "${s.name}",
@@ -154,10 +172,14 @@ export async function buildTampermonkey() {
                         ${s.code}
                     })();
                 } catch (e) {
-                    console.error("[BoredomEngine] Error executing ${s.name}:", e);
+                    console.error("[BoredomEngine] Error executing ${
+                        s.name
+                    }:", e);
                 }
             }
-        }`).join(",")}
+        }`
+            )
+            .join(",")}
     ];
 
     const menuHtml = \`${menuHtml}\`;

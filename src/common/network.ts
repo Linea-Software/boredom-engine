@@ -115,3 +115,23 @@ export function downgradeFetchImages(quality: number): void {
         originalFetch
     );
 }
+
+/**
+ * Blocks all fetch requests.
+ */
+export function blockFetchRequests() {
+    const originalFetch = window.fetch;
+
+    window.fetch = Object.assign(
+        async (
+            input: RequestInfo | URL,
+            init?: RequestInit
+        ): Promise<Response> => {
+            return new Response("", {
+                status: 404,
+                statusText: "Not Found",
+            });
+        },
+        originalFetch
+    );
+}
