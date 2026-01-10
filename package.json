@@ -1,11 +1,5 @@
 {
     "name": "boredom-engine",
-    "license": "MIT",
-    "type": "module",
-    "private": true,
-    "scripts": {
-        "build": "bun scripts/build.ts"
-    },
     "devDependencies": {
         "@playwright/test": "^1.57.0",
         "@types/bun": "latest",
@@ -15,5 +9,13 @@
     },
     "peerDependencies": {
         "typescript": "^5"
+    },
+    "license": "MIT",
+    "private": true,
+    "scripts": {
+        "build": "bun scripts/build.ts"
+    },
+    "type": "module",
+    "dependencies": {
     }
 }

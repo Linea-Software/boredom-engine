@@ -3,8 +3,8 @@
  * @description Intercepts fetch requests for images and downgrades their quality to reduced bandwidth usage / increase annoyance.
  * @version 1.0.0
  */
-import { onMount, downgradeFetchImages } from "$common";
+import { onMount, downgradeImages } from "$common";
 
 onMount(() => {
-    downgradeFetchImages(0.01); // 1% of original quality
+    downgradeImages(0.01); // 1% of original quality
 });

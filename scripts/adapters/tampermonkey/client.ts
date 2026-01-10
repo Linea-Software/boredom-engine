@@ -5,15 +5,18 @@ export interface ScriptMetadata {
     version: string;
     matches: (host: string) => boolean;
     execute: () => void;
+    type?: 'site' | 'generic';
 }
 
 export function main(scripts: ScriptMetadata[], menuHtml: string) {
     const currentHost = window.location.hostname;
 
-    // Filter scripts for current host
-    const availableScripts = scripts.filter((s) => s.matches(currentHost));
+    // Filter scripts
+    const siteScripts = scripts.filter((s) => s.type === 'site' && s.matches(currentHost));
+    const genericScripts = scripts.filter((s) => s.type === 'generic');
 
-    if (availableScripts.length === 0) {
+    // If no scripts at all, exit
+    if (siteScripts.length === 0 && genericScripts.length === 0) {
         return;
     }
 
@@ -28,9 +31,18 @@ export function main(scripts: ScriptMetadata[], menuHtml: string) {
     }
 
     // Execute enabled scripts
-    availableScripts.forEach((script) => {
+    // Site scripts: Enabled by default (unless explicitly false)
+    siteScripts.forEach((script) => {
         if (enabledScripts[script.id] !== false) {
-            console.log("[BoredomEngine] Running:", script.name);
+            console.log("[BoredomEngine] Running Site Script:", script.name);
+            script.execute();
+        }
+    });
+
+    // Generic scripts: Disabled by default (must be explicitly true)
+    genericScripts.forEach((script) => {
+        if (enabledScripts[script.id] === true) {
+            console.log("[BoredomEngine] Running Generic Script:", script.name);
             script.execute();
         }
     });
@@ -60,7 +72,7 @@ export function main(scripts: ScriptMetadata[], menuHtml: string) {
                 shadow.appendChild(style);
             }
 
-            // 2. Build DOM Structure manually to avoid Trusted Types issues
+            // 2. Build DOM Structure manually
             const beContainer = document.createElement("div");
             beContainer.className = "be-container";
 
@@ -83,6 +95,21 @@ export function main(scripts: ScriptMetadata[], menuHtml: string) {
             header.appendChild(title);
             header.appendChild(version);
 
+            // Tabs
+            const tabsContainer = document.createElement("div");
+            tabsContainer.className = "be-tabs";
+
+            const tabSite = document.createElement("div");
+            tabSite.className = "be-tab active";
+            tabSite.textContent = "Site";
+
+            const tabGeneric = document.createElement("div");
+            tabGeneric.className = "be-tab";
+            tabGeneric.textContent = "Generic";
+
+            tabsContainer.appendChild(tabSite);
+            tabsContainer.appendChild(tabGeneric);
+
             const list = document.createElement("div");
             list.className = "be-content";
             list.id = "list";
@@ -98,6 +125,7 @@ export function main(scripts: ScriptMetadata[], menuHtml: string) {
             footer.appendChild(saveBtn);
 
             panel.appendChild(header);
+            panel.appendChild(tabsContainer); // Insert Tabs
             panel.appendChild(list);
             panel.appendChild(footer);
 
@@ -143,66 +171,101 @@ export function main(scripts: ScriptMetadata[], menuHtml: string) {
                 panel.classList.toggle("open");
             });
 
-            // Populate List
-            console.log(
-                `[BoredomEngine] Populating menu with ${availableScripts.length} scripts.`
-            );
+            // State for active tab
+            let currentTab: 'site' | 'generic' = siteScripts.length > 0 ? 'site' : 'generic';
 
-            // Clear list safely
-            while (list.firstChild) {
-                list.removeChild(list.firstChild);
-            }
+            // Function to render list
+            function renderList() {
+                // Clear list
+                while (list.firstChild) {
+                    list.removeChild(list.firstChild);
+                }
 
-            if (availableScripts.length === 0) {
-                const empty = document.createElement("div");
-                empty.className = "be-empty";
-                empty.textContent = "No active scripts for this domain";
-                list.appendChild(empty);
-            }
+                // Update tabs usage
+                if (currentTab === 'site') {
+                    tabSite.classList.add('active');
+                    tabGeneric.classList.remove('active');
+                } else {
+                    tabSite.classList.remove('active');
+                    tabGeneric.classList.add('active');
+                }
 
-            availableScripts.forEach((script) => {
-                console.log("Appending script to menu:", script.name);
-                const isEnabled = enabledScripts[script.id] !== false;
+                const scriptsToShow = currentTab === 'site' ? siteScripts : genericScripts;
+                const isGenericTab = currentTab === 'generic';
 
-                const item = document.createElement("div");
-                item.className = "be-item";
+                if (scriptsToShow.length === 0) {
+                    const empty = document.createElement("div");
+                    empty.className = "be-empty";
+                    empty.textContent = isGenericTab ? "No generic scripts available" : "No active scripts for this domain";
+                    list.appendChild(empty);
+                    return;
+                }
 
-                const info = document.createElement("div");
-                info.className = "be-item-info";
+                scriptsToShow.forEach((script) => {
+                    // Logic for checked state:
+                    // Site: default true (checked if !== false)
+                    // Generic: default false (checked if === true)
+                    let isChecked = false;
+                    if (script.type === 'generic') {
+                        isChecked = enabledScripts[script.id] === true;
+                    } else {
+                        isChecked = enabledScripts[script.id] !== false;
+                    }
 
-                const name = document.createElement("div");
-                name.className = "be-item-name";
-                name.textContent = script.name;
+                    const item = document.createElement("div");
+                    item.className = "be-item";
 
-                const desc = document.createElement("div");
-                desc.className = "be-item-desc";
-                desc.textContent = script.description;
+                    const itemInfo = document.createElement("div");
+                    itemInfo.className = "be-item-info";
 
-                info.appendChild(name);
-                info.appendChild(desc);
+                    const name = document.createElement("div");
+                    name.className = "be-item-name";
+                    name.textContent = script.name;
 
-                const switchLabel = document.createElement("label");
-                switchLabel.className = "be-switch";
+                    const desc = document.createElement("div");
+                    desc.className = "be-item-desc";
+                    desc.textContent = script.description;
 
-                const input = document.createElement("input");
-                input.type = "checkbox";
-                input.checked = isEnabled;
-                // Bind change
-                input.addEventListener("change", (e: Event) => {
-                    const target = e.target as HTMLInputElement;
-                    enabledScripts[script.id] = target.checked;
+                    itemInfo.appendChild(name);
+                    itemInfo.appendChild(desc);
+
+                    const switchLabel = document.createElement("label");
+                    switchLabel.className = "be-switch";
+
+                    const input = document.createElement("input");
+                    input.type = "checkbox";
+                    input.checked = isChecked;
+
+                    input.addEventListener("change", (e: Event) => {
+                        const target = e.target as HTMLInputElement;
+                        enabledScripts[script.id] = target.checked;
+                    });
+
+                    const slider = document.createElement("span");
+                    slider.className = "be-slider";
+
+                    switchLabel.appendChild(input);
+                    switchLabel.appendChild(slider);
+
+                    item.appendChild(itemInfo);
+                    item.appendChild(switchLabel);
+                    list.appendChild(item);
                 });
+            }
 
-                const slider = document.createElement("span");
-                slider.className = "be-slider";
-
-                switchLabel.appendChild(input);
-                switchLabel.appendChild(slider);
-
-                item.appendChild(info);
-                item.appendChild(switchLabel);
-                list.appendChild(item);
+            // Tab Click Handlers
+            tabSite.addEventListener('click', () => {
+                currentTab = 'site';
+                renderList();
             });
+
+            tabGeneric.addEventListener('click', () => {
+                currentTab = 'generic';
+                renderList();
+            });
+
+            // Initial Render
+            renderList();
 
             // Save & Reload
             saveBtn.addEventListener("click", () => {

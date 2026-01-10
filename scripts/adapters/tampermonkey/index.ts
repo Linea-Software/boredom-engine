@@ -54,11 +54,12 @@ export async function buildTampermonkey() {
     const files = await getFiles(srcSitesDir);
     const tsFiles = files.filter(
         (f) =>
-            f.endsWith(".ts") &&
+            (f.endsWith(".ts") || f.endsWith(".js")) &&
             !f.endsWith(".spec.ts") &&
-            !f.endsWith(".test.ts")
-    );
-    console.log("Files to build:", tsFiles);
+            !f.endsWith(".test.ts") &&
+            !f.includes("/shared/") &&
+            !f.includes("\\shared\\")
+    ); console.log("Files to build:", tsFiles);
 
     const packageJsonPath = join(process.cwd(), "package.json");
     const packageJson = JSON.parse(await readFile(packageJsonPath, "utf-8"));
@@ -90,6 +91,7 @@ export async function buildTampermonkey() {
         path: string;
         metadata: any;
         matchExpr: string;
+        type: "site" | "generic";
     }[] = [];
 
     // Helper to process Imports
@@ -162,6 +164,7 @@ ${body}
             path: `./${moduleFileName}`,
             metadata,
             matchExpr: matchCondition,
+            type: relPath.startsWith("generic/") ? "generic" : "site",
         });
     }
 
@@ -175,26 +178,24 @@ import { main } from "${clientImportPath}";
 
 // Import Scripts
 ${scriptModules
-    .map(
-        (m) =>
-            `import ${m.variable}, { metadata as ${m.variable}_meta, matchCondition as ${m.variable}_match } from "${m.path}";`
-    )
-    .join("\n")}
+            .map(
+                (m) =>
+                    `import ${m.variable}, { metadata as ${m.variable}_meta, matchCondition as ${m.variable}_match } from "${m.path}";`
+            )
+            .join("\n")}
 
 const scripts = [
-    ${scriptModules
-        .map(
-            (m) => `
+    ${scriptModules.map((m) =>
+                `
     {
         id: "${m.metadata.name}", // Use name or other ID
         name: ${m.variable}_meta.name,
         description: ${m.variable}_meta.description,
         version: ${m.variable}_meta.version,
         matches: ${m.variable}_match,
-        execute: ${m.variable}
-    }`
-        )
-        .join(",\n")}
+        execute: ${m.variable},
+        type: "${m.type}"
+    }`).join(",\n")}
 ];
 
 const menuHtml = \`${menuHtml}\`;
@@ -235,6 +236,7 @@ main(scripts, menuHtml);
 // @grant        GM_xmlhttpRequest
 // @grant        GM_setValue
 // @grant        GM_getValue
+// @run-at       document-start
 // ==/UserScript==
 `;
 

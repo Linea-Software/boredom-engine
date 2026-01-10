@@ -31,7 +31,14 @@ export async function buildDefault() {
     // 1. Bundle
     const srcSitesDir = join(process.cwd(), "src/sites");
     const files = await getFiles(srcSitesDir);
-    const entryPoints = files.filter((f) => f.endsWith(".ts") && !f.endsWith(".spec.ts") && !f.endsWith(".test.ts"));
+    const entryPoints = files.filter(
+        (f) =>
+            f.endsWith(".ts") &&
+            !f.endsWith(".spec.ts") &&
+            !f.endsWith(".test.ts") &&
+            !f.includes("/shared/") &&
+            !f.includes("\\shared\\")
+    );
 
     console.log(`Found ${entryPoints.length} entry points.`);
 
@@ -52,7 +59,14 @@ export async function buildDefault() {
 
     const packageJsonPath = join(process.cwd(), "package.json");
     const packageJson = JSON.parse(await readFile(packageJsonPath, "utf-8"));
-    const tsFiles = files.filter((f) => f.endsWith(".ts") && !f.endsWith(".spec.ts") && !f.endsWith(".test.ts"));
+    const tsFiles = files.filter(
+        (f) =>
+            f.endsWith(".ts") &&
+            !f.endsWith(".spec.ts") &&
+            !f.endsWith(".test.ts") &&
+            !f.includes("/shared/") &&
+            !f.includes("\\shared\\")
+    );
 
     const sites: Record<string, SiteNode> = {};
 
