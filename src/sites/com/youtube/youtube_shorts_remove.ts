@@ -8,7 +8,7 @@
 import { onDOMLoaded, injectCss } from "$common";
 
 onDOMLoaded(() => {
-    if (!window.location.pathname.includes("/shorts")) {
+    if (window.location.pathname.includes("/shorts")) {
         window.location.replace("https://youtube.com");
     }
 
