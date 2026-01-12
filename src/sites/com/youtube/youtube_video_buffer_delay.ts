@@ -5,10 +5,10 @@
  * @version 1.0.4
  */
 
-import { onMount } from "$common";
+import { onDOMLoaded } from "$common";
 import { YouTubeBypassController } from "$sites/com/youtube/shared/youtube-bypass";
 
-onMount(() => {
+onDOMLoaded(() => {
     let isBuffering = false;
 
     // We can't easily intercept "pause" events across iframe boundary for global UI logic unless we inject script into iframed document.

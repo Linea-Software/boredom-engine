@@ -5,10 +5,10 @@
  * @version 1.0.0
  */
 
-import { onMount } from "$common";
+import { onDOMLoaded } from "$common";
 import { FakeCaptcha } from "$common/captcha";
 
-onMount(() => {
+onDOMLoaded(() => {
     const captcha = new FakeCaptcha();
 
     let isCaptchaActive = false;

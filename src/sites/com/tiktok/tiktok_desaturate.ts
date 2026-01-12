@@ -4,9 +4,9 @@
  * @description Desaturates media on TikTok to reduce dopamine stimulation.
  * @version 1.0.0
  */
-import { onMount, applyMediaDesaturation, injectCss } from "$common";
+import { onDOMLoaded, applyMediaDesaturation, injectCss } from "$common";
 
-onMount(() => {
+onDOMLoaded(() => {
     applyMediaDesaturation();
 
     document.documentElement.style.setProperty(

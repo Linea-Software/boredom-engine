@@ -5,10 +5,10 @@
  * @version 1.0.0
  */
 
-import { onMount } from "$common";
+import { onDOMLoaded } from "$common";
 import { FakeCaptcha } from "$common/captcha";
 
-onMount(() => {
+onDOMLoaded(() => {
     const minInterval = 2 * 60 * 1000; // 2 minutes
     const maxInterval = 5 * 60 * 1000; // 5 minutes
 

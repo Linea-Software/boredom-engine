@@ -5,8 +5,8 @@
  * @version 1.0.0
  */
 
-import { onMount, applyMediaDesaturation } from "$common";
+import { onDOMLoaded, applyMediaDesaturation } from "$common";
 
-onMount(() => {
+onDOMLoaded(() => {
     applyMediaDesaturation();
 });

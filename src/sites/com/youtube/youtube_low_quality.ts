@@ -5,10 +5,10 @@
  * @version 1.0.1
  */
 
-import { onMount } from "$common";
+import { onDOMLoaded } from "$common";
 import { YouTubeBypassController } from "$sites/com/youtube/shared/youtube-bypass";
 
-onMount(() => {
+onDOMLoaded(() => {
     // Aggressively force quality check every 5 seconds
     setInterval(() => {
         if (window.location.href.includes("/watch")) {

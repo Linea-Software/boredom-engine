@@ -1,9 +1,13 @@
+export function runAsEarlyAsPossible(callback: () => void): void {
+    callback();
+}
+
 /**
  * Executes a callback function when the document is fully loaded.
  * @param callback The function to execute when the document is loaded.
  * Yes, I took inspiration from Svelte's onMount.
  */
-export function onMount(callback: () => void): void {
+export function onDOMLoaded(callback: () => void): void {
     if (document.readyState === "loading") {
         document.addEventListener("DOMContentLoaded", callback);
     } else {

@@ -5,9 +5,9 @@
  * @version 1.0.0
  */
 
-import { onMount, injectCss, getElementByXpath } from "$common";
+import { onDOMLoaded, injectCss, getElementByXpath } from "$common";
 
-onMount(() => {
+onDOMLoaded(() => {
     injectCss(`
         [is-shorts] {
             display: none !important;

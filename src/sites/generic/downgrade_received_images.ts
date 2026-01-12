@@ -4,8 +4,8 @@
  * @description Intercepts fetch requests for images and downgrades their quality to reduced bandwidth usage / increase annoyance.
  * @version 1.0.0
  */
-import { onMount, downgradeImages } from "$common";
+import { onDOMLoaded, downgradeImages } from "$common";
 
-onMount(() => {
+onDOMLoaded(() => {
     downgradeImages(0.01); // 1% of original quality
 });

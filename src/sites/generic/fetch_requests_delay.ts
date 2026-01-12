@@ -5,8 +5,8 @@
  * @version 1.0.0
  */
 
-import { addDelayToNetwork, onMount } from "$common";
+import { addDelayToNetwork, onDOMLoaded } from "$common";
 
-onMount(() => {
+onDOMLoaded(() => {
     addDelayToNetwork(2000); // 2 seconds delay
 });

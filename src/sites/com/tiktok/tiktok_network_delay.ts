@@ -4,8 +4,8 @@
  * @description Adds a 5-second delay to all fetch requests on TikTok to reduce immediate gratification.
  * @version 1.0.0
  */
-import { onMount, addDelayToNetwork } from "$common";
+import { onDOMLoaded, addDelayToNetwork } from "$common";
 
-onMount(() => {
+onDOMLoaded(() => {
     addDelayToNetwork(5000);
 });

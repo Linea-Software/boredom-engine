@@ -4,9 +4,9 @@
  * @description Blocks recommendation feeds on Reddit.
  * @version 1.0.0
  */
-import { onMount, getElementByXpath } from "$common";
+import { onDOMLoaded, getElementByXpath } from "$common";
 
-onMount(() => {
+onDOMLoaded(() => {
     const observer = new MutationObserver(() => {
         // Dynamically check for the path name for changes
         if (

@@ -4,8 +4,8 @@
  * @description Downgrades the visual quality of videos by rendering them at a lower resolution (pixelated).
  * @version 1.0.0
  */
-import { onMount, downgradeVideos } from "$common";
+import { onDOMLoaded, downgradeVideos } from "$common";
 
-onMount(() => {
+onDOMLoaded(() => {
     downgradeVideos(0.7); // 40% resolution
 });
