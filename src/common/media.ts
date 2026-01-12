@@ -2,15 +2,15 @@
 const CONFIG = {
     images: {
         enabled: false,
-        quality: 0.05 // Lower = more pixelated (0.01 to 1.0)
+        quality: 0.05, // Lower = more pixelated (0.01 to 1.0)
     },
     videos: {
         enabled: false,
-        quality: 0.08 // Lower = more pixelated
+        quality: 0.08, // Lower = more pixelated
     },
     audio: {
-        delay: 0.3 // Seconds of lag
-    }
+        delay: 0.3, // Seconds of lag
+    },
 };
 
 /**
@@ -20,7 +20,7 @@ const CONFIG = {
  */
 export function setAudioDelay(
     element: HTMLMediaElement,
-    delaySeconds: number
+    delaySeconds: number,
 ): AudioContext | undefined {
     try {
         const AudioContext =
@@ -58,12 +58,11 @@ export function setAudioDelay(
     } catch (error) {
         console.error(
             "Failed to set audio delay (likely CORS or already connected):",
-            error
+            error,
         );
         return undefined;
     }
 }
-
 
 let observerStarted = false;
 
@@ -74,7 +73,8 @@ function processAudio(element: HTMLMediaElement): void {
     if (element.dataset.audioLagged) return;
 
     try {
-        const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+        const AudioContext =
+            window.AudioContext || (window as any).webkitAudioContext;
         if (!AudioContext) return;
 
         // We use a singleton context to prevent browser limit errors
@@ -93,11 +93,10 @@ function processAudio(element: HTMLMediaElement): void {
 
         // Handle resume on interaction
         const resumeCtx = () => {
-            if (ctx.state === 'suspended') ctx.resume();
+            if (ctx.state === "suspended") ctx.resume();
         };
-        document.addEventListener('click', resumeCtx, { once: true });
-        element.addEventListener('play', resumeCtx);
-
+        document.addEventListener("click", resumeCtx, { once: true });
+        element.addEventListener("play", resumeCtx);
     } catch (e) {
         // Usually fails if the element is already connected to a graph
         // or due to strict autoplay policies.
@@ -119,7 +118,9 @@ async function degradeImage(img: HTMLImageElement): Promise<void> {
 
     // 2. Check if we can do the heavy Canvas bitcrush
     // We can only read pixels if the image is same-origin or allows CORS
-    const isLocal = img.src.includes(window.location.hostname) || img.src.startsWith('data:');
+    const isLocal =
+        img.src.includes(window.location.hostname) ||
+        img.src.startsWith("data:");
 
     if (isLocal) {
         applyCanvasBitcrush(img);
@@ -150,16 +151,16 @@ function applyCanvasBitcrush(img: HTMLImageElement) {
     const w = Math.floor(img.naturalWidth * scale);
     const h = Math.floor(img.naturalHeight * scale);
 
-    const canvas = document.createElement('canvas');
+    const canvas = document.createElement("canvas");
     canvas.width = w;
     canvas.height = h;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
 
     if (ctx) {
         ctx.drawImage(img, 0, 0, w, h);
         // Replace image source with the tiny, crunched version
         // Browser upscaling (image-rendering: pixelated) handles the rest
-        img.src = canvas.toDataURL('image/jpeg', 0.5);
+        img.src = canvas.toDataURL("image/jpeg", 0.5);
     }
 }
 
@@ -174,8 +175,8 @@ function degradeVideo(video: HTMLVideoElement): void {
     processAudio(video);
 
     // Setup Canvas Overlay
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d', { alpha: false }); // optimization
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d", { alpha: false }); // optimization
 
     if (!ctx) return;
 
@@ -194,8 +195,8 @@ function degradeVideo(video: HTMLVideoElement): void {
     if (parent) {
         // Ensure parent can hold absolute children
         const parentStyle = window.getComputedStyle(parent);
-        if (parentStyle.position === 'static') {
-            parent.style.position = 'relative';
+        if (parentStyle.position === "static") {
+            parent.style.position = "relative";
         }
         parent.appendChild(canvas);
     }
@@ -253,12 +254,14 @@ const observer = new MutationObserver((mutations) => {
             const node = mutation.addedNodes[i];
             if (node instanceof HTMLElement) {
                 // Check for IMG
-                if (node.tagName === 'IMG') degradeImage(node as HTMLImageElement);
-                node.querySelectorAll('img').forEach(degradeImage);
+                if (node.tagName === "IMG")
+                    degradeImage(node as HTMLImageElement);
+                node.querySelectorAll("img").forEach(degradeImage);
 
                 // Check for VIDEO
-                if (node.tagName === 'VIDEO') degradeVideo(node as HTMLVideoElement);
-                node.querySelectorAll('video').forEach(degradeVideo);
+                if (node.tagName === "VIDEO")
+                    degradeVideo(node as HTMLVideoElement);
+                node.querySelectorAll("video").forEach(degradeVideo);
             }
         }
     }
@@ -270,7 +273,6 @@ function startObserver() {
     observer.observe(document.body, { childList: true, subtree: true });
 }
 
-
 /**
  * Turns existing images into low-res versions.
  * @param quality 0.01 (worst) to 0.5 (bad)
@@ -280,7 +282,7 @@ export function downgradeImages(quality: number = 0.1): void {
     CONFIG.images.quality = quality;
 
     // Process existing
-    document.querySelectorAll('img').forEach(degradeImage);
+    document.querySelectorAll("img").forEach(degradeImage);
     startObserver();
     console.log(`[Boredom] Images set to quality: ${quality}`);
 }
@@ -294,7 +296,7 @@ export function downgradeVideos(quality: number = 0.1): void {
     CONFIG.videos.quality = quality;
 
     // Process existing
-    document.querySelectorAll('video').forEach(degradeVideo);
+    document.querySelectorAll("video").forEach(degradeVideo);
     startObserver();
     console.log(`[Boredom] Videos set to quality: ${quality}`);
 }

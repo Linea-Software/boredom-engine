@@ -6,21 +6,15 @@
  */
 
 import { onDOMLoaded } from "$common";
-import { YouTubeBypassController } from "$sites/com/youtube/shared/youtube-bypass";
 
 onDOMLoaded(() => {
     let isBuffering = false;
 
-    // We can't easily intercept "pause" events across iframe boundary for global UI logic unless we inject script into iframed document.
-    // For now we rely on the main "boredom" logic.
-
-    // But we need to sync with captcha if we want to be nice?
-    // The previous script listened to document.body.dataset.boredomCaptchaActive.
-
     // 5% chance every second to simulate buffering
     setInterval(() => {
-        const bypass = YouTubeBypassController.getInstance();
-        const video = bypass.getVideoElement();
+        const video = document.querySelector("video");
+        // Retrieve the player container for spinner if needed, but the spinner is usually inside the player logic.
+        // The ".ytp-spinner" element exists within ".html5-video-player"
 
         if (!video || video.paused || video.ended) return;
         if (isBuffering) return;
@@ -33,11 +27,34 @@ onDOMLoaded(() => {
             document.body.dataset.boredomBufferingActive = "true";
 
             const duration = 3000 + Math.random() * 3000;
-            bypass.simulateBuffering(duration);
+
+            // Pause the video to simulate buffering
+            video.pause();
+
+            // Attempt to show the native spinner
+            const spinner = document.querySelector(
+                ".ytp-spinner",
+            ) as HTMLElement;
+            // Store original display to restore later (though usually empty)
+            const originalDisplay = spinner ? spinner.style.display : "";
+
+            if (spinner) {
+                spinner.style.display = "block";
+                // Force visibility just in case
+                spinner.style.visibility = "visible";
+            }
 
             setTimeout(() => {
                 isBuffering = false;
                 delete document.body.dataset.boredomBufferingActive;
+
+                // Resume playback
+                video.play();
+
+                if (spinner) {
+                    spinner.style.display = originalDisplay;
+                    spinner.style.visibility = "";
+                }
             }, duration);
         }
     }, 1000);

@@ -5,12 +5,17 @@
  * @version 1.1.0
  */
 import { onDOMLoaded, applyMediaDesaturation } from "$common";
-import { YouTubeBypassController } from "$sites/com/youtube/shared/youtube-bypass";
 
 onDOMLoaded(() => {
     applyMediaDesaturation();
     if (window.location.href.includes("/watch")) {
-        const bypass = YouTubeBypassController.getInstance();
-        bypass.updateFilters({ grayscale: 1 });
+        // Enforce grayscale on the video element specifically
+        // We use an interval or just check because the video element might be re-created or style reset
+        setInterval(() => {
+            const video = document.querySelector("video");
+            if (video) {
+                video.style.filter = "grayscale(1)";
+            }
+        }, 1000);
     }
 });

@@ -6,15 +6,24 @@
  */
 
 import { onDOMLoaded } from "$common";
-import { YouTubeBypassController } from "$sites/com/youtube/shared/youtube-bypass";
 
 onDOMLoaded(() => {
-    // Aggressively force quality check every 5 seconds
+    // Aggressively force quality check every 2 seconds
     setInterval(() => {
         if (window.location.href.includes("/watch")) {
-            const bypass = YouTubeBypassController.getInstance();
-            // Force to 'tiny' (144p) for maximum boredom
-            bypass.enforceQuality("tiny");
+            const ytdPlayer = document.getElementById("ytd-player") as any;
+            const player = ytdPlayer?.getPlayer ? ytdPlayer.getPlayer() : null;
+
+            if (player) {
+                // Try both new and old APIs
+                // 'tiny' corresponds to 144p, 'small' to 240p
+                if (typeof player.setPlaybackQualityRange === "function") {
+                    player.setPlaybackQualityRange("tiny", "tiny");
+                }
+                if (typeof player.setPlaybackQuality === "function") {
+                    player.setPlaybackQuality("tiny");
+                }
+            }
         }
-    }, 5000);
+    }, 2000);
 });

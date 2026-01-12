@@ -5,9 +5,13 @@
  * @version 1.0.0
  */
 
-import { onDOMLoaded, injectCss, getElementByXpath } from "$common";
+import { onDOMLoaded, injectCss } from "$common";
 
 onDOMLoaded(() => {
+    if (!window.location.pathname.includes("/shorts")) {
+        window.location.replace("https://youtube.com");
+    }
+
     injectCss(`
         [is-shorts] {
             display: none !important;
