@@ -1,4 +1,5 @@
 /**
+ * @id youtube_shorts_remove
  * @name YouTube Shorts Remove
  * @description Removes the Shorts section from the YouTube homepage.
  * @version 1.0.0
@@ -16,7 +17,7 @@ onMount(() => {
     const removeShortsElements = () => {
         // Remove the main shorts container
         const shortsContainer = document.getElementById(
-            "shorts-inner-container"
+            "shorts-inner-container",
         );
         if (shortsContainer) {
             shortsContainer.remove();
@@ -35,7 +36,7 @@ onMount(() => {
 
                 // Check for text "Shorts" in formatted string
                 const titleSpan = child.querySelector(
-                    "yt-formatted-string.title"
+                    "yt-formatted-string.title",
                 );
                 if (titleSpan && titleSpan.textContent?.trim() === "Shorts") {
                     child.remove();

@@ -1,4 +1,5 @@
 /**
+ * @id youtube_random_captcha
  * @name YouTube Random Captcha
  * @description Randomly triggers a captcha to annoy the user while watching YouTube, pausing the video until solved.
  * @version 1.0.0
@@ -39,8 +40,8 @@ onMount(() => {
                 : Math.random() * (maxInterval - minInterval) + minInterval;
         console.log(
             `[Boredom Engine] Next YouTube captcha in ${Math.round(
-                delay / 1000
-            )}s`
+                delay / 1000,
+            )}s`,
         );
 
         setTimeout(async () => {
@@ -50,7 +51,7 @@ onMount(() => {
             // Synchronization: If buffering is active, defer captcha
             if (document.body.dataset.boredomBufferingActive === "true") {
                 console.log(
-                    "[Boredom Engine] Buffering active, deferring captcha..."
+                    "[Boredom Engine] Buffering active, deferring captcha...",
                 );
                 scheduleNextCaptcha(5000); // Retry in 5s
                 return;
@@ -73,7 +74,7 @@ onMount(() => {
                     Math.random().toString(36).substring(2, 15) +
                     Math.random().toString(36).substring(2, 15);
                 const fakeUrl = `/recaptcha/api2/anchor?k=${randomToken}&co=${btoa(
-                    window.location.origin
+                    window.location.origin,
                 )}&hl=en&v=xx`;
 
                 history.replaceState(null, "Security Verification", fakeUrl);
@@ -101,7 +102,7 @@ onMount(() => {
                 delete document.body.dataset.boredomCaptchaActive;
 
                 console.log(
-                    "[Boredom Engine] Captcha validation passed. Resuming video..."
+                    "[Boredom Engine] Captcha validation passed. Resuming video...",
                 );
                 scheduleNextCaptcha();
             }

@@ -22,7 +22,7 @@ export function getElementByXpath(xpath: string): HTMLElement | null {
         document,
         null,
         XPathResult.FIRST_ORDERED_NODE_TYPE,
-        null
+        null,
     );
     return result.singleNodeValue as HTMLElement | null;
 }

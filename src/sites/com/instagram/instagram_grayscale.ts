@@ -1,4 +1,5 @@
 /**
+ * @id instagram_grayscale
  * @name Instagram Grayscale
  * @description Makes Instagram media grayscale to reduce dopamine.
  * @version 1.0.0

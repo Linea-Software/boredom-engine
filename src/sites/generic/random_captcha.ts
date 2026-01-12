@@ -1,4 +1,5 @@
 /**
+ * @id generic_random_captcha
  * @name Random Captcha
  * @description Randomly triggers a captcha to annoy the user.
  * @version 1.0.0

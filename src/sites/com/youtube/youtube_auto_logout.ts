@@ -1,4 +1,5 @@
 /**
+ * @id youtube_auto_logout
  * @name YouTube Auto Logout
  * @description Automatically logs out the user (goes to youtube.com/logout) if the user has not used YouTube for at least 15 minutes.
  * @version 1.1.0
@@ -36,7 +37,7 @@ onMount(() => {
             clearTimeout(logoutTimer);
             logoutTimer = window.setTimeout(
                 checkAndScheduleLogout,
-                remainingTime
+                remainingTime,
             );
         }
     };
@@ -51,7 +52,7 @@ onMount(() => {
         clearTimeout(logoutTimer);
         logoutTimer = window.setTimeout(
             checkAndScheduleLogout,
-            IDLE_TIMEOUT_MS
+            IDLE_TIMEOUT_MS,
         );
 
         // Throttle to avoid excessive storage writes
@@ -96,6 +97,6 @@ onMount(() => {
     });
 
     console.log(
-        "YouTube Auto Logout script loaded. Idle timeout set to 15 minutes (with persistence)."
+        "YouTube Auto Logout script loaded. Idle timeout set to 15 minutes (with persistence).",
     );
 });

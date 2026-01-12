@@ -1,4 +1,5 @@
 /**
+ * @id tiktok_block_main_content
  * @name TikTok Block Main Content
  * @description Blocks the main "For You" feed content on TikTok to prevent doomscrolling.
  * @version 1.0.0
@@ -16,7 +17,7 @@ onMount(() => {
     `);
     setInterval(() => {
         const mainContent = document.getElementById(
-            "main-content-homepage_hot"
+            "main-content-homepage_hot",
         );
         if (mainContent) {
             const mediaElements = mainContent.querySelectorAll("video, audio");

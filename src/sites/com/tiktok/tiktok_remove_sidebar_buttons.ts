@@ -1,4 +1,5 @@
 /**
+ * @id tiktok_remove_sidebar_buttons
  * @name TikTok Remove Sidebar Buttons
  * @description Removes specific buttons from the TikTok sidebar (e.g. "Following" or specific nav items) to reduce clutter.
  * @version 1.0.0

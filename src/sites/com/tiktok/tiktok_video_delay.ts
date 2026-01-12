@@ -1,4 +1,5 @@
 /**
+ * @id tiktok_video_delay
  * @name TikTok Video Delay
  * @description Adds random buffering/delays to TikTok videos to interrupt the dopamine loop.
  * @version 1.0.0
@@ -48,7 +49,7 @@ onMount(() => {
             spinner.className = "boredom-tiktok-spinner";
             if (video.parentElement) {
                 const parentStyle = window.getComputedStyle(
-                    video.parentElement
+                    video.parentElement,
                 );
                 if (parentStyle.position === "static") {
                     video.parentElement.style.position = "relative";

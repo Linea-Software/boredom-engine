@@ -1,4 +1,5 @@
 /**
+ * @id tiktok_desaturate
  * @name TikTok Desaturate
  * @description Desaturates media on TikTok to reduce dopamine stimulation.
  * @version 1.0.0
@@ -10,7 +11,7 @@ onMount(() => {
 
     document.documentElement.style.setProperty(
         "--ui-text-primary-display",
-        "156, 156, 156"
+        "156, 156, 156",
     );
 
     injectCss(`

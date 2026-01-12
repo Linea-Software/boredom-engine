@@ -1,4 +1,5 @@
 /**
+ * @id youtube_video_buffer_delay
  * @name YouTube Video Buffer Delay
  * @description Simulates buffering by pausing the video and showing the native YouTube spinner.
  * @version 1.0.4
