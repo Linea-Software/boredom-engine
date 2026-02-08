@@ -22,6 +22,7 @@ interface ScriptData {
 
 interface SiteNode {
     scripts: ScriptData[];
+    rules?: any;
     children: Record<string, SiteNode>;
 }
 
@@ -137,6 +138,25 @@ export async function buildDefault() {
         } catch (e) {
             console.error(`Error processing ${relPath}:`, e);
             throw e; // Stop build on error
+        }
+    }
+
+    // 3. Process Rules JSON files
+    const rulesFiles = files.filter((f) => f.endsWith(".rules.json"));
+    for (const fullPath of rulesFiles) {
+        const normalizedFullPath = fullPath.replace(/\\/g, "/");
+        const normalizedSrcSites = srcSitesDir.replace(/\\/g, "/");
+        const relPath = normalizedFullPath.slice(normalizedSrcSites.length + 1);
+        const pathParts = dirname(relPath).split("/");
+
+        try {
+            const content = await readFile(fullPath, "utf-8");
+            const rules = JSON.parse(content);
+            const node = ensureNode(pathParts);
+            node.rules = rules;
+        } catch (e) {
+            console.error(`Error processing rules ${relPath}:`, e);
+            throw e;
         }
     }
 
