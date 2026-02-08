@@ -10,6 +10,22 @@ import { onDOMLoaded } from "$common";
 onDOMLoaded(() => {
     let isBuffering = false;
 
+    // Enforce buffering state
+    document.addEventListener(
+        "play",
+        (e) => {
+            if (isBuffering) {
+                const target = e.target as HTMLVideoElement;
+                if (target && target.tagName === "VIDEO") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    target.pause();
+                }
+            }
+        },
+        true // Capture phase
+    );
+
     // 5% chance every second to simulate buffering
     setInterval(() => {
         const video = document.querySelector("video");
@@ -26,6 +42,7 @@ onDOMLoaded(() => {
             isBuffering = true;
             document.body.dataset.boredomBufferingActive = "true";
 
+            // Determine duration (3-6 seconds)
             const duration = 3000 + Math.random() * 3000;
 
             // Pause the video to simulate buffering
@@ -35,7 +52,8 @@ onDOMLoaded(() => {
             const spinner = document.querySelector(
                 ".ytp-spinner",
             ) as HTMLElement;
-            // Store original display to restore later (though usually empty)
+
+            // Store original display to restore later (usually it's empty or 'none')
             const originalDisplay = spinner ? spinner.style.display : "";
 
             if (spinner) {
