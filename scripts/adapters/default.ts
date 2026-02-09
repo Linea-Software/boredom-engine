@@ -14,6 +14,7 @@ async function getFiles(dir: string): Promise<string[]> {
 }
 
 interface ScriptData {
+    id: string;
     path: string;
     name: string;
     description: string;
@@ -104,28 +105,32 @@ export async function buildDefault() {
         const content = await readFile(fullPath, "utf-8");
         const commentMatch = content.match(/^\s*\/\*\*([\s\S]*?)\*\//);
 
+        let id: string | undefined;
         let name: string | undefined;
         let description: string | undefined;
         let version: string | undefined;
 
         if (commentMatch) {
             const commentBody = commentMatch[1];
+            const idMatch = commentBody.match(/@id\s+(.*)/);
             const nameMatch = commentBody.match(/@name\s+(.*)/);
             const descMatch = commentBody.match(/@description\s+(.*)/);
             const verMatch = commentBody.match(/@version\s+(.*)/);
 
+            if (idMatch) id = idMatch[1].trim();
             if (nameMatch) name = nameMatch[1].trim();
             if (descMatch) description = descMatch[1].trim();
             if (verMatch) version = verMatch[1].trim();
         }
 
-        if (!name || !description || !version) {
+        if (!id || !name || !description || !version) {
             throw new Error(
-                `Script ${relPath} is missing required metadata options (@name, @description, @version).`
+                `Script ${relPath} is missing required metadata options (@id, @name, @description, @version).`
             );
         }
 
         const scriptData: ScriptData = {
+            id,
             path: distPath,
             name,
             description,

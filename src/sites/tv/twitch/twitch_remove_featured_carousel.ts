@@ -1,4 +1,5 @@
 /**
+ * @id twitch_remove_featured_carousel
  * @name Twitch Remove Featured Carousel
  * @description Removes the featured carousel from the Twitch homepage.
  * @version 1.2.0
