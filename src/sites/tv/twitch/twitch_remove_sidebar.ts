@@ -1,4 +1,5 @@
 /**
+ * @id twitch_remove_sidebar
  * @name Twitch Remove Sidebar
  * @description Removes the sidebar navigation on Twitch to reduce distraction.
  * @version 1.0.0
