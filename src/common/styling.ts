@@ -26,7 +26,7 @@ export const COMMON_MEDIA_FILTER =
  * @param additionalSelectors Optional array of additional CSS selectors to apply grayscale to.
  */
 export function applyMediaDesaturation(
-    additionalSelectors: string[] = []
+    additionalSelectors: string[] = [],
 ): void {
     const selectors = ["video", "img", ...additionalSelectors];
     const css = `
@@ -38,4 +38,47 @@ export function applyMediaDesaturation(
         }
     `;
     injectCss(css);
+}
+
+/**
+ * Enforces CSS variables on the document element with !important priority.
+ * Uses a MutationObserver to ensure they persist if overridden by the site.
+ * @param variables Object mapping variable names to their values
+ */
+export function enforceCssVariables(variables: Record<string, string>): void {
+    const root = document.documentElement;
+
+    const apply = () => {
+        for (const [key, val] of Object.entries(variables)) {
+            if (root.style.getPropertyValue(key) !== val) {
+                root.style.setProperty(key, val, "important");
+            }
+        }
+    };
+
+    // Apply immediately
+    apply();
+
+    // Persist changes
+    const observer = new MutationObserver(() => apply());
+    observer.observe(root, {
+        attributes: true,
+        attributeFilter: ["style"],
+    });
+}
+
+/**
+ * Convenience method to force a list of CSS variables to a gray color.
+ * @param variableNames List of CSS variable names (e.g. ['--primary-color'])
+ * @param grayValue The color value to set (default: "128, 128, 128")
+ */
+export function setCssVariablesToGray(
+    variableNames: string[],
+    grayValue: string = "gray",
+): void {
+    const vars: Record<string, string> = {};
+    for (const name of variableNames) {
+        vars[name] = grayValue;
+    }
+    enforceCssVariables(vars);
 }

@@ -11,7 +11,7 @@ onDOMLoaded(() => {
         window.location.pathname.startsWith("/reels") ||
         window.location.pathname.includes("/reels/")
     ) {
-        blockNetworkRequests();
+        window.location.replace("https://instagram.com");
     }
 
     const reelsIcon = document.querySelector(
