@@ -1,14 +1,12 @@
 {
     "name": "boredom-engine",
     "devDependencies": {
-        "@playwright/test": "^1.57.0",
         "@types/bun": "latest",
-        "esbuild": "^0.27.2",
-        "playwright": "^1.57.0",
-        "typedoc": "^0.28.15"
+        "esbuild": "^0.27.3",
+        "typedoc": "^0.28.16"
     },
     "peerDependencies": {
-        "typescript": "^5"
+        "typescript": "^5.9.3"
     },
     "license": "MIT",
     "private": true,
@@ -17,6 +15,5 @@
         "deploy": "bun scripts/deploy.ts"
     },
     "type": "module",
-    "dependencies": {
-    }
+    "dependencies": {}
 }
