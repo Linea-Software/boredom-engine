@@ -166,6 +166,26 @@ function applyCanvasBitcrush(img: HTMLImageElement) {
 
 // --- 3. VIDEO DEGRADATION SERVICE ---
 
+function injectBitCrushFilter() {
+    if (document.getElementById("boredom-bitcrush-svg")) return;
+    const div = document.createElement("div");
+    div.id = "boredom-bitcrush-svg";
+    div.style.cssText =
+        "position: absolute; width: 0; height: 0; overflow: hidden; pointer-events: none;";
+    div.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg">
+            <filter id="boredom-bitcrush">
+                <feComponentTransfer>
+                    <feFuncR type="discrete" tableValues="0 0.15 0.3 0.45 0.6 0.75 0.9 1"/>
+                    <feFuncG type="discrete" tableValues="0 0.15 0.3 0.45 0.6 0.75 0.9 1"/>
+                    <feFuncB type="discrete" tableValues="0 0.15 0.3 0.45 0.6 0.75 0.9 1"/>
+                </feComponentTransfer>
+            </filter>
+        </svg>
+    `;
+    document.body.appendChild(div);
+}
+
 function degradeVideo(video: HTMLVideoElement): void {
     if (!CONFIG.videos.enabled) return;
     if (video.dataset.processed) return;
@@ -173,6 +193,8 @@ function degradeVideo(video: HTMLVideoElement): void {
 
     // Apply Audio Lag
     processAudio(video);
+
+    injectBitCrushFilter();
 
     // Setup Canvas Overlay
     const canvas = document.createElement("canvas");
@@ -186,8 +208,9 @@ function degradeVideo(video: HTMLVideoElement): void {
         position: absolute;
         top: 0; left: 0; width: 100%; height: 100%;
         pointer-events: none;
-        z-index: 10;
+        z-index: 2147483640;
         image-rendering: pixelated;
+        filter: url(#boredom-bitcrush) contrast(1.2) saturate(1.2);
     `;
 
     // Parent container handling
@@ -202,18 +225,24 @@ function degradeVideo(video: HTMLVideoElement): void {
     }
 
     // Hide original video visually, but keep it playing for audio/timing
-    video.style.opacity = "0";
+    // Hide original video visually, but keep it playing for audio/timing
+    video.style.setProperty("opacity", "0", "important");
 
     const renderLoop = () => {
         if (!CONFIG.videos.enabled) {
             canvas.remove();
-            video.style.opacity = "1";
+            video.style.opacity = "";
             return;
         }
 
         if (video.paused || video.ended) {
             requestAnimationFrame(renderLoop);
             return;
+        }
+
+        // Enforce opacity as some players reset it
+        if (video.style.opacity !== "0") {
+            video.style.setProperty("opacity", "0", "important");
         }
 
         // Set low-res canvas dimensions
@@ -234,8 +263,9 @@ function degradeVideo(video: HTMLVideoElement): void {
             // This happens on Netflix/Youtube often.
             // FALLBACK: Remove canvas, apply CSS blur to video.
             canvas.remove();
-            video.style.opacity = "1";
-            video.style.filter = "contrast(2.0) blur(2px)";
+            video.style.opacity = "";
+            video.style.filter =
+                "url(#boredom-bitcrush) contrast(2.0) blur(2px)";
             video.style.imageRendering = "pixelated";
             return; // Stop the loop
         }

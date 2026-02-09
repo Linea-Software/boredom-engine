@@ -84,7 +84,11 @@ onDOMLoaded(() => {
             };
 
             // Check every second while playing
-            setInterval(() => {
+            const interval = setInterval(() => {
+                if (!video.isConnected) {
+                    clearInterval(interval);
+                    return;
+                }
                 if (!video.paused && !video.ended) {
                     triggerBuffer();
                 }

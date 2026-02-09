@@ -6,6 +6,4 @@
  */
 import { onDOMLoaded, addDelayToNetwork } from "$common";
 
-onDOMLoaded(() => {
-    addDelayToNetwork(5000);
-});
+addDelayToNetwork(5000);
