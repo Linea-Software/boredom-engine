@@ -1,5 +1,5 @@
 {
-    "$schema": "../../common/rules.schema.json",
+    "$schema": "../../../common/rules.schema.json",
     "random_jitter": 1000,
     "packet_loss": 0.3,
     "packet_delay": 4000
