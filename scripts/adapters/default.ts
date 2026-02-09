@@ -152,6 +152,11 @@ export async function buildDefault() {
         try {
             const content = await readFile(fullPath, "utf-8");
             const rules = JSON.parse(content);
+
+            if (rules.$schema) {
+                delete rules.$schema;
+            }
+
             const node = ensureNode(pathParts);
             node.rules = rules;
         } catch (e) {

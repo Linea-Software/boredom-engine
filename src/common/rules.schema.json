@@ -4,26 +4,26 @@
     "description": "Configuration schema for network simulation rules including jitter, loss, and delay.",
     "type": "object",
     "properties": {
-        "random_jitter": {
+        "randomJitter": {
             "type": "integer",
             "description": "Random jitter in milliseconds to be added to the packet delay",
             "minimum": 0,
             "default": 0
         },
-        "packet_loss": {
+        "packetLoss": {
             "type": "number",
             "description": "Probability of packet loss, expressed as a value between 0.0 (no loss) and 1.0 (100% loss)",
             "minimum": 0,
             "maximum": 1,
             "default": 0
         },
-        "packet_delay": {
+        "packetDelay": {
             "type": "integer",
             "description": "Base network delay in milliseconds",
             "minimum": 0,
             "default": 0
         }
     },
-    "required": ["random_jitter", "packet_loss", "packet_delay"],
+    "required": ["randomJitter", "packetLoss", "packetDelay"],
     "additionalProperties": false
 }
