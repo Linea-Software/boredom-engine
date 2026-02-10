@@ -4,7 +4,7 @@
  * @description Automatically logs out the user (goes to youtube.com/logout) if the user has not used YouTube for at least 15 minutes.
  * @version 1.1.0
  */
-import { onDOMLoaded } from "$common";
+import { getIntensity, Intensity, onDOMLoaded } from "$common";
 
 const IDLE_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
 const LAST_ACTIVE_KEY = "be_yt_last_active";
@@ -17,6 +17,11 @@ function performLogout() {
 }
 
 onDOMLoaded(() => {
+    const intensity = getIntensity();
+    if (intensity === Intensity.Low || intensity === Intensity.Medium) {
+        return;
+    }
+
     let logoutTimer: number;
     let isThrottled = false;
 

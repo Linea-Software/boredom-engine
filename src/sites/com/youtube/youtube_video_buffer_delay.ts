@@ -5,7 +5,21 @@
  * @version 1.0.4
  */
 
-import { onDOMLoaded } from "$common";
+import { getIntensity, Intensity, onDOMLoaded } from "$common";
+
+const BUFFER_DELAY_DURATION_MAP = {
+    [Intensity.Low]: 0,
+    [Intensity.Medium]: 1500,
+    [Intensity.High]: 3000,
+    [Intensity.Extreme]: 5000,
+}
+
+const BUFFER_DELAY_RANDOM_MAP = {
+    [Intensity.Low]: 0,
+    [Intensity.Medium]: 0.05,
+    [Intensity.High]: 0.2,
+    [Intensity.Extreme]: 0.4,
+}
 
 onDOMLoaded(() => {
     let isBuffering = false;
@@ -26,7 +40,6 @@ onDOMLoaded(() => {
         true // Capture phase
     );
 
-    // 5% chance every second to simulate buffering
     setInterval(() => {
         const video = document.querySelector("video");
         // Retrieve the player container for spinner if needed, but the spinner is usually inside the player logic.
@@ -38,12 +51,12 @@ onDOMLoaded(() => {
         // Check local state or global state
         if (document.body.dataset.boredomCaptchaActive === "true") return;
 
-        if (Math.random() < 0.05) {
+        if (Math.random() < BUFFER_DELAY_RANDOM_MAP[getIntensity()]) {
             isBuffering = true;
             document.body.dataset.boredomBufferingActive = "true";
 
             // Determine duration (3-6 seconds)
-            const duration = 3000 + Math.random() * 3000;
+            const duration = BUFFER_DELAY_DURATION_MAP[getIntensity()] * (1 + Math.random());
 
             // Pause the video to simulate buffering
             video.pause();

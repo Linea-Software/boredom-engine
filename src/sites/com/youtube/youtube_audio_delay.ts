@@ -4,7 +4,14 @@
  * @description Adds a 2-second delay to the audio to make the video more frustrating to watch. Works with both YouTube Shorts and regular videos.
  * @version 1.0.0
  */
-import { onDOMLoaded } from "$common";
+import { getIntensity, Intensity, onDOMLoaded } from "$common";
+
+const AUDIO_DELAY_MAP: Record<Intensity, number> = {
+    [Intensity.Low]: 0,
+    [Intensity.Medium]: 1,
+    [Intensity.High]: 3,
+    [Intensity.Extreme]: 5,
+};
 
 onDOMLoaded(() => {
     let context: AudioContext | null = null;
@@ -30,7 +37,7 @@ onDOMLoaded(() => {
             }
 
             if (context.state === "suspended") {
-                context.resume().catch(() => {});
+                context.resume().catch(() => { });
             }
 
             // Create media source from the video element.
@@ -39,7 +46,7 @@ onDOMLoaded(() => {
             source = context.createMediaElementSource(video);
 
             delayNode = context.createDelay(5.0);
-            delayNode.delayTime.value = 2.0; // 2 seconds delay
+            delayNode.delayTime.value = AUDIO_DELAY_MAP[getIntensity()];
 
             source.connect(delayNode);
             delayNode.connect(context.destination);
