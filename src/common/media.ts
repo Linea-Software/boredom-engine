@@ -1,3 +1,5 @@
+import { getIntensity, Intensity } from "$common";
+
 // Configuration State
 const CONFIG = {
     images: {
@@ -305,28 +307,40 @@ function startObserver() {
 
 /**
  * Turns existing images into low-res versions.
- * @param quality 0.01 (worst) to 0.5 (bad)
  */
-export function downgradeImages(quality: number = 0.1): void {
+export function downgradeImages(): void {
+    const IMAGE_QUALITY_MAP = {
+        [Intensity.Low]: 1,
+        [Intensity.Medium]: 0.5,
+        [Intensity.High]: 0.15,
+        [Intensity.Extreme]: 0.05,
+    }
+
     CONFIG.images.enabled = true;
-    CONFIG.images.quality = quality;
+    CONFIG.images.quality = IMAGE_QUALITY_MAP[getIntensity()];
 
     // Process existing
     document.querySelectorAll("img").forEach(degradeImage);
     startObserver();
-    console.log(`[Boredom] Images set to quality: ${quality}`);
+    console.log(`[Boredom] Images set to quality: ${CONFIG.images.quality}`);
 }
 
 /**
  * Overlays pixelated canvas on videos and adds audio lag.
- * @param quality 0.01 (worst) to 0.2 (bad)
  */
-export function downgradeVideos(quality: number = 0.1): void {
+export function downgradeVideos(): void {
+    const VIDEO_QUALITY_MAP = {
+        [Intensity.Low]: 1,
+        [Intensity.Medium]: 0.5,
+        [Intensity.High]: 0.15,
+        [Intensity.Extreme]: 0.05,
+    }
+
     CONFIG.videos.enabled = true;
-    CONFIG.videos.quality = quality;
+    CONFIG.videos.quality = VIDEO_QUALITY_MAP[getIntensity()];
 
     // Process existing
     document.querySelectorAll("video").forEach(degradeVideo);
     startObserver();
-    console.log(`[Boredom] Videos set to quality: ${quality}`);
+    console.log(`[Boredom] Videos set to quality: ${CONFIG.videos.quality}`);
 }
