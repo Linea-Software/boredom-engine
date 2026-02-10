@@ -223,6 +223,7 @@ main(scripts);
 // @grant        GM_xmlhttpRequest
 // @grant        GM_setValue
 // @grant        GM_getValue
+// @grant        window.close
 // @run-at       document-start
 // ==/UserScript==
 `;

@@ -22,5 +22,5 @@
             "$sites/*": ["./src/sites/*"]
         }
     },
-    "include": ["src/**/*", "scripts/**/*"]
+    "include": ["src/**/*", "scripts/**/*", "tests/**/*"]
 }

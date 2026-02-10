@@ -1,4 +1,6 @@
-import { getIntensity, Intensity, setIntensity } from "$common";
+import { getIntensity, setIntensity } from "./intensity";
+import { Intensity } from "./intensity";
+export { Intensity };
 
 export interface UsageReport {
     siteHostname: string;
@@ -16,6 +18,7 @@ export type ServerAction = "nothing" | "increase_intensity" | "close_tab"
  * Common module to track and send usage statistics to the local server.
  */
 const GLOBAL_PORT_KEY = "__BOREDOM_SERVER_PORT__";
+const GLOBAL_HOSTNAME_KEY = "__BOREDOM_SERVER_HOSTNAME__";
 
 /**
  * Returns the local server URL where statistics should be sent, or null if not configured.
@@ -23,10 +26,12 @@ const GLOBAL_PORT_KEY = "__BOREDOM_SERVER_PORT__";
 export function getBoredomServerUrl(): string | null {
     if (typeof window === "undefined") return null;
 
-    const port = (window as any)[GLOBAL_PORT_KEY];
+    const port = (window as any)[GLOBAL_PORT_KEY] || 3000;
+    const hostname = (window as any)[GLOBAL_HOSTNAME_KEY] || "localhost";
+
     if (!port) return null;
 
-    return `http://localhost:${port}`;
+    return `http://${hostname}:${port}`;
 }
 
 
