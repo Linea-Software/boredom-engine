@@ -1,3 +1,6 @@
+import hostile from "hostile";
+import devcert from "devcert";
+
 export enum Intensity {
     Low = "low",
     Medium = "medium",
@@ -16,68 +19,119 @@ export interface UsageReport {
 export type ServerAction = "nothing" | "increase_intensity" | "close_tab";
 
 const PORT = Number(Bun.env.BOREDOM_PORT) || 3000;
-const HOSTNAME = Bun.env.BOREDOM_HOSTNAME || "localhost";
+const DEFAULT_HOSTNAME = "boredomserver.dev";
+const HOSTNAME = Bun.env.BOREDOM_HOSTNAME || DEFAULT_HOSTNAME;
 
-console.log(`Starting mock usage stats server on http://${HOSTNAME}:${PORT}...`);
-console.log(`To test, set window.__BOREDOM_SERVER_PORT__ = ${PORT} in your browser.`);
-if (HOSTNAME !== "localhost") {
-    console.log(`Also set window.__BOREDOM_SERVER_HOSTNAME__ = "${HOSTNAME}" in your browser.`);
+// Register hostname if it's the default one
+if (HOSTNAME === DEFAULT_HOSTNAME) {
+    try {
+        hostile.set("127.0.0.1", HOSTNAME);
+        console.log(`[Hosts] Registered ${HOSTNAME} -> 127.0.0.1`);
+    } catch (err) {
+        console.error(`[Hosts] Failed to register ${HOSTNAME}. Try running with admin/sudo privileges.`);
+        console.debug(err);
+    }
 }
 
-Bun.serve({
-    port: PORT,
-    hostname: HOSTNAME,
-    async fetch(req) {
-        const url = new URL(req.url);
-
-        // Handle CORS preflight
-        if (req.method === "OPTIONS") {
-            return new Response(null, {
-                headers: {
-                    "Access-Control-Allow-Origin": "*",
-                    "Access-Control-Allow-Methods": "POST, OPTIONS",
-                    "Access-Control-Allow-Headers": "Content-Type",
-                },
-            });
+// Cleanup on exit
+const cleanup = () => {
+    if (HOSTNAME === DEFAULT_HOSTNAME) {
+        try {
+            hostile.remove("127.0.0.1", HOSTNAME);
+            console.log(`\n[Hosts] Unregistered ${HOSTNAME}`);
+        } catch (err) {
+            // Silence cleanup errors
         }
+    }
+    process.exit(0);
+};
 
-        if (url.pathname === "/usage" && req.method === "POST") {
-            try {
-                const report: UsageReport = await req.json();
-                console.log(`[${new Date().toLocaleTimeString()}] Report from ${report.siteHostname}:`, {
-                    type: report.type,
-                    activeTime: `${report.activeTimeSeconds}s`,
-                    intensity: report.currentIntensity
-                });
+process.on("SIGINT", cleanup);
+process.on("SIGTERM", cleanup);
 
-                let action: ServerAction = "nothing";
+async function startServer() {
+    let ssl: { key: Buffer; cert: Buffer } | undefined;
 
-                // Logic: Every 20 seconds of usage, increase intensity.
-                // If already extreme, close the tab.
-                if (report.type !== "closed") {
-                    if (report.activeTimeSeconds > 0 && report.activeTimeSeconds % 20 === 0) {
-                        if (report.currentIntensity === Intensity.Extreme) {
-                            console.log("!!! User reached Extreme intensity and hit the limit. Sending close_tab.");
-                            action = "close_tab";
-                        } else {
-                            console.log(`>>> Threshold reached (${report.activeTimeSeconds}s). Sending increase_intensity.`);
-                            action = "increase_intensity";
-                        }
-                    }
-                }
+    // devcert requires an interactive terminal for the first run to install the root CA.
+    // If it fails, we fall back to HTTP.
+    try {
+        console.log(`[SSL] Generating/Fetching certificates for ${HOSTNAME}...`);
+        const { key, cert } = await devcert.certificateFor(HOSTNAME);
+        ssl = { key, cert };
+        console.log(`[SSL] Certificates ready.`);
+    } catch (err) {
+        console.error(`[SSL] Failed to setup HTTPS:`, err);
+        console.log(`[SSL] Proceeding with HTTP fallback.`);
+    }
 
-                return new Response(JSON.stringify(action), {
+    const protocol = ssl ? "https" : "http";
+    console.log(`Starting mock usage stats server on ${protocol}://${HOSTNAME}:${PORT}...`);
+    console.log(`To test, set window.__BOREDOM_SERVER_PORT__ = ${PORT} in your browser.`);
+    if (HOSTNAME !== "localhost") {
+        console.log(`Also set window.__BOREDOM_SERVER_HOSTNAME__ = "${HOSTNAME}" in your browser.`);
+    }
+
+    Bun.serve({
+        port: PORT,
+        hostname: HOSTNAME,
+        tls: ssl ? {
+            key: ssl.key,
+            cert: ssl.cert,
+        } : undefined,
+        async fetch(req) {
+            const url = new URL(req.url);
+
+            // Handle CORS preflight
+            if (req.method === "OPTIONS") {
+                return new Response(null, {
                     headers: {
-                        "Content-Type": "application/json",
                         "Access-Control-Allow-Origin": "*",
+                        "Access-Control-Allow-Methods": "POST, OPTIONS",
+                        "Access-Control-Allow-Headers": "Content-Type",
                     },
                 });
-            } catch (err) {
-                console.error("Error parsing report:", err);
-                return new Response("Invalid JSON", { status: 400 });
             }
-        }
 
-        return new Response("Not Found", { status: 404 });
-    },
-});
+            if (url.pathname === "/usage" && req.method === "POST") {
+                try {
+                    const report: UsageReport = await req.json();
+                    console.log(`[${new Date().toLocaleTimeString()}] Report from ${report.siteHostname}:`, {
+                        type: report.type,
+                        activeTime: `${report.activeTimeSeconds}s`,
+                        intensity: report.currentIntensity
+                    });
+
+                    let action: ServerAction = "nothing";
+
+                    // Logic: Every 20 seconds of usage, increase intensity.
+                    // If already extreme, close the tab.
+                    if (report.type !== "closed") {
+                        if (report.activeTimeSeconds > 0 && report.activeTimeSeconds % 20 === 0) {
+                            if (report.currentIntensity === Intensity.Extreme) {
+                                console.log("!!! User reached Extreme intensity and hit the limit. Sending close_tab.");
+                                action = "close_tab";
+                            } else {
+                                console.log(`>>> Threshold reached (${report.activeTimeSeconds}s). Sending increase_intensity.`);
+                                action = "increase_intensity";
+                            }
+                        }
+                    }
+
+                    return new Response(JSON.stringify(action), {
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Access-Control-Allow-Origin": "*",
+                        },
+                    });
+                } catch (err) {
+                    console.error("Error parsing report:", err);
+                    return new Response("Invalid JSON", { status: 400 });
+                }
+            }
+
+            return new Response("Not Found", { status: 404 });
+        },
+    });
+}
+
+startServer();
