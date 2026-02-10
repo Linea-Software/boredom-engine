@@ -15,5 +15,7 @@
         "deploy": "bun scripts/deploy.ts"
     },
     "type": "module",
-    "dependencies": {}
+    "dependencies": {
+        "lit": "^3.3.2"
+    }
 }

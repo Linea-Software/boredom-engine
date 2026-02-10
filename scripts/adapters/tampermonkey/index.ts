@@ -64,21 +64,11 @@ export async function buildTampermonkey() {
     const packageJsonPath = join(process.cwd(), "package.json");
     const packageJson = JSON.parse(await readFile(packageJsonPath, "utf-8"));
 
-    // Load Menu HTML
-    const menuHtmlPath = join(
-        process.cwd(),
-        "scripts/adapters/tampermonkey/menu.html"
-    );
-    let menuHtml = await readFile(menuHtmlPath, "utf-8");
-    // Escape backticks for template literal inclusion
-    menuHtml = menuHtml.replace(/`/g, "\\`").replace(/\${/g, "\\${");
-
     // Prepare Intermediate Directory
     const distDir = join(process.cwd(), "dist");
     const intermediateDir = join(distDir, "tm_intermediate");
 
     // Ensure Clean Directory
-    // (Node 14+ recursive mkdir)
     await import("fs").then((fs) => {
         if (fs.existsSync(intermediateDir)) {
             fs.rmSync(intermediateDir, { recursive: true });
@@ -117,7 +107,6 @@ export async function buildTampermonkey() {
                 ) {
                     // side-effect import or incomplete
                     if (trimmed.includes('"') || trimmed.includes("'")) {
-                        // side effect import like import "foo";
                         insideMultiLineImport = false;
                     } else {
                         insideMultiLineImport = true;
@@ -198,10 +187,8 @@ const scripts = [
     }`).join(",\n")}
 ];
 
-const menuHtml = \`${menuHtml}\`;
-
 // Run Client
-main(scripts, menuHtml);
+main(scripts);
 `;
 
     await writeFile(entryPath, entryContent);

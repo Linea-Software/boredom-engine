@@ -1,3 +1,16 @@
+import { html, render } from 'lit';
+import { classMap } from 'lit/directives/class-map.js';
+import { ScriptMetadata } from './client';
+
+export interface UIState {
+  enabledScripts: Record<string, boolean>;
+  currentTab: 'site' | 'generic';
+  isOpen: boolean;
+  siteScripts: ScriptMetadata[];
+  genericScripts: ScriptMetadata[];
+}
+
+const styles = html`
 <style>
   :host {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -8,7 +21,6 @@
     --text-muted: #94a3b8;
     --border: rgba(255, 255, 255, 0.1);
     
-    /* Ensure the host is consistently positioned on top but allow critical overlays */
     position: fixed;
     top: 0;
     left: 0;
@@ -59,6 +71,7 @@
   .be-fab svg {
     width: 24px;
     height: 24px;
+    pointer-events: none;
   }
 
   /* Panel */
@@ -74,6 +87,7 @@
     border-radius: 16px;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     opacity: 0;
+    visibility: hidden;
     transform: translateY(10px) scale(0.95);
     transform-origin: bottom right;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -85,6 +99,7 @@
 
   .be-panel.open {
     opacity: 1;
+    visibility: visible;
     transform: translateY(0) scale(1);
     pointer-events: auto;
   }
@@ -116,7 +131,7 @@
     padding: 12px 0;
     max-height: 400px;
     overflow-y: auto;
-    flex: 1; /* specific fix for flexbox parent if needed */
+    flex: 1;
   }
 
   .be-empty {
@@ -273,27 +288,88 @@
     border-bottom: 2px solid var(--primary);
     background: rgba(255,255,255,0.05);
   }
-
 </style>
+`;
 
-<div class="be-container">
-  <div class="be-panel" id="panel">
-    <div class="be-header">
-      <h3 class="be-title">Boredom Engine</h3>
-      <span class="be-version">v1.0.0</span>
-    </div>
-    <div class="be-content" id="list">
-       <!-- Items will be injected here -->
-       <div class="be-empty">No active scripts for this domain</div>
-    </div>
-    <div class="be-footer">
-      <button class="be-btn" id="save-btn">Save & Reload</button>
-    </div>
-  </div>
+export function setupUI(
+  container: HTMLElement,
+  initialState: UIState,
+  onToggle: (id: string, enabled: boolean) => void,
+  onSave: () => void
+) {
+  let state = { ...initialState };
+  const shadow = container.shadowRoot || container.attachShadow({ mode: "open" });
 
-  <button class="be-fab" id="fab" aria-label="Boredom Engine Settings">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
-    </svg>
-  </button>
-</div>
+  function updateState(newState: Partial<UIState>) {
+    state = { ...state, ...newState };
+    renderUI();
+  }
+
+  function renderUI() {
+    const { currentTab, isOpen, enabledScripts, siteScripts, genericScripts } = state;
+    const scriptsToShow = currentTab === 'site' ? siteScripts : genericScripts;
+
+    const template = html`
+            ${styles}
+            <div class="be-container">
+                <div class=${classMap({ 'be-panel': true, 'open': isOpen })}>
+                    <div class="be-header">
+                        <h3 class="be-title">Boredom Engine</h3>
+                        <span class="be-version">v1.0.0</span>
+                    </div>
+                    
+                    <div class="be-tabs">
+                        <div class=${classMap({ 'be-tab': true, 'active': currentTab === 'site' })} 
+                             @click=${() => updateState({ currentTab: 'site' })}>
+                            Site
+                        </div>
+                        <div class=${classMap({ 'be-tab': true, 'active': currentTab === 'generic' })} 
+                             @click=${() => updateState({ currentTab: 'generic' })}>
+                            Generic
+                        </div>
+                    </div>
+
+                    <div class="be-content">
+                        ${scriptsToShow.length === 0
+        ? html`<div class="be-empty">${currentTab === 'generic' ? 'No generic scripts available' : 'No active scripts for this domain'}</div>`
+        : scriptsToShow.map(script => {
+          const isChecked = script.type === 'generic'
+            ? enabledScripts[script.id] === true
+            : enabledScripts[script.id] !== false;
+
+          return html`
+                                    <div class="be-item">
+                                        <div class="be-item-info">
+                                            <div class="be-item-name">${script.name}</div>
+                                            <div class="be-item-desc">${script.description}</div>
+                                        </div>
+                                        <label class="be-switch">
+                                            <input type="checkbox" 
+                                                .checked=${isChecked}
+                                                @change=${(e: any) => onToggle(script.id, e.target.checked)}>
+                                            <span class="be-slider"></span>
+                                        </label>
+                                    </div>
+                                `;
+        })
+      }
+                    </div>
+
+                    <div class="be-footer">
+                        <button class="be-btn" @click=${onSave}>Save & Reload</button>
+                    </div>
+                </div>
+
+                <button class="be-fab" @click=${() => updateState({ isOpen: !state.isOpen })} aria-label="Boredom Engine Settings">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                    </svg>
+                </button>
+            </div>
+        `;
+
+    render(template, shadow);
+  }
+
+  renderUI();
+}

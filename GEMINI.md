@@ -18,7 +18,12 @@ This project contains a set of site-specific scripts aimed at transforming addic
 - Examples:
     - Install dependencies: `bun install`
     - Run scripts: `bun run build`
-    - Add packages: `bun add <package>`
+    - Add packages: \`bun add <package>\`
+
+## Tampermonkey Development
+
+- **Auto-Loading**: The project is configured to automatically reload the Tampermonkey script in the browser whenever \`bun run build\` is executed. This allows for a fast development cycle without manual script updates in the Tampermonkey dashboard.
+- **Menu UI**: The Boredom Engine menu is built with Lit and is accessible via the FAB (Floating Action Button) on supported sites.
 
 ## Development Guidelines
 
