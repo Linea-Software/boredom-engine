@@ -1,5 +1,5 @@
 import hostile from "hostile";
-import devcert from "devcert";
+import mkcert from "mkcert";
 
 export enum Intensity {
     Low = "low",
@@ -50,14 +50,29 @@ process.on("SIGINT", cleanup);
 process.on("SIGTERM", cleanup);
 
 async function startServer() {
-    let ssl: { key: Buffer; cert: Buffer } | undefined;
+    let ssl: { key: string; cert: string } | undefined;
 
-    // devcert requires an interactive terminal for the first run to install the root CA.
-    // If it fails, we fall back to HTTP.
     try {
-        console.log(`[SSL] Generating/Fetching certificates for ${HOSTNAME}...`);
-        const { key, cert } = await devcert.certificateFor(HOSTNAME);
-        ssl = { key, cert };
+        console.log(`[SSL] Generating certificates for ${HOSTNAME}...`);
+
+        // Create a certificate authority
+        const ca = await mkcert.createCA({
+            organization: "Boredom Engine",
+            countryCode: "US",
+            state: "California",
+            locality: "San Francisco",
+            validity: 365
+        });
+
+        // Create a certificate signed by the CA
+        const cert = await mkcert.createCert({
+            domains: [HOSTNAME, "127.0.0.1", "localhost"],
+            validity: 365,
+            caKey: ca.key,
+            caCert: ca.cert
+        });
+
+        ssl = { key: cert.key, cert: cert.cert };
         console.log(`[SSL] Certificates ready.`);
     } catch (err) {
         console.error(`[SSL] Failed to setup HTTPS:`, err);
