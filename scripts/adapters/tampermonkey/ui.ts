@@ -1,6 +1,7 @@
 import { html, render } from 'lit';
 import { classMap } from 'lit/directives/class-map.js';
 import { ScriptMetadata } from './client';
+import { Intensity } from '../../../src/common/intensity';
 
 export interface UIState {
   enabledScripts: Record<string, boolean>;
@@ -8,6 +9,7 @@ export interface UIState {
   isOpen: boolean;
   siteScripts: ScriptMetadata[];
   genericScripts: ScriptMetadata[];
+  intensity: Intensity;
 }
 
 const styles = html`
@@ -288,6 +290,42 @@ const styles = html`
     border-bottom: 2px solid var(--primary);
     background: rgba(255,255,255,0.05);
   }
+
+  /* Intensity Selector */
+  .be-intensity-section {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .be-intensity-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .be-select {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    outline: none;
+    cursor: pointer;
+  }
+  
+  .be-select:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .be-select option {
+    background: #0f172a; /* Fallback */
+    color: var(--text);
+  }
 </style>
 `;
 
@@ -295,6 +333,7 @@ export function setupUI(
   container: HTMLElement,
   initialState: UIState,
   onToggle: (id: string, enabled: boolean) => void,
+  onIntensityChange: (intensity: Intensity) => void,
   onSave: () => void
 ) {
   let state = { ...initialState };
@@ -306,7 +345,7 @@ export function setupUI(
   }
 
   function renderUI() {
-    const { currentTab, isOpen, enabledScripts, siteScripts, genericScripts } = state;
+    const { currentTab, isOpen, enabledScripts, siteScripts, genericScripts, intensity } = state;
     const scriptsToShow = currentTab === 'site' ? siteScripts : genericScripts;
 
     const template = html`
@@ -327,6 +366,17 @@ export function setupUI(
                              @click=${() => updateState({ currentTab: 'generic' })}>
                             Generic
                         </div>
+                    </div>
+
+                    <div class="be-intensity-section">
+                        <label class="be-intensity-label">Intensity Level</label>
+                        <select class="be-select" @change=${(e: any) => onIntensityChange(e.target.value as Intensity)}>
+                            ${Object.values(Intensity).map(val => html`
+                                <option value="${val}" ?selected=${intensity === val}>
+                                    ${val.charAt(0).toUpperCase() + val.slice(1)}
+                                </option>
+                            `)}
+                        </select>
                     </div>
 
                     <div class="be-content">

@@ -1,4 +1,5 @@
 import { setupUI, UIState } from './ui';
+import { Intensity } from '../../../src/common/intensity';
 
 export interface ScriptMetadata {
     id: string;
@@ -23,14 +24,26 @@ export function main(scripts: ScriptMetadata[]) {
     }
 
     // Load settings
-    const STORAGE_KEY = "be_enabled_scripts";
+    const SCRIPTS_KEY = "be_enabled_scripts";
+    const INTENSITY_KEY = "be_intensity";
+
     let enabledScripts: Record<string, boolean> = {};
+    let intensity: Intensity = Intensity.Medium;
+
     try {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) enabledScripts = JSON.parse(stored);
+        const storedScripts = localStorage.getItem(SCRIPTS_KEY);
+        if (storedScripts) enabledScripts = JSON.parse(storedScripts);
+
+        const storedIntensity = localStorage.getItem(INTENSITY_KEY);
+        if (storedIntensity && Object.values(Intensity).includes(storedIntensity as Intensity)) {
+            intensity = storedIntensity as Intensity;
+        }
     } catch (e) {
         console.error("Failed to load settings", e);
     }
+
+    // Set global intensity for scripts to use
+    (window as any).__BOREDOM_INTENSITY__ = intensity;
 
     // Execute enabled scripts
     siteScripts.forEach((script) => {
@@ -60,7 +73,8 @@ export function main(scripts: ScriptMetadata[]) {
             currentTab: siteScripts.length > 0 ? 'site' : 'generic',
             isOpen: false,
             siteScripts,
-            genericScripts
+            genericScripts,
+            intensity
         };
 
         setupUI(
@@ -69,8 +83,12 @@ export function main(scripts: ScriptMetadata[]) {
             (id, enabled) => {
                 enabledScripts[id] = enabled;
             },
+            (newIntensity) => {
+                intensity = newIntensity;
+            },
             () => {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(enabledScripts));
+                localStorage.setItem(SCRIPTS_KEY, JSON.stringify(enabledScripts));
+                localStorage.setItem(INTENSITY_KEY, intensity);
                 window.location.reload();
             }
         );

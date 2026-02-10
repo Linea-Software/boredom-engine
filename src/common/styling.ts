@@ -1,4 +1,4 @@
-import { Intensity } from "$common";
+import { getIntensity, Intensity } from "$common";
 
 /**
  * Injects a CSS string into the document head.
@@ -17,7 +17,7 @@ export function injectCss(css: string): void {
  */
 export function setGrayscale(element: HTMLElement, intensity: Intensity): void {
     const GRAYSCALE_MAP: Record<Intensity, number> = {
-        [Intensity.Low]: 20,
+        [Intensity.Low]: 30,
         [Intensity.Medium]: 50,
         [Intensity.High]: 80,
         [Intensity.Extreme]: 100,
@@ -36,18 +36,17 @@ export const COMMON_MEDIA_FILTER =
  */
 export function applyMediaDesaturation(
     additionalSelectors: string[] = [],
-    intensity: Intensity,
 ): void {
     const DESATURATION_MAP: Record<Intensity, number> = {
-        [Intensity.Low]: 20,
+        [Intensity.Low]: 70,
         [Intensity.Medium]: 50,
-        [Intensity.High]: 80,
-        [Intensity.Extreme]: 100,
+        [Intensity.High]: 20,
+        [Intensity.Extreme]: 0,
     };
     const selectors = ["video", "img", ...additionalSelectors];
     const css = `
         :root {
-            --boredom-saturate: ${DESATURATION_MAP[intensity]}%;
+            --boredom-saturate: ${DESATURATION_MAP[getIntensity()]}%;
         }
         ${selectors.join(",\n        ")} {
             filter: ${COMMON_MEDIA_FILTER} !important;

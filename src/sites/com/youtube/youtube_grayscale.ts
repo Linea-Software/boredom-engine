@@ -4,7 +4,7 @@
  * @description Turns the YouTube video player and Shorts grayscale to reduce visual stimulation.
  * @version 1.1.0
  */
-import { onDOMLoaded, applyMediaDesaturation } from "$common";
+import { onDOMLoaded, applyMediaDesaturation, setGrayscale, getIntensity } from "$common";
 
 onDOMLoaded(() => {
     applyMediaDesaturation();
@@ -14,7 +14,7 @@ onDOMLoaded(() => {
         setInterval(() => {
             const video = document.querySelector("video");
             if (video) {
-                video.style.filter = "grayscale(1)";
+                setGrayscale(video, getIntensity());
             }
         }, 1000);
     }
