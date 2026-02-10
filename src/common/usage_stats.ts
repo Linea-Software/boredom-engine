@@ -15,22 +15,17 @@ export type ServerAction = "nothing" | "increase_intensity" | "close_tab"
 /**
  * Common module to track and send usage statistics to the local server.
  */
-
-const DEFAULT_PORT = 3000;
 const GLOBAL_PORT_KEY = "__BOREDOM_SERVER_PORT__";
 
 /**
- * Returns the local server URL where statistics should be sent.
+ * Returns the local server URL where statistics should be sent, or null if not configured.
  */
-export function getBoredomServerUrl(): string {
-    if (typeof window === "undefined") return `http://localhost:${DEFAULT_PORT}`;
+export function getBoredomServerUrl(): string | null {
+    if (typeof window === "undefined") return null;
 
-    // Check for the port in window object, supporting multiple variants
-    const port =
-        (window as any)["__BOREDOM_SERVER_PORT__"] ||
-        (window as any)["__BORDEDOM_SERVER_PORT__"] || // typo support from user request
-        (window as any)["__ENGINE_PORT__"] ||
-        DEFAULT_PORT;
+    const port = (window as any)[GLOBAL_PORT_KEY];
+    if (!port) return null;
+
     return `http://localhost:${port}`;
 }
 
@@ -116,7 +111,10 @@ export async function sendUsageReport(type: "opened" | "closed" | "heartbeat"): 
         currentIntensity: getIntensity(),
     };
 
-    const url = `${getBoredomServerUrl()}/usage`;
+    const serverUrl = getBoredomServerUrl();
+    if (!serverUrl) return;
+
+    const url = `${serverUrl}/usage`;
 
     try {
         // Use fetch with keepalive for 'closed' events to ensure they are sent during unload
