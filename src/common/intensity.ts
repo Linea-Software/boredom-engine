@@ -43,3 +43,8 @@ export function getIntensity(): Intensity {
         default: return Intensity.Medium;
     }
 }
+
+export function setIntensity(intensity: Intensity): void {
+    if (typeof window === "undefined") return;
+    (window as any)[GLOBAL_INTENSITY_KEY] = intensity;
+}
