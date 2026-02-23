@@ -46,6 +46,8 @@ export function getIntensity(): Intensity {
     //aggressive minification/compilation strategies that might inline enums weirdly,
     // though string enums usually persist.
     switch (value) {
+        case "none":
+            return Intensity.None;
         case "low":
             return Intensity.Low;
         case "medium":
