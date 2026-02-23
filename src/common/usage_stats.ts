@@ -50,7 +50,7 @@ let defaultHeartbeatTimer: ReturnType<typeof setInterval> | null = null;
 let defaultInactivityTimer: ReturnType<typeof setTimeout> | null = null;
 
 const HEARTBEAT_INTERVAL_MS = 10000;
-const INACTIVITY_TIMEOUT_MS = 10000;
+const INACTIVITY_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes
 
 function resetDefaultInactivityTimer() {
     if (isTrackingPaused) {
