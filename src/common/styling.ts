@@ -17,6 +17,7 @@ export function injectCss(css: string): void {
  */
 export function setGrayscale(element: HTMLElement, intensity: Intensity): void {
     const GRAYSCALE_MAP: Record<Intensity, number> = {
+        [Intensity.None]: 0,
         [Intensity.Low]: 30,
         [Intensity.Medium]: 50,
         [Intensity.High]: 80,
@@ -38,6 +39,7 @@ export function applyMediaDesaturation(
     additionalSelectors: string[] = [],
 ): void {
     const DESATURATION_MAP: Record<Intensity, number> = {
+        [Intensity.None]: 100,
         [Intensity.Low]: 70,
         [Intensity.Medium]: 50,
         [Intensity.High]: 20,

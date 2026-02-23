@@ -14,6 +14,8 @@
  */
 
 export enum Intensity {
+    /** No annoyances/punishments provided */
+    None = "none",
     /** Mild annoyance, still usable but degraded experience */
     Low = "low",
     /** Standard operation, noticeable degradation */
@@ -21,8 +23,16 @@ export enum Intensity {
     /** Very annoying, significant features might be broken or heavily degraded */
     High = "high",
     /** Unusable / Maximum stress, complete blockage or extreme degradation */
-    Extreme = "extreme"
+    Extreme = "extreme",
 }
+
+export const INTENSITY_VALUE_MAP = {
+    [Intensity.None]: 0,
+    [Intensity.Low]: 1,
+    [Intensity.Medium]: 2,
+    [Intensity.High]: 3,
+    [Intensity.Extreme]: 4,
+};
 
 const GLOBAL_INTENSITY_KEY = "__BOREDOM_INTENSITY__";
 
@@ -36,11 +46,16 @@ export function getIntensity(): Intensity {
     //aggressive minification/compilation strategies that might inline enums weirdly,
     // though string enums usually persist.
     switch (value) {
-        case "low": return Intensity.Low;
-        case "medium": return Intensity.Medium;
-        case "high": return Intensity.High;
-        case "extreme": return Intensity.Extreme;
-        default: return Intensity.Medium;
+        case "low":
+            return Intensity.Low;
+        case "medium":
+            return Intensity.Medium;
+        case "high":
+            return Intensity.High;
+        case "extreme":
+            return Intensity.Extreme;
+        default:
+            return Intensity.Medium;
     }
 }
 
@@ -48,3 +63,20 @@ export function setIntensity(intensity: Intensity): void {
     if (typeof window === "undefined") return;
     (window as any)[GLOBAL_INTENSITY_KEY] = intensity;
 }
+
+export function intensityHigherThan(a: Intensity, b: Intensity): boolean {
+    return INTENSITY_VALUE_MAP[a] > INTENSITY_VALUE_MAP[b];
+}
+
+export function intensityHigherOrEqualTo(a: Intensity, b: Intensity): boolean {
+    return INTENSITY_VALUE_MAP[a] >= INTENSITY_VALUE_MAP[b];
+}
+
+export function currentIntensityHigherThan(intensity: Intensity): boolean {
+    return intensityHigherThan(getIntensity(), intensity);
+}
+
+export function currentIntensityHigherOrEqualTo(intensity: Intensity): boolean {
+    return intensityHigherOrEqualTo(getIntensity(), intensity);
+}
+
