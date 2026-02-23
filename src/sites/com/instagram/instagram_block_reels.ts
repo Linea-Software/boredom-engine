@@ -4,9 +4,13 @@
  * @description Blocks Instagram reels elements and fetch requests on the reels page.
  * @version 1.0.0
  */
-import { onDOMLoaded, blockNetworkRequests } from "$common";
+import { onDOMLoaded, blockNetworkRequests, currentIntensityHigherThan, Intensity } from "$common";
 
 onDOMLoaded(() => {
+    if(!currentIntensityHigherThan(Intensity.None)){
+        return;
+    }
+
     if (
         window.location.pathname.startsWith("/reels") ||
         window.location.pathname.includes("/reels/")

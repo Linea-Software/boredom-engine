@@ -4,9 +4,18 @@
  * @description Removes the sidebar navigation on Twitch to reduce distraction.
  * @version 1.0.0
  */
-import { onDOMLoaded, getElementByXpath } from "$common";
+import {
+    onDOMLoaded,
+    getElementByXpath,
+    currentIntensityHigherThan,
+    Intensity,
+} from "$common";
 
 onDOMLoaded(() => {
+    if (!currentIntensityHigherThan(Intensity.None)) {
+        return;
+    }
+
     // XPath provided by user: //*[@id="root"]/div[1]/div[1]/div[2]/div[1]
     const sidebarXpath = '//*[@id="root"]/div[1]/div[1]/div[2]/div[1]';
 

@@ -4,23 +4,28 @@
  * @description Adds random buffering/delays to TikTok videos to interrupt the dopamine loop.
  * @version 1.0.0
  */
-import { onDOMLoaded, getElementByXpath, injectCss, Intensity, getIntensity } from "$common";
+import { onDOMLoaded, getElementByXpath, injectCss, Intensity, getIntensity, currentIntensityHigherThan } from "$common";
 
-const BUFFER_DELAY_DURATION_MAP = {
-    [Intensity.Low]: 0,
+const BUFFER_DELAY_DURATION_MAP: Record<Intensity, number> = {
+    [Intensity.None]: 0,
+    [Intensity.Low]: 750,
     [Intensity.Medium]: 1500,
     [Intensity.High]: 3000,
     [Intensity.Extreme]: 5000,
 }
 
-const BUFFER_DELAY_RANDOM_MAP = {
-    [Intensity.Low]: 0,
-    [Intensity.Medium]: 0.05,
+const BUFFER_DELAY_RANDOM_MAP: Record<Intensity, number> = {
+    [Intensity.None]: 0,
+    [Intensity.Low]: 0.05,
+    [Intensity.Medium]: 0.1,
     [Intensity.High]: 0.2,
     [Intensity.Extreme]: 0.4,
 }
 
 onDOMLoaded(() => {
+    if (!currentIntensityHigherThan(Intensity.None)) {
+        return;
+    }
     // Inject spinner styles
     injectCss(`
         .boredom-tiktok-spinner {

@@ -8,9 +8,14 @@ import {
     onDOMLoaded,
     applyMediaDesaturation,
     setCssVariablesToGray,
+    currentIntensityHigherThan,
+    Intensity,
 } from "$common";
 
 onDOMLoaded(() => {
+    if (!currentIntensityHigherThan(Intensity.None)) {
+        return;
+    }
     applyMediaDesaturation(["shreddit-player"]);
 
     setCssVariablesToGray(["--color-global-orangered"]);

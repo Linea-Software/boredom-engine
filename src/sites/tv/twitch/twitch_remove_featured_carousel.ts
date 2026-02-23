@@ -4,9 +4,13 @@
  * @description Removes the featured carousel from the Twitch homepage.
  * @version 1.2.0
  */
-import { onDOMLoaded, injectCss } from "$common";
+import { onDOMLoaded, injectCss, currentIntensityHigherThan, Intensity } from "$common";
 
 onDOMLoaded(() => {
+    if (!currentIntensityHigherThan(Intensity.None)) {
+        return;
+    }
+
     // Inject style to hide it immediately for better performance/UX
     injectCss(`
         [data-a-target="front-page-carousel"],

@@ -4,9 +4,19 @@
  * @description Forcefully downgrades the resolution of Twitch videos and images to reduce dopamine stimulation.
  * @version 1.0.0
  */
-import { onDOMLoaded, downgradeVideos, downgradeImages } from "$common";
+import {
+    onDOMLoaded,
+    downgradeVideos,
+    downgradeImages,
+    currentIntensityHigherThan,
+    Intensity,
+} from "$common";
 
 onDOMLoaded(() => {
-    downgradeVideos(0.9);
-    downgradeImages(0.25);
+    if (!currentIntensityHigherThan(Intensity.None)) {
+        return;
+    }
+
+    downgradeVideos();
+    downgradeImages();
 });

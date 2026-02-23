@@ -5,23 +5,34 @@
  * @version 1.0.4
  */
 
-import { getIntensity, Intensity, onDOMLoaded } from "$common";
+import {
+    currentIntensityHigherThan,
+    getIntensity,
+    Intensity,
+    onDOMLoaded,
+} from "$common";
 
-const BUFFER_DELAY_DURATION_MAP = {
-    [Intensity.Low]: 0,
+const BUFFER_DELAY_DURATION_MAP: Record<Intensity, number> = {
+    [Intensity.None]: 0,
+    [Intensity.Low]: 750,
     [Intensity.Medium]: 1500,
     [Intensity.High]: 3000,
     [Intensity.Extreme]: 5000,
-}
+};
 
-const BUFFER_DELAY_RANDOM_MAP = {
-    [Intensity.Low]: 0,
-    [Intensity.Medium]: 0.05,
+const BUFFER_DELAY_RANDOM_MAP: Record<Intensity, number> = {
+    [Intensity.None]: 0,
+    [Intensity.Low]: 0.05,
+    [Intensity.Medium]: 0.1,
     [Intensity.High]: 0.2,
     [Intensity.Extreme]: 0.4,
-}
+};
 
 onDOMLoaded(() => {
+    if (!currentIntensityHigherThan(Intensity.None)) {
+        return;
+    }
+    
     let isBuffering = false;
 
     // Enforce buffering state
@@ -37,7 +48,7 @@ onDOMLoaded(() => {
                 }
             }
         },
-        true // Capture phase
+        true, // Capture phase
     );
 
     setInterval(() => {
@@ -56,7 +67,8 @@ onDOMLoaded(() => {
             document.body.dataset.boredomBufferingActive = "true";
 
             // Determine duration (3-6 seconds)
-            const duration = BUFFER_DELAY_DURATION_MAP[getIntensity()] * (1 + Math.random());
+            const duration =
+                BUFFER_DELAY_DURATION_MAP[getIntensity()] * (1 + Math.random());
 
             // Pause the video to simulate buffering
             video.pause();

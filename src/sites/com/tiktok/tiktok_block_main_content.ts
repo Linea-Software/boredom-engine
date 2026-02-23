@@ -4,9 +4,13 @@
  * @description Blocks the main "For You" feed content on TikTok to prevent doomscrolling.
  * @version 1.0.0
  */
-import { onDOMLoaded, injectCss, getIntensity, Intensity } from "$common";
+import { onDOMLoaded, injectCss, getIntensity, Intensity, currentIntensityHigherThan } from "$common";
 
 onDOMLoaded(() => {
+    if (!currentIntensityHigherThan(Intensity.None)) {
+        return;
+    }
+
     if (getIntensity() === Intensity.Low) return;
 
     // Blocks the main feed container

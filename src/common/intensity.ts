@@ -26,7 +26,7 @@ export enum Intensity {
     Extreme = "extreme",
 }
 
-export const INTENSITY_VALUE_MAP = {
+export const INTENSITY_VALUE_MAP: Record<Intensity, number> = {
     [Intensity.None]: 0,
     [Intensity.Low]: 1,
     [Intensity.Medium]: 2,

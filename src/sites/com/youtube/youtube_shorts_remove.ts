@@ -5,9 +5,18 @@
  * @version 1.0.0
  */
 
-import { onDOMLoaded, injectCss } from "$common";
+import {
+    onDOMLoaded,
+    injectCss,
+    Intensity,
+    currentIntensityHigherThan,
+} from "$common";
 
 onDOMLoaded(() => {
+    if (!currentIntensityHigherThan(Intensity.None)) {
+        return;
+    }
+
     if (window.location.pathname.includes("/shorts")) {
         window.location.replace("https://youtube.com");
     }

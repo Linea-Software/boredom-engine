@@ -4,9 +4,18 @@
  * @description Blocks recommendation feeds on Reddit.
  * @version 1.0.0
  */
-import { onDOMLoaded, getElementByXpath } from "$common";
+import {
+    onDOMLoaded,
+    getElementByXpath,
+    currentIntensityHigherThan,
+    Intensity,
+} from "$common";
 
 onDOMLoaded(() => {
+    if (!currentIntensityHigherThan(Intensity.None)) {
+        return;
+    }
+
     const observer = new MutationObserver(() => {
         // Dynamically check for the path name for changes
         if (

@@ -4,9 +4,12 @@
  * @description Removes specific buttons from the TikTok sidebar (e.g. "Following" or specific nav items) to reduce clutter.
  * @version 1.0.0
  */
-import { onDOMLoaded, getElementByXpath, getIntensity, Intensity } from "$common";
+import { onDOMLoaded, getElementByXpath, getIntensity, Intensity, currentIntensityHigherThan } from "$common";
 
 onDOMLoaded(() => {
+        if (!currentIntensityHigherThan(Intensity.None)) {
+            return;
+        }
     if (getIntensity() === Intensity.Low) return;
 
     // List of XPaths to remove

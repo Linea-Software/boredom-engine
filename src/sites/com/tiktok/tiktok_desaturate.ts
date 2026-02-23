@@ -10,20 +10,27 @@ import {
     injectCss,
     enforceCssVariables,
     setCssVariablesToGray,
+    currentIntensityHigherThan,
+    Intensity,
 } from "$common";
 
-// Enforce specific color values
-setCssVariablesToGray([
-    "--ui-shape-primary",
-    "--ui-text-primary-display",
-    "--tux-colorPrimary",
-    "--tux-colorPrimary-tint-4",
-    "--tux-colorPrimary-tint-8",
-    "--tux-colorPrimary-tint-12",
-    "--tux-colorLink",
-]);
+if (currentIntensityHigherThan(Intensity.None)) {
+    // Enforce specific color values
+    setCssVariablesToGray([
+        "--ui-shape-primary",
+        "--ui-text-primary-display",
+        "--tux-colorPrimary",
+        "--tux-colorPrimary-tint-4",
+        "--tux-colorPrimary-tint-8",
+        "--tux-colorPrimary-tint-12",
+        "--tux-colorLink",
+    ]);
+}
 
 onDOMLoaded(() => {
+    if (!currentIntensityHigherThan(Intensity.None)) {
+        return;
+    }
     applyMediaDesaturation();
 
     // Backup: Inject CSS as well
