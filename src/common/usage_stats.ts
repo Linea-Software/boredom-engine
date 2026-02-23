@@ -1,3 +1,4 @@
+import { onDOMLoaded } from "./dom";
 import { getIntensity, setIntensity } from "./intensity";
 import { Intensity } from "./intensity";
 export { Intensity };
@@ -96,6 +97,9 @@ export function initUsageTracking(): void {
     });
 }
 
+// Initialize usage tracking when the DOM is loaded
+onDOMLoaded(initUsageTracking);
+
 /**
  * Returns the number of seconds the user has been effectively active.
  */
@@ -168,6 +172,9 @@ function increaseIntensity(): void {
     let next: Intensity;
 
     switch (current) {
+        case Intensity.None:
+            next = Intensity.Low;
+            break;
         case Intensity.Low:
             next = Intensity.Medium;
             break;

@@ -63,7 +63,6 @@ function startHeartbeat() {
 }
 
 onDOMLoaded(() => {
-    initUsageTracking();
 
     // Interaction listeners
     const activityEvents = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart'];
