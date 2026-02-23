@@ -309,8 +309,9 @@ function startObserver() {
  * Turns existing images into low-res versions.
  */
 export function downgradeImages(): void {
-    const IMAGE_QUALITY_MAP = {
-        [Intensity.Low]: 1,
+    const IMAGE_QUALITY_MAP: Record<Intensity, number> = {
+        [Intensity.None]: 0,
+        [Intensity.Low]: 0.75,
         [Intensity.Medium]: 0.5,
         [Intensity.High]: 0.15,
         [Intensity.Extreme]: 0.05,
@@ -330,7 +331,8 @@ export function downgradeImages(): void {
  */
 export function downgradeVideos(): void {
     const VIDEO_QUALITY_MAP = {
-        [Intensity.Low]: 1,
+        [Intensity.None]: 1,
+        [Intensity.Low]: 0.75,
         [Intensity.Medium]: 0.5,
         [Intensity.High]: 0.15,
         [Intensity.Extreme]: 0.05,

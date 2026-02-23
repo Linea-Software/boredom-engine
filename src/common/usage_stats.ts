@@ -46,6 +46,44 @@ let totalActiveTimeMs = 0;
 let lastVisibilityChangeTimestamp = Date.now();
 let isPageVisible = typeof document !== "undefined" ? !document.hidden : true;
 let isTrackingPaused = false;
+let defaultHeartbeatTimer: ReturnType<typeof setInterval> | null = null;
+let defaultInactivityTimer: ReturnType<typeof setTimeout> | null = null;
+
+const HEARTBEAT_INTERVAL_MS = 10000;
+const INACTIVITY_TIMEOUT_MS = 10000;
+
+function resetDefaultInactivityTimer() {
+    if (isTrackingPaused) {
+        resumeTracking();
+    }
+    if (defaultInactivityTimer) {
+        clearTimeout(defaultInactivityTimer);
+    }
+    defaultInactivityTimer = setTimeout(() => {
+        haltTracking();
+    }, INACTIVITY_TIMEOUT_MS);
+}
+
+/**
+ * Stops the default automatic tracking and heartbeat so that a site-specific script can implement custom logic.
+ */
+export function stopDefaultTracking(): void {
+    if (defaultHeartbeatTimer) {
+        clearInterval(defaultHeartbeatTimer);
+        defaultHeartbeatTimer = null;
+    }
+    if (defaultInactivityTimer) {
+        clearTimeout(defaultInactivityTimer);
+        defaultInactivityTimer = null;
+    }
+    const activityEvents = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart'];
+    if (typeof window !== "undefined") {
+        activityEvents.forEach(event => {
+            window.removeEventListener(event, resetDefaultInactivityTimer);
+        });
+    }
+}
+
 
 function updateAccumulatedTime(): void {
     const now = Date.now();
@@ -77,6 +115,9 @@ export function resumeTracking(): void {
 export function initUsageTracking(): void {
     if (typeof window === "undefined" || typeof document === "undefined") return;
 
+    if ((window as any).__BOREDOM_TRACKING_INIT__) return;
+    (window as any).__BOREDOM_TRACKING_INIT__ = true;
+
     sessionOpenedAt = new Date();
     totalActiveTimeMs = 0;
     lastVisibilityChangeTimestamp = Date.now();
@@ -84,6 +125,19 @@ export function initUsageTracking(): void {
 
     // Send "opened" event
     sendUsageReport("opened");
+
+    // Default activity tracking and heartbeat
+    const activityEvents = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart'];
+    activityEvents.forEach(event => {
+        window.addEventListener(event, resetDefaultInactivityTimer, { passive: true });
+    });
+    resetDefaultInactivityTimer();
+
+    defaultHeartbeatTimer = setInterval(() => {
+        if (!isTrackingPaused && isPageVisible) {
+            sendUsageReport("heartbeat");
+        }
+    }, HEARTBEAT_INTERVAL_MS);
 
     // Track visibility changes to calculate "effectively active" time
     document.addEventListener("visibilitychange", () => {

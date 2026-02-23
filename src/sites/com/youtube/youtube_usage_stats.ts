@@ -11,7 +11,7 @@
  * 4. After 10 seconds of inactivity (no interactions and no video playing), the session is marked as inactive.
  */
 
-import { onDOMLoaded, initUsageTracking, haltTracking, resumeTracking, sendUsageReport } from "$common";
+import { onDOMLoaded, initUsageTracking, haltTracking, resumeTracking, sendUsageReport, stopDefaultTracking } from "$common";
 
 const INACTIVITY_TIMEOUT_MS = 10000; // 10 seconds
 const HEARTBEAT_INTERVAL_MS = 10000; // 10 seconds
@@ -63,6 +63,8 @@ function startHeartbeat() {
 }
 
 onDOMLoaded(() => {
+    // Disable default tracking as we implement custom video-aware logic here
+    stopDefaultTracking();
 
     // Interaction listeners
     const activityEvents = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart'];
