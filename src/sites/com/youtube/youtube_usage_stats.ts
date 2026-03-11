@@ -3,6 +3,7 @@
  * @name YouTube Usage Statistics
  * @description Tracks YouTube usage and sends reports to the local boredom server.
  * @version 1.0.0
+ * @type usage
  * 
  * Rules:
  * 1. Tracks if user is active (clicks, scrolls, typing).

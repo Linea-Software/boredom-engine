@@ -43,15 +43,53 @@ export async function buildDefault() {
 
     console.log(`Found ${entryPoints.length} entry points.`);
 
-    await build({
-        entryPoints: entryPoints,
-        outdir: "dist",
-        bundle: true,
-        platform: "browser",
-        target: "es2020",
-        outbase: "src/sites",
-        minify: true,
-    });
+    const normalEntryPoints: string[] = [];
+    const trackingEntryPoints: string[] = [];
+    
+    // First, determine the type of each script
+    for (const file of entryPoints) {
+        const content = await readFile(file, "utf-8");
+        const commentMatch = content.match(/^\s*\/\*\*([\s\S]*?)\*\//);
+        let isUsage = false;
+        if (commentMatch) {
+            const commentBody = commentMatch[1];
+            const typeMatch = commentBody.match(/@type\s+(.*)/);
+            if (typeMatch && typeMatch[1].trim() === "usage") {
+                isUsage = true;
+            }
+        }
+        if (isUsage) {
+            trackingEntryPoints.push(file);
+        } else {
+            normalEntryPoints.push(file);
+        }
+    }
+
+    if (normalEntryPoints.length > 0) {
+        await build({
+            entryPoints: normalEntryPoints,
+            outdir: "dist/normal",
+            bundle: true,
+            platform: "browser",
+            target: "es2020",
+            outbase: "src/sites",
+            minify: true,
+            format: "iife", // Just to be safe for browser content scripts
+        });
+    }
+
+    if (trackingEntryPoints.length > 0) {
+        await build({
+            entryPoints: trackingEntryPoints,
+            outdir: "dist/tracking",
+            bundle: true,
+            platform: "browser",
+            target: "es2020",
+            outbase: "src/sites",
+            minify: true,
+            format: "iife",
+        });
+    }
 
     console.log("Bundling complete.");
 
@@ -60,19 +98,13 @@ export async function buildDefault() {
 
     const packageJsonPath = join(process.cwd(), "package.json");
     const packageJson = JSON.parse(await readFile(packageJsonPath, "utf-8"));
-    const tsFiles = files.filter(
-        (f) =>
-            f.endsWith(".ts") &&
-            !f.endsWith(".spec.ts") &&
-            !f.endsWith(".test.ts") &&
-            !f.includes("/shared/") &&
-            !f.includes("\\shared\\")
-    );
+    const tsFiles = entryPoints; // Reusing the already filtered list
 
-    const sites: Record<string, SiteNode> = {};
+    const normalSites: Record<string, SiteNode> = {};
+    const trackingSites: Record<string, SiteNode> = {};
 
-    const ensureNode = (pathParts: string[]): SiteNode => {
-        let currentLevel = sites;
+    const ensureNode = (pathParts: string[], sitesObj: Record<string, SiteNode>): SiteNode => {
+        let currentLevel = sitesObj;
         let lastNode: SiteNode | undefined;
 
         for (const part of pathParts) {
@@ -89,18 +121,14 @@ export async function buildDefault() {
     };
 
     for (const fullPath of tsFiles) {
-        // Paths
-        // Normalize paths for consistent comparison
         const normalizedFullPath = fullPath.replace(/\\/g, "/");
         const normalizedSrcSites = srcSitesDir.replace(/\\/g, "/");
 
         const relPath = normalizedFullPath.slice(normalizedSrcSites.length + 1);
         const distRelPath = relPath.replace(/\.ts$/, ".js");
-        const distPath = distRelPath; // relative path for output
 
         const pathParts = dirname(relPath).split("/");
 
-        // Parse content
         const content = await readFile(fullPath, "utf-8");
         const commentMatch = content.match(/^\s*\/\*\*([\s\S]*?)\*\//);
 
@@ -108,6 +136,7 @@ export async function buildDefault() {
         let name: string | undefined;
         let description: string | undefined;
         let version: string | undefined;
+        let isUsage = false;
 
         if (commentMatch) {
             const commentBody = commentMatch[1];
@@ -115,11 +144,13 @@ export async function buildDefault() {
             const nameMatch = commentBody.match(/@name\s+(.*)/);
             const descMatch = commentBody.match(/@description\s+(.*)/);
             const verMatch = commentBody.match(/@version\s+(.*)/);
+            const typeMatch = commentBody.match(/@type\s+(.*)/);
 
             if (idMatch) id = idMatch[1].trim();
             if (nameMatch) name = nameMatch[1].trim();
             if (descMatch) description = descMatch[1].trim();
             if (verMatch) version = verMatch[1].trim();
+            if (typeMatch && typeMatch[1].trim() === "usage") isUsage = true;
         }
 
         if (!id || !name || !description || !version) {
@@ -128,30 +159,42 @@ export async function buildDefault() {
             );
         }
 
+        // distPath logic uses the respective directory now
         const scriptData: ScriptData = {
             id,
-            path: distPath,
+            path: distRelPath,
             name,
             description,
             version,
         };
 
         try {
-            const node = ensureNode(pathParts);
-            node.scripts.push(scriptData);
+            if (isUsage) {
+                const node = ensureNode(pathParts, trackingSites);
+                node.scripts.push(scriptData);
+            } else {
+                const node = ensureNode(pathParts, normalSites);
+                node.scripts.push(scriptData);
+            }
         } catch (e) {
             console.error(`Error processing ${relPath}:`, e);
-            throw e; // Stop build on error
+            throw e; 
         }
     }
 
-
-    const output = {
+    const normalOutput = {
         projectName: packageJson.name,
         license: packageJson.license || "MIT",
-        sites: sites,
+        sites: normalSites,
     };
 
-    await writeFile("dist/scripts-data.json", JSON.stringify(output, null, 4));
-    console.log("Docs generated at dist/scripts-data.json");
+    const trackingOutput = {
+        projectName: packageJson.name,
+        license: packageJson.license || "MIT",
+        sites: trackingSites,
+    };
+
+    await writeFile("dist/scripts-data.json", JSON.stringify(normalOutput, null, 4));
+    await writeFile("dist/tracking-scripts.json", JSON.stringify(trackingOutput, null, 4));
+    console.log("Docs generated at dist/scripts-data.json and dist/tracking-scripts.json");
 }
