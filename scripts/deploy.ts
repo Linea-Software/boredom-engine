@@ -42,8 +42,8 @@ async function main() {
             }
         }
         scriptsZip.addFile(join(distDir, "scripts-data.json"), "scripts-data.json");
-        await scriptsZip.archive(join(distDir, "boredom_scripts.zip"));
-        console.log("Created boredom_scripts.zip");
+        await scriptsZip.archive(join(distDir, "boredom-scripts.zip"));
+        console.log("Created boredom-scripts.zip");
 
         // 2. Boredom Tracking Zip
         const trackingZip = new zip.Zip();
@@ -59,8 +59,8 @@ async function main() {
             }
         }
         trackingZip.addFile(join(distDir, "tracking-scripts.json"), "tracking-scripts.json");
-        await trackingZip.archive(join(distDir, "boredom_tracking.zip"));
-        console.log("Created boredom_tracking.zip");
+        await trackingZip.archive(join(distDir, "boredom-tracking.zip"));
+        console.log("Created boredom-tracking.zip");
 
     } catch (e) {
         console.error("Zipping failed:", e);
