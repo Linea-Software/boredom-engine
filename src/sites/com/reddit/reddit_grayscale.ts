@@ -18,8 +18,28 @@ onDOMLoaded(() => {
         return;
     }
 
-    // Apply grayscale to media elements
-    applyMediaDesaturation(["shreddit-player", "shreddit-post", "img", "video"]);
+    // Apply grayscale to media elements and remaining vibrant UI icons/badges
+    applyMediaDesaturation([
+        "shreddit-player", 
+        "shreddit-post", 
+        "img", 
+        "video",
+        "#reddit-logo",
+        "#login-button",
+        ".button-brand",
+        ".button-primary",
+        ".join-btn",
+        ".shreddit-subreddit-icon__icon",
+        "award-button img",
+        ".text-secondary",
+        ".text-neutral-content",
+        "faceplate-icon",
+        ".be-fab",
+        "shreddit-post-flair",
+        "faceplate-search-input",
+        "reddit-search-large",
+        "a[href='/answers/']"
+    ]);
 
     const vibrantVariables = [
         "--color-global-orangered",
@@ -38,7 +58,14 @@ onDOMLoaded(() => {
         "--color-category-nsfw",
         "--color-success-background",
         "--color-danger-background",
-        "--color-brand-gradient-default"
+        "--color-brand-gradient-default",
+        // Additional ones found missing
+        "--color-brand-orange",
+        "--color-brand-orange-hover",
+        "--color-input-border-focus",
+        "--color-button-brand-background",
+        "--color-button-primary-background",
+        "--color-global-admin"
     ];
 
     const GRAY_LEVELS: Record<Intensity, string> = {
