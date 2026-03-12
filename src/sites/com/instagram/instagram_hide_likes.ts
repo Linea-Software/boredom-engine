@@ -14,9 +14,15 @@ onDOMLoaded(() => {
 
     // Hide Like counts and "Liked by" info
     injectCss(`
-        /* Hide Like buttons text/counts */
-        a[href*="/liked_by/"] {
+        /* Hide Like buttons text/counts in feed */
+        a[href*="/liked_by/"],
+        span.x1ypdohk.x1s688f.x2fvf9.xe9ewy2[role="button"] {
              display: none !important;
+        }
+
+        /* Hide Like count in modal/single post view */
+        span.x1rg5ohu.x1qfufaz {
+            display: none !important;
         }
     `);
 
@@ -36,10 +42,10 @@ onDOMLoaded(() => {
         spans.forEach(el => {
             const text = el.textContent || '';
             if (
-                /^\d+ likes$/.test(text) || 
-                /^\d+ Mi piace$/.test(text) ||
-                text.includes('others') && text.includes('liked') ||
-                text.includes('altre persone') && text.includes('piace')
+                /^\d+ likes$/.test(text.toLowerCase()) || 
+                /^\d+ mi piace$/.test(text.toLowerCase()) ||
+                text.toLowerCase().includes('others') && text.toLowerCase().includes('liked') ||
+                text.toLowerCase().includes('altre persone') && text.toLowerCase().includes('piace')
             ) {
                 (el as HTMLElement).style.display = 'none';
             }

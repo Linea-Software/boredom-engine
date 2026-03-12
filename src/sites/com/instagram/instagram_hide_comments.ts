@@ -13,7 +13,6 @@ onDOMLoaded(() => {
     }
 
     // Hide comment buttons and comment sections
-    // Note: We use aria-labels to target the buttons.
     injectCss(`
         /* Hide comment buttons in feed */
         svg[aria-label="Comment"],
@@ -30,23 +29,25 @@ onDOMLoaded(() => {
             display: none !important;
         }
 
-        /* Hide comments container in sidebars/modals */
-        ul._a9z6, /* Common class for comment list */
+        /* Hide comments list in modal/single post view */
+        ul._ab8d._ab8e,
+        ul._a9z6,
         div[role="presentation"] ul,
-        section._ae79 /* Comments section in some views */ {
+        section.x78zum5.xdt5ytf.x1iyjqo2.xg6iff7 {
              display: none !important;
         }
     `);
 
     // Add a more robust observer for text-based hiding
     const hideCommentText = () => {
-        const elements = document.querySelectorAll('span, div, button');
+        const elements = document.querySelectorAll('span, div, button, a');
         elements.forEach(el => {
             const text = el.textContent?.toLowerCase() || '';
             if (
-                text.includes('view all') && text.includes('comment') || 
-                text.includes('visualizza tutti') && text.includes('commenti') ||
-                text.includes('mostra tutti') && text.includes('commenti')
+                (text.includes('view all') && text.includes('comment')) || 
+                (text.includes('visualizza tutti') && text.includes('commenti')) ||
+                (text.includes('mostra tutti') && text.includes('commenti')) ||
+                (text.includes('altri') && text.includes('commenti'))
             ) {
                 (el as HTMLElement).style.display = 'none';
             }
