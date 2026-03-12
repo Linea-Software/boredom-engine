@@ -9,16 +9,16 @@ import {
     applyMediaDesaturation,
     currentIntensityHigherThan,
     Intensity,
+    enforceCssVariables,
 } from "$common";
 
 onDOMLoaded(() => {
     applyMediaDesaturation();
 
     if (currentIntensityHigherThan(Intensity.None)) {
-        //set css variable --ig-badge: 255, 48, 64; to gray
-        document.documentElement.style.setProperty(
-            "--ig-badge",
-            "156, 156, 156",
-        );
+        // Enforce the badge color to be gray
+        enforceCssVariables({
+            "--ig-badge": "156, 156, 156",
+        });
     }
 });

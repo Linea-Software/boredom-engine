@@ -4,23 +4,39 @@
  * @description Blocks Instagram reels elements and fetch requests on the reels page.
  * @version 1.0.0
  */
-import { onDOMLoaded, blockNetworkRequests, currentIntensityHigherThan, Intensity } from "$common";
+import { onDOMLoaded, blockNetworkRequests, currentIntensityHigherThan, Intensity, injectCss } from "$common";
 
 onDOMLoaded(() => {
-    if(!currentIntensityHigherThan(Intensity.None)){
+    if (!currentIntensityHigherThan(Intensity.None)) {
         return;
     }
 
-    if (
-        window.location.pathname.startsWith("/reels") ||
-        window.location.pathname.includes("/reels/")
-    ) {
-        window.location.replace("https://instagram.com");
-    }
+    const checkPath = () => {
+        if (
+            window.location.pathname.startsWith("/reels") ||
+            window.location.pathname.includes("/reels/")
+        ) {
+            window.location.replace("https://instagram.com");
+        }
+    };
 
-    const reelsIcon = document.querySelector(
-        'a[href*="/reels/"]',
-    ) as HTMLAnchorElement;
+    // Hide Reels icons/links via CSS
+    injectCss(`
+        a[href*="/reels/"] {
+            display: none !important;
+        }
+    `);
 
-    reelsIcon.style.display = "none";
+    // Monitor for navigation and dynamic elements
+    const observer = new MutationObserver(() => {
+        checkPath();
+    });
+
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+    });
+
+    // Initial check
+    checkPath();
 });
