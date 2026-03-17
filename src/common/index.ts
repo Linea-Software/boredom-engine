@@ -4,3 +4,4 @@ export * from "./network";
 export * from "./media";
 export * from "./intensity";
 export * from "./usage_stats";
+export * from "./scroll";
