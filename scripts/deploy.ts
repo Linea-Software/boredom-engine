@@ -42,8 +42,8 @@ async function main() {
             }
         }
         scriptsZip.addFile(join(distDir, "scripts-data.json"), "scripts-data.json");
-        await scriptsZip.archive(join(distDir, "boredom-scripts.zip"));
-        console.log("Created boredom-scripts.zip");
+        await scriptsZip.archive(join(distDir, "resistance-scripts.zip"));
+        console.log("Created resistance-scripts.zip");
 
         // 2. Boredom Tracking Zip
         const trackingZip = new zip.Zip();
@@ -59,8 +59,8 @@ async function main() {
             }
         }
         trackingZip.addFile(join(distDir, "tracking-scripts.json"), "tracking-scripts.json");
-        await trackingZip.archive(join(distDir, "boredom-tracking.zip"));
-        console.log("Created boredom-tracking.zip");
+        await trackingZip.archive(join(distDir, "resistance-tracking.zip"));
+        console.log("Created resistance-tracking.zip");
 
     } catch (e) {
         console.error("Zipping failed:", e);
@@ -73,7 +73,7 @@ async function main() {
     try {
         await mkdir(targetDir, { recursive: true });
 
-        const zips = ["boredom_scripts.zip", "boredom_tracking.zip"];
+        const zips = ["resistance-scripts.zip", "resistance-scripts.zip"];
 
         for (const zipFile of zips) {
             const sourcePath = join(distDir, zipFile);

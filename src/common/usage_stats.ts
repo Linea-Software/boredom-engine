@@ -8,10 +8,11 @@ export interface UsageReport {
     openedAt: string;
     activeTimeSeconds: number;
     currentIntensity: Intensity;
-    type: "opened" | "closed" | "heartbeat";
+    type: "opened" | "closed" | "heartbeat" | "theme";
+    dominantColor?: string;
 }
 
-export type ServerAction = "nothing" | "increase_intensity" | "close_tab"
+export type ServerAction = "nothing" | "increase_intensity" | "close_tab";
 
 
 
@@ -166,13 +167,17 @@ export function getActiveTimeSeconds(): number {
  * Sends a usage report to the local server and handles the response action.
  * @param type The type of report (opened, closed, or heartbeat)
  */
-export async function sendUsageReport(type: "opened" | "closed" | "heartbeat"): Promise<void> {
+export async function sendUsageReport(
+    type: "opened" | "closed" | "heartbeat" | "theme",
+    extraData: Partial<UsageReport> = {}
+): Promise<void> {
     const report: UsageReport = {
         siteHostname: window.location.hostname,
         openedAt: sessionOpenedAt.toISOString(),
         activeTimeSeconds: getActiveTimeSeconds(),
         type: type,
         currentIntensity: getIntensity(),
+        ...extraData,
     };
 
     const serverUrl = getBoredomServerUrl();
