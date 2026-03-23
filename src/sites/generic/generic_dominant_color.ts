@@ -6,7 +6,8 @@
  * @type usage
  */
 
-import { onDOMLoaded, sendUsageReport } from "$common";
+import { onDOMLoaded } from "$common";
+import { sendSiteThemeReport } from "$common/theme-report";
 import { getColorSync } from "colorthief";
 
 /**
@@ -78,9 +79,7 @@ async function syncSiteThemeColor(): Promise<void> {
         console.log(
             `[Boredom Engine] Site dominant color: ${dominantColorHex}`
         );
-        await sendUsageReport("theme", {
-            dominantColor: dominantColorHex,
-        });
+        await sendSiteThemeReport(window.location.hostname, dominantColorHex);
     } else {
         console.debug(
             "[Boredom Engine] No accessible dominant color found on this site."

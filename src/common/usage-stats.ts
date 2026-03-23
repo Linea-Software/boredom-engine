@@ -1,6 +1,7 @@
 import { onDOMLoaded } from "./dom";
 import { getIntensity, setIntensity } from "./intensity";
 import { Intensity } from "./intensity";
+import { getBoredomServerUrl } from "./server";
 export { Intensity };
 
 export interface UsageReport {
@@ -8,35 +9,12 @@ export interface UsageReport {
     openedAt: string;
     activeTimeSeconds: number;
     currentIntensity: Intensity;
-    type: "opened" | "closed" | "heartbeat" | "theme";
-    dominantColor?: string;
+    type: "opened" | "closed" | "heartbeat";
 }
+
+
 
 export type ServerAction = "nothing" | "increase_intensity" | "close_tab";
-
-
-
-/**
- * Common module to track and send usage statistics to the local server.
- */
-const GLOBAL_PORT_KEY = "__BOREDOM_SERVER_PORT__";
-const GLOBAL_HOSTNAME_KEY = "__BOREDOM_SERVER_HOSTNAME__";
-
-/**
- * Returns the local server URL where statistics should be sent, or null if not configured.
- */
-export function getBoredomServerUrl(): string | null {
-    if (typeof window === "undefined") return null;
-
-    const port = (window as any)[GLOBAL_PORT_KEY] || 3000;
-    // Default to boredomserver.dev, which we register in the hosts file during mock server startup.
-    const hostname = (window as any)[GLOBAL_HOSTNAME_KEY] || "boredomserver.dev";
-
-    if (!port) return null;
-
-    return `https://${hostname}:${port}`;
-}
-
 
 
 /**
@@ -168,7 +146,7 @@ export function getActiveTimeSeconds(): number {
  * @param type The type of report (opened, closed, or heartbeat)
  */
 export async function sendUsageReport(
-    type: "opened" | "closed" | "heartbeat" | "theme",
+    type: "opened" | "closed" | "heartbeat",
     extraData: Partial<UsageReport> = {}
 ): Promise<void> {
     const report: UsageReport = {
@@ -183,7 +161,7 @@ export async function sendUsageReport(
     const serverUrl = getBoredomServerUrl();
     if (!serverUrl) return;
 
-    const url = `${serverUrl}/usage`;
+    const url = new URL("/report/usage", serverUrl);
 
     try {
         // Use fetch with keepalive for 'closed' events to ensure they are sent during unload
