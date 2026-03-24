@@ -16,7 +16,8 @@ export interface UsageReport {
     openedAt: string;
     activeTimeSeconds: number;
     currentIntensity: Intensity;
-    type: "opened" | "closed" | "heartbeat";
+    type: "opened" | "closed" | "heartbeat" | "theme";
+    dominantColor?: string;
 }
 
 export type ServerAction = "nothing" | "increase_intensity" | "close_tab";
@@ -133,7 +134,8 @@ async function startServer() {
                     console.log(`[${new Date().toLocaleTimeString()}] Report from ${report.siteHostname}:`, {
                         type: report.type,
                         activeTime: `${report.activeTimeSeconds}s`,
-                        intensity: report.currentIntensity
+                        intensity: report.currentIntensity,
+                        ...(report.dominantColor ? { dominantColor: report.dominantColor } : {})
                     });
 
                     let action: ServerAction = "nothing";

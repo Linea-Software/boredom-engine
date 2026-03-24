@@ -6,6 +6,7 @@
       "name": "boredom-engine",
       "dependencies": {
         "@types/hostile": "^1.3.5",
+        "colorthief": "^3.3.1",
         "hostile": "^1.4.0",
         "lit": "^3.3.2",
         "lucide": "^0.563.0",
@@ -127,6 +128,8 @@
     "color-convert": ["color-convert@2.0.1", "", { "dependencies": { "color-name": "~1.1.4" } }, "sha512-RRECPsj7iu/xb5oKYcsFHSppFNnsj/52OVTRKb4zP5onXwVF3zVmmToNcOfGC+CRDpfK/U584fMg38ZHCaElKQ=="],
 
     "color-name": ["color-name@1.1.4", "", {}, "sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA=="],
+
+    "colorthief": ["colorthief@3.3.1", "", { "peerDependencies": { "sharp": ">=0.33.0" }, "optionalPeers": ["sharp"], "bin": { "colorthief": "dist/cli.js" } }, "sha512-a3qzYXy51h6p3725pV8rnJwUBGTtvYQge2pVhKJwL+vETUD5pCi6VKmQyu51pBHdUbu/BPEXbwFLS0GnxXNhGA=="],
 
     "commander": ["commander@11.1.0", "", {}, "sha512-yPVavfyCcRhmorC7rWlkHn15b4wDVgVmBA7kV4QVBsF7kv/9TKJAbAXVTxvTnwP8HHKjRCJDClKbciiYS7p0DQ=="],
 
