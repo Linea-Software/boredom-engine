@@ -59,8 +59,8 @@ async function main() {
             }
         }
         trackingZip.addFile(join(distDir, "tracking-scripts.json"), "tracking-scripts.json");
-        await trackingZip.archive(join(distDir, "resistance-tracking.zip"));
-        console.log("Created resistance-tracking.zip");
+        await trackingZip.archive(join(distDir, "tracking-scripts.zip"));
+        console.log("Created tracking-scripts.zip");
 
     } catch (e) {
         console.error("Zipping failed:", e);
