@@ -23,7 +23,7 @@ export interface UsageReport {
 export type ServerAction = "nothing" | "increase_intensity" | "close_tab";
 
 const PORT = Number(Bun.env.BOREDOM_PORT) || 3000;
-const DEFAULT_HOSTNAME = "boredomserver.dev";
+const DEFAULT_HOSTNAME = "ace-engine.local";
 const HOSTNAME = Bun.env.BOREDOM_HOSTNAME || DEFAULT_HOSTNAME;
 
 // Register hostname if it's the default one

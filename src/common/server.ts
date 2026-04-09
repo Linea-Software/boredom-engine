@@ -10,13 +10,13 @@ const GLOBAL_HOSTNAME_KEY = "__BOREDOM_SERVER_HOSTNAME__";
 export function getBoredomServerUrl(): URL | null {
     if (typeof window === "undefined") return null;
 
-    const port = (window as any)[GLOBAL_PORT_KEY] || 3000;
-    // Default to boredomserver.dev, which we register in the hosts file during mock server startup.
-    const hostname = (window as any)[GLOBAL_HOSTNAME_KEY] || "boredomserver.dev";
+    const port = (window as any)[GLOBAL_PORT_KEY];
 
-    if (!port) return null;
+    const hostname = (window as any)[GLOBAL_HOSTNAME_KEY];
 
-    
+    if (!port || !hostname) {
+        return null;
+    }
 
     return new URL(`https://${hostname}:${port}`);
 }
