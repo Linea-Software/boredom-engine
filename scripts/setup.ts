@@ -110,24 +110,20 @@ async function writeZedSettings(extractDir: string): Promise<void> {
     const zedDir = join(PROJECT_ROOT, ".zed");
     await mkdir(zedDir, { recursive: true });
 
-    const content = `// Folder-specific settings
-//
-// For a full list of overridable settings, and general information on folder-specific settings,
-// see the documentation: https://zed.dev/docs/configuring-zed#settings-files
-${JSON.stringify(
-    {
-        context_servers: {
-            "chrome-devtools-mcp-zed": {
-                settings: {
-                    chrome_arg: [`--load-extension=${posixPath}`],
+    const content =
+        JSON.stringify(
+            {
+                context_servers: {
+                    "chrome-devtools-mcp-zed": {
+                        settings: {
+                            chrome_arg: [`--load-extension=${posixPath}`],
+                        },
+                    },
                 },
             },
-        },
-    },
-    null,
-    4,
-)}
-`;
+            null,
+            4,
+        ) + "\n";
 
     await writeFile(ZED_SETTINGS_PATH, content, "utf-8");
     console.log(`✅ .zed/settings.json updated with chrome_arg\n`);
