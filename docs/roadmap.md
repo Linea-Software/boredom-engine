@@ -20,6 +20,7 @@ This document tracks which sites are currently supported and which ones are plan
 | **Reddit** | `com.reddit` | 6 scripts | ✅ Done |
 | **TikTok** | `com.tiktok` | 5 scripts | ✅ Done |
 | **Twitch** | `tv.twitch` | 7 scripts | ✅ Done |
+| **Facebook** | `com.facebook` | 10 scripts | ✅ Done |
 
 ---
 
@@ -29,7 +30,7 @@ This document tracks which sites are currently supported and which ones are plan
 
 | Site | Domain Path | Priority | Notes | Status |
 |------|-------------|----------|-------|--------|
-| **Facebook** | `com.facebook` | 🔴 High | Feed blocking, reels/stories removal, grayscale, captcha. Many patterns reusable from Instagram. | 📋 Planned |
+| **Facebook** | `com.facebook` | 🔴 High | Feed blocking, reels/stories removal, grayscale, captcha, hide reactions/comments, sidebar removal, scrolling limits. | ✅ Done |
 | **X / Twitter** | `com.x` | 🔴 High | Timeline blocking, trending topics removal, scrolling limits, captcha. | 📋 Planned |
 | **LinkedIn** | `com.linkedin` | 🔴 High | Feed blocking, notification reduction, scroll limits, captcha. Increasingly addictive. | 📋 Planned |
 | **Pinterest** | `com.pinterest` | 🟡 Medium | Infinite visual discovery feed — natural fit for content blocking, desaturation, scroll limits, captcha. | 📋 Planned |
