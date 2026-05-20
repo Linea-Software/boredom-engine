@@ -1,5 +1,5 @@
 // Tiny bootloader — read this file and pass its content as initScript to navigate_page.
-// It loads the Boredom Engine scripts from the local dev server (bun run serve).
+// It loads the Boredom Engine scripts from the local dev server (bun run dev).
 const BASE = "http://localhost:48325";
 const SCRIPTS = {
     "www.facebook.com": [
