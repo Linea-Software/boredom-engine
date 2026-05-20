@@ -5,9 +5,8 @@
  * 2. Downloads & extracts the latest Tampermonkey CRX for use with --load-extension
  * 3. Writes the required chrome_arg into .zed/settings.json so the MCP browser loads Tampermonkey
  */
-import { mkdir, writeFile, readFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { existsSync } from "node:fs";
 import { Unzip } from "zip-lib";
 
 const PROJECT_ROOT = join(import.meta.dir, "..");
@@ -106,40 +105,31 @@ async function fetchTampermonkey(): Promise<string> {
 async function writeZedSettings(extractDir: string): Promise<void> {
     console.log("🔧 Updating .zed/settings.json...");
 
-    // Use forward slashes in the path — Chrome accepts them and avoids JSON escaping issues
-    const posixPath = extractDir.replace(/\\/g, "/");
-    const loadExtArg = `--load-extension=${posixPath}`;
-    const newSettings = {
-        chrome_arg: [loadExtArg],
-    };
+    const posixPath = extractDir.split("\\").join("/");
 
-    const dir = join(PROJECT_ROOT, ".zed");
-    if (!existsSync(dir)) {
-        await mkdir(dir, { recursive: true });
-    }
+    const zedDir = join(PROJECT_ROOT, ".zed");
+    await mkdir(zedDir, { recursive: true });
 
-    // Read existing file (may contain only comments and an empty object)
-    const raw = await readFile(ZED_SETTINGS_PATH, "utf-8");
-    const jsonStart = raw.indexOf("{");
-    const jsonEnd = raw.lastIndexOf("}") + 1;
-    const existing =
-        jsonStart !== -1 && jsonEnd > jsonStart
-            ? JSON.parse(raw.slice(jsonStart, jsonEnd))
-            : {};
-
-    // Merge so we don't nuke any other settings someone might add later
-    const merged = { ...existing, ...newSettings };
-    // chrome_arg should override, not merge
-    merged.chrome_arg = newSettings.chrome_arg;
-
-    const output = `// Folder-specific settings
+    const content = `// Folder-specific settings
 //
 // For a full list of overridable settings, and general information on folder-specific settings,
 // see the documentation: https://zed.dev/docs/configuring-zed#settings-files
-${JSON.stringify(merged, null, 2)}
+${JSON.stringify(
+    {
+        context_servers: {
+            "chrome-devtools-mcp-zed": {
+                settings: {
+                    chrome_arg: [`--load-extension=${posixPath}`],
+                },
+            },
+        },
+    },
+    null,
+    4,
+)}
 `;
 
-    await writeFile(ZED_SETTINGS_PATH, output, "utf-8");
+    await writeFile(ZED_SETTINGS_PATH, content, "utf-8");
     console.log(`✅ .zed/settings.json updated with chrome_arg\n`);
 }
 
