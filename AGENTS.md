@@ -47,6 +47,33 @@ When implementing scripts for a new site, **use the browser to inspect the site 
 
 This ensures the scripts are accurate and resilient to DOM changes rather than relying on assumptions.
 
+## Policy for Sites Requiring an Account
+
+Many addictive sites (Facebook, LinkedIn, X/Twitter, etc.) require logging in to access their main content. Since credentials are not available, follow this policy:
+
+1. **Inspect what's accessible without login** — Many sites still expose:
+   - Landing pages, login/signup screens
+   - Public profiles, pages, or groups
+   - Shared/embedded content (e.g., public posts, video embeds)
+   - Generic navigation elements (header, footer, search)
+   These often share CSS classes and DOM patterns with the logged-in experience.
+
+2. **Leverage similar sites** — If the target site is similar to an already-implemented one, reuse its patterns:
+   - **Facebook** is structurally similar to **Instagram** (feed, stories, reels, sidebar, notifications). Many of Instagram's selectors and approaches can be adapted.
+   - **X/Twitter** shares patterns with **Reddit** and **TikTok** (timeline feed, trending sidebar, infinite scroll).
+   - **LinkedIn** has feed and sidebar patterns similar to **Facebook**.
+
+3. **Research the site's API and network layer** — Use `list_network_requests` to observe:
+   - API endpoints that serve feed data, recommendations, or notifications
+   - GraphQL/REST patterns the site uses for dynamic content
+   - Request headers or response structures that can be used for `blockNetworkRequests`
+
+4. **Use public documentation** — Check if the site has public developer docs or open-source UI libraries (e.g., Facebook's React, LinkedIn's Ember) that reveal component structure and CSS class naming conventions.
+
+5. **Make reasonable inferences** — Based on patterns from similar sites, common social media UI patterns, and the publicly visible parts, implement scripts using well-known selectors and DOM structures. Logged-in testing can be done later by the developer.
+
+6. **When in doubt, block broadly** — If you can't verify a specific selector, prefer broader CSS class patterns or attribute selectors that are less likely to change (e.g., `[role="feed"]`, `[data-testid]`, aria labels). These are more stable across logged-in/logged-out states.
+
 ## External Documentation
 
 - **Lit (lit-html)**: When working with Lit or lit-html, always refer to the local documentation stored in `docs/lit/`. These docs cover components, templates, data management, and API references.
