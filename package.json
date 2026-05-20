@@ -12,6 +12,7 @@
     "license": "MIT",
     "private": true,
     "scripts": {
+        "setup": "bun scripts/setup.ts",
         "build": "bun scripts/build.ts",
         "deploy": "bun scripts/deploy.ts",
         "dev": "bun scripts/watch.ts",
