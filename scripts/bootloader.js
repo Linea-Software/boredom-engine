@@ -58,9 +58,19 @@ const SCRIPTS = {
 
 const files = SCRIPTS[location.hostname];
 if (files) {
-    for (const f of files) {
-        const s = document.createElement("script");
-        s.src = BASE + f;
-        document.head.appendChild(s);
+    function inject() {
+        if (!document.head) return;
+        for (const f of files) {
+            const s = document.createElement("script");
+            s.src = BASE + f;
+            document.head.appendChild(s);
+        }
     }
+    (function poll() {
+        if (document.head) {
+            inject();
+            return;
+        }
+        setTimeout(poll, 1);
+    })();
 }

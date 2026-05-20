@@ -15,8 +15,7 @@
         "setup": "bun scripts/setup.ts",
         "build": "bun scripts/build.ts",
         "deploy": "bun scripts/deploy.ts",
-        "dev": "bun scripts/watch.ts",
-        "serve": "bun scripts/serve.ts",
+        "dev": "bun scripts/dev.ts",
         "mock-server": "bun tests/mock-server/server.ts"
     },
     "type": "module",
