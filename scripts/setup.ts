@@ -39,7 +39,9 @@ async function fetchTampermonkey(): Promise<string> {
 
     const response = await fetch(CRX_URL);
     if (!response.ok) {
-        console.error(`Failed to download: ${response.status} ${response.statusText}`);
+        console.error(
+            `Failed to download: ${response.status} ${response.statusText}`,
+        );
         process.exit(1);
     }
 
@@ -60,7 +62,10 @@ async function fetchTampermonkey(): Promise<string> {
     const version = crxData[4];
     let zipStart = 0;
     if (version === 3) {
-        const headerSize = new DataView(crxData.buffer, 8, 4).getUint32(0, true);
+        const headerSize = new DataView(crxData.buffer, 8, 4).getUint32(
+            0,
+            true,
+        );
         zipStart = 12 + headerSize;
     } else if (version === 2) {
         const pubKeyLen = new DataView(crxData.buffer, 8, 4).getUint32(0, true);
@@ -101,9 +106,11 @@ async function fetchTampermonkey(): Promise<string> {
 async function writeZedSettings(extractDir: string): Promise<void> {
     console.log("🔧 Updating .zed/settings.json...");
 
-    const loadExtArg = `--load-extension=${extractDir.replace(/\\/g, "\\\\")}`;
+    // Use forward slashes in the path — Chrome accepts them and avoids JSON escaping issues
+    const posixPath = extractDir.replace(/\\/g, "/");
+    const loadExtArg = `--load-extension=${posixPath}`;
     const newSettings = {
-        "chrome_arg": [loadExtArg],
+        chrome_arg: [loadExtArg],
     };
 
     const dir = join(PROJECT_ROOT, ".zed");
@@ -115,9 +122,10 @@ async function writeZedSettings(extractDir: string): Promise<void> {
     const raw = await readFile(ZED_SETTINGS_PATH, "utf-8");
     const jsonStart = raw.indexOf("{");
     const jsonEnd = raw.lastIndexOf("}") + 1;
-    const existing = jsonStart !== -1 && jsonEnd > jsonStart
-        ? JSON.parse(raw.slice(jsonStart, jsonEnd))
-        : {};
+    const existing =
+        jsonStart !== -1 && jsonEnd > jsonStart
+            ? JSON.parse(raw.slice(jsonStart, jsonEnd))
+            : {};
 
     // Merge so we don't nuke any other settings someone might add later
     const merged = { ...existing, ...newSettings };
