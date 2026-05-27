@@ -46,32 +46,33 @@ onDOMLoaded(() => {
             }
         });
 
-        // Find like buttons by their heart SVG path signature
-        const allButtons = document.querySelectorAll(
-            'div[role="button"], a, button',
-        );
-        allButtons.forEach((btn) => {
-            const svg = btn.querySelector("svg");
-            if (!svg) return;
-            const path = svg.querySelector("path");
-            if (!path) return;
-            const d = path.getAttribute("d") || "";
+        // Get the flat list of all role="button" elements in each article
+        const articles = document.querySelectorAll("article");
+        articles.forEach((article) => {
+            const allButtons = Array.from(
+                article.querySelectorAll('[role="button"]'),
+            );
 
-            // Heart (like) icon path starts with M16.792 3.904
-            if (d.startsWith("M16.792 3.904")) {
-                (btn as HTMLElement).style.display = "none";
+            for (let i = 0; i < allButtons.length; i++) {
+                const btn = allButtons[i];
+                const svg = btn.querySelector("svg");
+                if (!svg) continue;
+                const path = svg.querySelector("path");
+                if (!path) continue;
+                const d = path.getAttribute("d") || "";
 
-                // Also hide the like count: the next sibling button with numeric text
-                let sibling = btn.nextElementSibling;
-                while (sibling) {
+                // Heart (like) icon path starts with M16.792 3.904
+                if (d.startsWith("M16.792 3.904")) {
+                    (btn as HTMLElement).style.display = "none";
+
+                    // Hide the next [role="button"] if it's a numeric like count
+                    const next = allButtons[i + 1];
                     if (
-                        sibling.getAttribute("role") === "button" &&
-                        /^[\d,.\s]+$/.test(sibling.textContent?.trim() || "")
+                        next &&
+                        /^[\d,.]+$/.test(next.textContent?.trim() || "")
                     ) {
-                        (sibling as HTMLElement).style.display = "none";
-                        break;
+                        (next as HTMLElement).style.display = "none";
                     }
-                    sibling = sibling.nextElementSibling;
                 }
             }
         });
