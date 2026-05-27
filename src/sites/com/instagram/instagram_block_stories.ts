@@ -28,6 +28,15 @@ onDOMLoaded(() => {
         }
     `);
 
+    // Block navigation to story pages
+    const checkPath = () => {
+        if (window.location.pathname.startsWith("/stories")) {
+            window.location.replace("https://instagram.com");
+        }
+    };
+
+    checkPath();
+
     // JavaScript fallback: find stories container by story-specific traits.
     // Stories are in a UL/div with canvas elements (story rings) and no article descendants.
     const hideStoriesSection = () => {
@@ -53,6 +62,7 @@ onDOMLoaded(() => {
     };
 
     const observer = new MutationObserver(() => {
+        checkPath();
         hideStoriesSection();
     });
 
