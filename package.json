@@ -14,7 +14,8 @@
     "scripts": {
         "build": "bun scripts/build.ts",
         "deploy": "bun scripts/deploy.ts",
-        "dev": "bun scripts/dev.ts",
+        "dev": "bun scripts/watch.ts",
+        "dev-chrome": "bun scripts/dev-chrome.ts",
         "mock-server": "bun tests/mock-server/server.ts"
     },
     "type": "module",
