@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, mkdirSync } from "node:fs";
 import { homedir, platform } from "node:os";
 import { join } from "node:path";
 
@@ -79,9 +79,15 @@ async function main() {
     console.log("🚀 Launching Chrome with remote debugging...");
     console.log();
 
+    // Create the profile directory if it doesn't exist
+    if (!existsSync(userDataDir)) {
+        mkdirSync(userDataDir, { recursive: true });
+        console.log(`📁 Created profile directory: ${userDataDir}`);
+    }
+
     const args = [
         `--remote-debugging-port=${CHROME_DEBUG_PORT}`,
-        `--user-data-dir="${userDataDir}"`,
+        `--user-data-dir=${userDataDir}`,
         // Suppress warnings and popups
         "--no-first-run",
         "--no-default-browser-check",
