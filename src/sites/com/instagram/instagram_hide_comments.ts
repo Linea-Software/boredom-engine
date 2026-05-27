@@ -55,23 +55,19 @@ onDOMLoaded(() => {
                 if (d.startsWith("M20.656 17.008")) {
                     (btn as HTMLElement).style.display = "none";
 
-                    // Also hide the comment count next to it
-                    const nextBtn = btn.nextElementSibling;
-                    if (
-                        nextBtn &&
-                        nextBtn.getAttribute("role") === "button" &&
-                        nextBtn.querySelector("svg")
-                    ) {
-                        const nextPath = nextBtn
-                            .querySelector("svg")
-                            ?.querySelector("path");
+                    // Also hide the comment count: the next sibling button with numeric text
+                    let sibling = btn.nextElementSibling;
+                    while (sibling) {
                         if (
-                            nextPath
-                                ?.getAttribute("d")
-                                ?.startsWith("M20.656 17.008")
+                            sibling.getAttribute("role") === "button" &&
+                            /^[\d,.\s]+$/.test(
+                                sibling.textContent?.trim() || "",
+                            )
                         ) {
-                            (nextBtn as HTMLElement).style.display = "none";
+                            (sibling as HTMLElement).style.display = "none";
+                            break;
                         }
+                        sibling = sibling.nextElementSibling;
                     }
                 }
             });
