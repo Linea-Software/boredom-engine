@@ -31,10 +31,7 @@ onDOMLoaded(() => {
 
         /* Hide comments list in modal/single post view (class-based selectors) */
         ul._ab8d._ab8e,
-        ul._a9z6,
-
-        /* Hide comment text sections */
-        section.x78zum5.xdt5ytf.x1iyjqo2.xg6iff7 {
+        ul._a9z6 {
             display: none !important;
         }
     `);
