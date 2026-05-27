@@ -40,37 +40,33 @@ onDOMLoaded(() => {
     const hideComments = () => {
         const articles = document.querySelectorAll("article");
         articles.forEach((article) => {
-            // Find all action buttons with SVGs in the article
-            const buttons = article.querySelectorAll(
-                'div[role="button"]:has(svg)',
+            // Get the flat list of all role="button" elements in DOM order
+            const allButtons = Array.from(
+                article.querySelectorAll('[role="button"]'),
             );
-            buttons.forEach((btn) => {
+
+            for (let i = 0; i < allButtons.length; i++) {
+                const btn = allButtons[i];
                 const svg = btn.querySelector("svg");
-                if (!svg) return;
+                if (!svg) continue;
                 const path = svg.querySelector("path");
-                if (!path) return;
+                if (!path) continue;
                 const d = path.getAttribute("d") || "";
 
                 // Comment icon path starts with M20.656 (speech bubble)
                 if (d.startsWith("M20.656 17.008")) {
                     (btn as HTMLElement).style.display = "none";
 
-                    // Also hide the comment count: the next sibling button with numeric text
-                    let sibling = btn.nextElementSibling;
-                    while (sibling) {
-                        if (
-                            sibling.getAttribute("role") === "button" &&
-                            /^[\d,.\s]+$/.test(
-                                sibling.textContent?.trim() || "",
-                            )
-                        ) {
-                            (sibling as HTMLElement).style.display = "none";
-                            break;
-                        }
-                        sibling = sibling.nextElementSibling;
+                    // Hide the next [role="button"] if it's a numeric count
+                    const next = allButtons[i + 1];
+                    if (
+                        next &&
+                        /^[\d,.]+$/.test(next.textContent?.trim() || "")
+                    ) {
+                        (next as HTMLElement).style.display = "none";
                     }
                 }
-            });
+            }
         });
     };
 
