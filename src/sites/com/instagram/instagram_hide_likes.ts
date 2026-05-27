@@ -65,12 +65,9 @@ onDOMLoaded(() => {
                 if (d.startsWith("M16.792 3.904")) {
                     (btn as HTMLElement).style.display = "none";
 
-                    // Hide the next [role="button"] if it's a numeric like count
+                    // Hide the next [role="button"] — it's the count
                     const next = allButtons[i + 1];
-                    if (
-                        next &&
-                        /^[\d,.]+$/.test(next.textContent?.trim() || "")
-                    ) {
+                    if (next) {
                         (next as HTMLElement).style.display = "none";
                     }
                 }
