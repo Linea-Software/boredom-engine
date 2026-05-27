@@ -5,57 +5,85 @@
  * @version 1.0.0
  */
 
-import { onDOMLoaded, currentIntensityHigherThan, Intensity, injectCss } from "$common";
+import {
+    onDOMLoaded,
+    currentIntensityHigherThan,
+    Intensity,
+    injectCss,
+} from "$common";
 
 onDOMLoaded(() => {
     if (!currentIntensityHigherThan(Intensity.None)) {
         return;
     }
 
-    // Hide comment buttons and comment sections
+    // Hide comments using language-agnostic selectors:
+    // - SVG path signature for the comment (speech bubble) icon
+    // - Structural CSS selectors for comment sections
     injectCss(`
-        /* Hide comment buttons in feed */
-        svg[aria-label="Comment"],
-        svg[aria-label="Commento"],
-        svg[aria-label="Scrivi un commento"],
-        svg[aria-label="Add a comment"] {
-            display: none !important;
-        }
+        /* Hide comment button by its SVG icon path signature (speech bubble) */
+        div[role="button"]:has(svg path[d^="M20.656 17.008"]),
+        /* Also hide the comment count span that typically sits next to it */
+        div[role="button"]:has(svg path[d^="M20.656 17.008"]) ~ div[role="button"]:has(svg path[d^="M20.656 17.008"]),
+        /* Hide comment button containers */
+        a:has(svg path[d^="M20.656 17.008"]),
+        button:has(svg path[d^="M20.656 17.008"]),
 
-        button:has(svg[aria-label="Comment"]),
-        button:has(svg[aria-label="Commento"]),
-        a:has(svg[aria-label="Comment"]),
-        a:has(svg[aria-label="Commento"]) {
-            display: none !important;
-        }
-
-        /* Hide comments list in modal/single post view */
+        /* Hide comments list in modal/single post view (structural selectors) */
         ul._ab8d._ab8e,
         ul._a9z6,
         div[role="presentation"] ul,
+
+        /* Hide comment text sections */
         section.x78zum5.xdt5ytf.x1iyjqo2.xg6iff7 {
-             display: none !important;
+            display: none !important;
         }
     `);
 
-    // Add a more robust observer for text-based hiding
-    const hideCommentText = () => {
-        const elements = document.querySelectorAll('span, div, button, a');
-        elements.forEach(el => {
-            const text = el.textContent?.toLowerCase() || '';
-            if (
-                (text.includes('view all') && text.includes('comment')) || 
-                (text.includes('visualizza tutti') && text.includes('commenti')) ||
-                (text.includes('mostra tutti') && text.includes('commenti')) ||
-                (text.includes('altri') && text.includes('commenti'))
-            ) {
-                (el as HTMLElement).style.display = 'none';
-            }
+    // JavaScript fallback: find comment buttons by their position in the action bar
+    const hideComments = () => {
+        const articles = document.querySelectorAll("article");
+        articles.forEach((article) => {
+            // Find all action buttons with SVGs in the article
+            const buttons = article.querySelectorAll(
+                'div[role="button"]:has(svg)',
+            );
+            buttons.forEach((btn) => {
+                const svg = btn.querySelector("svg");
+                if (!svg) return;
+                const path = svg.querySelector("path");
+                if (!path) return;
+                const d = path.getAttribute("d") || "";
+
+                // Comment icon path starts with M20.656 (speech bubble)
+                if (d.startsWith("M20.656 17.008")) {
+                    (btn as HTMLElement).style.display = "none";
+
+                    // Also hide the comment count next to it
+                    const nextBtn = btn.nextElementSibling;
+                    if (
+                        nextBtn &&
+                        nextBtn.getAttribute("role") === "button" &&
+                        nextBtn.querySelector("svg")
+                    ) {
+                        const nextPath = nextBtn
+                            .querySelector("svg")
+                            ?.querySelector("path");
+                        if (
+                            nextPath
+                                ?.getAttribute("d")
+                                ?.startsWith("M20.656 17.008")
+                        ) {
+                            (nextBtn as HTMLElement).style.display = "none";
+                        }
+                    }
+                }
+            });
         });
     };
 
     const observer = new MutationObserver(() => {
-        hideCommentText();
+        hideComments();
     });
 
     observer.observe(document.body, {
@@ -63,5 +91,5 @@ onDOMLoaded(() => {
         subtree: true,
     });
 
-    hideCommentText();
+    hideComments();
 });
