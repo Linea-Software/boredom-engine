@@ -7,7 +7,11 @@ import { getIntensity, Intensity } from "$common";
 export function injectCss(css: string): void {
     const style = document.createElement("style");
     style.textContent = css;
-    document.head.appendChild(style);
+    // document.head may not exist at document-start timing; fall back to documentElement
+    const target = document.head || document.documentElement;
+    if (target) {
+        target.appendChild(style);
+    }
 }
 
 /**

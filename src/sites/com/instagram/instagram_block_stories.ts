@@ -28,24 +28,28 @@ onDOMLoaded(() => {
         }
     `);
 
-    // JavaScript fallback: find the stories section before the first article
+    // JavaScript fallback: find stories container by story-specific traits.
+    // Stories are in a UL/div with canvas elements (story rings) and no article descendants.
     const hideStoriesSection = () => {
-        const main =
-            document.querySelector("main") ||
-            document.querySelector('[role="main"]');
-        if (!main) return;
-
-        // The stories tray is the first section in main, before any articles
-        const firstSection = main.querySelector("section");
-        if (firstSection) {
-            // Verify it's the stories section by checking for story-like children
-            // (circular profile images or canvas elements for story rings)
-            const imgs = firstSection.querySelectorAll('img[alt*="profile"]');
-            const canvases = firstSection.querySelectorAll("canvas");
-            if (imgs.length >= 2 || canvases.length >= 1) {
-                (firstSection as HTMLElement).style.display = "none";
+        // Find elements that contain story items (canvas-drawn rings + listitems)
+        const storyLists = document.querySelectorAll("ul, div[role='list']");
+        storyLists.forEach((list) => {
+            const canvases = list.querySelectorAll("canvas");
+            const articles = list.querySelectorAll("article");
+            const listItems = list.querySelectorAll("li, [role='listitem']");
+            // Story tray: has canvas (story rings), list items (stories), and no feed articles
+            if (
+                canvases.length >= 1 &&
+                articles.length === 0 &&
+                listItems.length >= 2
+            ) {
+                (list as HTMLElement).style.setProperty(
+                    "display",
+                    "none",
+                    "important",
+                );
             }
-        }
+        });
     };
 
     const observer = new MutationObserver(() => {

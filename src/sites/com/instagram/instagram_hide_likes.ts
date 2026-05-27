@@ -60,6 +60,19 @@ onDOMLoaded(() => {
             // Heart (like) icon path starts with M16.792 3.904
             if (d.startsWith("M16.792 3.904")) {
                 (btn as HTMLElement).style.display = "none";
+
+                // Also hide the like count: the next sibling button with numeric text
+                let sibling = btn.nextElementSibling;
+                while (sibling) {
+                    if (
+                        sibling.getAttribute("role") === "button" &&
+                        /^[\d,.\s]+$/.test(sibling.textContent?.trim() || "")
+                    ) {
+                        (sibling as HTMLElement).style.display = "none";
+                        break;
+                    }
+                    sibling = sibling.nextElementSibling;
+                }
             }
         });
     };

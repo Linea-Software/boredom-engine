@@ -29,10 +29,9 @@ onDOMLoaded(() => {
         a:has(svg path[d^="M20.656 17.008"]),
         button:has(svg path[d^="M20.656 17.008"]),
 
-        /* Hide comments list in modal/single post view (structural selectors) */
+        /* Hide comments list in modal/single post view (class-based selectors) */
         ul._ab8d._ab8e,
         ul._a9z6,
-        div[role="presentation"] ul,
 
         /* Hide comment text sections */
         section.x78zum5.xdt5ytf.x1iyjqo2.xg6iff7 {
