@@ -6,7 +6,9 @@ import { injectCss } from "./styling";
  * Limits the scrolling depth on a page based on the current intensity.
  * @param vhMultiplierMap Optional map to override default VH multipliers for different intensities.
  */
-export function limitScrolling(vhMultiplierMap?: Partial<Record<Intensity, number>>) {
+export function limitScrolling(
+    vhMultiplierMap?: Partial<Record<Intensity, number>>,
+) {
     const intensity = getIntensity();
     if (intensity === Intensity.None) return;
 
@@ -19,13 +21,20 @@ export function limitScrolling(vhMultiplierMap?: Partial<Record<Intensity, numbe
         [Intensity.Extreme]: 0.5,
     };
 
-    const multiplier = vhMultiplierMap?.[intensity] ?? DEFAULT_LIMITS[intensity];
-    
+    const multiplier =
+        vhMultiplierMap?.[intensity] ?? DEFAULT_LIMITS[intensity];
+
     onDOMLoaded(() => {
         let maxScroll = window.innerHeight * multiplier;
         let limitReached = false;
 
+        let isScrollingBack = false;
+
         const enforceLimit = () => {
+            // Prevent re-entrant calls: scrollTo triggers another scroll event,
+            // which would otherwise cause an infinite loop and freeze the page.
+            if (isScrollingBack) return;
+
             if (window.scrollY > maxScroll) {
                 if (!limitReached) {
                     limitReached = true;
@@ -41,18 +50,23 @@ export function limitScrolling(vhMultiplierMap?: Partial<Record<Intensity, numbe
                     `;
                     document.head.appendChild(style);
                 }
-                
+
                 // Force scroll back to the limit
+                isScrollingBack = true;
                 window.scrollTo(0, maxScroll);
+                // Reset the guard on the next microtask so future scrolls (user or programmatic) work
+                setTimeout(() => {
+                    isScrollingBack = false;
+                }, 0);
             }
         };
 
         window.addEventListener("scroll", enforceLimit, { passive: false });
         window.addEventListener("touchmove", enforceLimit, { passive: false });
-        
+
         // Periodically check in case of dynamic content or programmatic scrolls
         setInterval(enforceLimit, 500);
-        
+
         // Handle resize
         window.addEventListener("resize", () => {
             if (!limitReached) {
