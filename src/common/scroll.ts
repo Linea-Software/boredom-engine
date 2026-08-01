@@ -1,9 +1,10 @@
 import { Intensity, getIntensity } from "./intensity";
 import { onDOMLoaded } from "./dom";
-import { injectCss } from "./styling";
 
 /**
  * Limits the scrolling depth on a page based on the current intensity.
+ * Uses requestAnimationFrame (not setInterval) and pauses when the tab is
+ * not visible to avoid wasting CPU in background tabs.
  * @param vhMultiplierMap Optional map to override default VH multipliers for different intensities.
  */
 export function limitScrolling(
@@ -27,8 +28,9 @@ export function limitScrolling(
     onDOMLoaded(() => {
         let maxScroll = window.innerHeight * multiplier;
         let limitReached = false;
-
         let isScrollingBack = false;
+        let animationId: number | null = null;
+        let isVisible = !document.hidden;
 
         const enforceLimit = () => {
             // Prevent re-entrant calls: scrollTo triggers another scroll event,
@@ -61,11 +63,43 @@ export function limitScrolling(
             }
         };
 
+        // Use rAF loop instead of setInterval — respects background tabs
+        // (browsers throttle rAF to ~1 fps when the tab is hidden).
+        const scheduleFrame = () => {
+            if (!isVisible) {
+                animationId = null;
+                return;
+            }
+            enforceLimit();
+            animationId = requestAnimationFrame(scheduleFrame);
+        };
+
+        const startLoop = () => {
+            if (animationId !== null) return;
+            isVisible = !document.hidden;
+            animationId = requestAnimationFrame(scheduleFrame);
+        };
+
+        const stopLoop = () => {
+            if (animationId !== null) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+        };
+
+        // Scroll / touch listeners still needed for immediate response
         window.addEventListener("scroll", enforceLimit, { passive: false });
         window.addEventListener("touchmove", enforceLimit, { passive: false });
 
-        // Periodically check in case of dynamic content or programmatic scrolls
-        setInterval(enforceLimit, 500);
+        // Pause the polling loop when the tab is hidden
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden) {
+                isVisible = false;
+                stopLoop();
+            } else {
+                startLoop();
+            }
+        });
 
         // Handle resize
         window.addEventListener("resize", () => {
@@ -73,5 +107,8 @@ export function limitScrolling(
                 maxScroll = window.innerHeight * multiplier;
             }
         });
+
+        // Start the rAF loop
+        startLoop();
     });
 }

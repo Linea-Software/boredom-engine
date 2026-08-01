@@ -61,31 +61,56 @@ export function applyMediaDesaturation(
     injectCss(css);
 }
 
-/**
- * Enforces CSS variables on the document element with !important priority.
- * Uses a MutationObserver to ensure they persist if overridden by the site.
- * @param variables Object mapping variable names to their values
- */
-export function enforceCssVariables(variables: Record<string, string>): void {
+// ---------------------------------------------------------------------------
+// Singleton observer for enforceCssVariables — merges multiple callers into a
+// single MutationObserver instead of leaking one per invocation.
+// ---------------------------------------------------------------------------
+
+let cssVarObserver: MutationObserver | null = null;
+const enforcedCssVariables: Record<string, string> = {};
+
+function getOrCreateCssVarObserver(): MutationObserver {
+    if (cssVarObserver) return cssVarObserver;
+
     const root = document.documentElement;
 
-    const apply = () => {
-        for (const [key, val] of Object.entries(variables)) {
+    const applyAll = () => {
+        for (const [key, val] of Object.entries(enforcedCssVariables)) {
             if (root.style.getPropertyValue(key) !== val) {
                 root.style.setProperty(key, val, "important");
             }
         }
     };
 
-    // Apply immediately
-    apply();
-
-    // Persist changes
-    const observer = new MutationObserver(() => apply());
-    observer.observe(root, {
+    cssVarObserver = new MutationObserver(() => applyAll());
+    cssVarObserver.observe(root, {
         attributes: true,
         attributeFilter: ["style"],
     });
+
+    return cssVarObserver;
+}
+
+/**
+ * Enforces CSS variables on the document element with !important priority.
+ * Uses a single shared MutationObserver so multiple callers don't leak
+ * observers.
+ * @param variables Object mapping variable names to their values
+ */
+export function enforceCssVariables(variables: Record<string, string>): void {
+    // Merge variables into the shared set
+    Object.assign(enforcedCssVariables, variables);
+
+    // Apply immediately
+    const root = document.documentElement;
+    for (const [key, val] of Object.entries(variables)) {
+        if (root.style.getPropertyValue(key) !== val) {
+            root.style.setProperty(key, val, "important");
+        }
+    }
+
+    // Ensure the singleton observer is watching
+    getOrCreateCssVarObserver();
 }
 
 /**

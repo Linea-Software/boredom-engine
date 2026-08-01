@@ -15,26 +15,47 @@ const CONFIG = {
     },
 };
 
+// ---------------------------------------------------------------------------
+// Singleton AudioContext — prevents hitting the browser limit (~6 contexts)
+// ---------------------------------------------------------------------------
+
+let sharedAudioCtx: AudioContext | null = null;
+const connectedElements = new WeakSet<HTMLMediaElement>();
+
+function getSharedAudioContext(): AudioContext | null {
+    if (sharedAudioCtx) return sharedAudioCtx;
+    try {
+        const AudioContextClass =
+            window.AudioContext || (window as any).webkitAudioContext;
+        if (!AudioContextClass) return null;
+        sharedAudioCtx = new AudioContextClass();
+    } catch {
+        return null;
+    }
+    return sharedAudioCtx;
+}
+
 /**
- * Adds a delay to the audio playback of a media element.
+ * Adds a delay to the audio playback of a media element using the shared
+ * AudioContext so we never exceed the browser's per-tab limit.
  * @param element The media element (video or audio) to delay.
  * @param delaySeconds The delay in seconds.
  */
 export function setAudioDelay(
     element: HTMLMediaElement,
     delaySeconds: number,
-): AudioContext | undefined {
-    try {
-        const AudioContext =
-            window.AudioContext || (window as any).webkitAudioContext;
-        if (!AudioContext) {
-            console.error("AudioContext not supported in this browser.");
-            return;
-        }
+): void {
+    const ctx = getSharedAudioContext();
+    if (!ctx) return;
 
-        const ctx = new AudioContext();
+    // Each media element can only be connected to the Web Audio graph once.
+    if (connectedElements.has(element)) return;
+
+    try {
         const source = ctx.createMediaElementSource(element);
-        const delayNode = ctx.createDelay(Math.max(delaySeconds + 1, 5.0)); // Ensure enough buffer
+        connectedElements.add(element);
+
+        const delayNode = ctx.createDelay(Math.max(delaySeconds + 1, 5.0));
         delayNode.delayTime.value = delaySeconds;
 
         source.connect(delayNode);
@@ -51,43 +72,32 @@ export function setAudioDelay(
 
         element.addEventListener("pause", updateState);
         element.addEventListener("play", updateState);
-
-        // Initial state check
         updateState();
-
-        console.log(`Audio delayed by ${delaySeconds}s.`);
-        return ctx;
     } catch (error) {
-        console.error(
-            "Failed to set audio delay (likely CORS or already connected):",
-            error,
-        );
-        return undefined;
+        console.debug("Failed to set audio delay:", error);
     }
 }
 
-let observerStarted = false;
+// ---------------------------------------------------------------------------
+// Audio processing for video degradation (also uses the shared context)
+// ---------------------------------------------------------------------------
 
-/**
- * Adds a delay node to audio sources to simulate lag/desync.
- */
 function processAudio(element: HTMLMediaElement): void {
     if (element.dataset.audioLagged) return;
 
+    const ctx = getSharedAudioContext();
+    if (!ctx) return;
+
+    // Prevent re-connecting the same media element to the audio graph.
+    if (connectedElements.has(element)) return;
+
     try {
-        const AudioContext =
-            window.AudioContext || (window as any).webkitAudioContext;
-        if (!AudioContext) return;
-
-        // We use a singleton context to prevent browser limit errors
-        // Note: In a strict extension environment, you might need one ctx per element
-        const ctx = new AudioContext();
         const source = ctx.createMediaElementSource(element);
-        const delayNode = ctx.createDelay(5.0);
+        connectedElements.add(element);
 
+        const delayNode = ctx.createDelay(5.0);
         delayNode.delayTime.value = CONFIG.audio.delay;
 
-        // Reconnect: Source -> Delay -> Destination
         source.connect(delayNode);
         delayNode.connect(ctx.destination);
 
@@ -100,8 +110,6 @@ function processAudio(element: HTMLMediaElement): void {
         document.addEventListener("click", resumeCtx, { once: true });
         element.addEventListener("play", resumeCtx);
     } catch (e) {
-        // Usually fails if the element is already connected to a graph
-        // or due to strict autoplay policies.
         console.debug("Audio intercept skipped:", e);
     }
 }
@@ -227,10 +235,17 @@ function degradeVideo(video: HTMLVideoElement): void {
     }
 
     // Hide original video visually, but keep it playing for audio/timing
-    // Hide original video visually, but keep it playing for audio/timing
     video.style.setProperty("opacity", "0", "important");
 
+    let frameCount = 0;
     const renderLoop = () => {
+        // Cleanup: if the video was removed from the DOM (common in SPAs with
+        // infinite scroll), remove the canvas and stop the render loop.
+        if (++frameCount % 60 === 0 && !video.isConnected) {
+            canvas.remove();
+            return;
+        }
+
         if (!CONFIG.videos.enabled) {
             canvas.remove();
             video.style.opacity = "";
@@ -280,29 +295,33 @@ function degradeVideo(video: HTMLVideoElement): void {
 
 // --- 4. MASTER OBSERVER ---
 
-const observer = new MutationObserver((mutations) => {
-    for (const mutation of mutations) {
-        for (let i = 0; i < mutation.addedNodes.length; i++) {
-            const node = mutation.addedNodes[i];
-            if (node instanceof HTMLElement) {
-                // Check for IMG
-                if (node.tagName === "IMG")
-                    degradeImage(node as HTMLImageElement);
-                node.querySelectorAll("img").forEach(degradeImage);
-
-                // Check for VIDEO
-                if (node.tagName === "VIDEO")
-                    degradeVideo(node as HTMLVideoElement);
-                node.querySelectorAll("video").forEach(degradeVideo);
-            }
-        }
-    }
-});
+let observerStarted = false;
+let mutationObserver: MutationObserver | null = null;
 
 function startObserver() {
     if (observerStarted) return;
     observerStarted = true;
-    observer.observe(document.body, { childList: true, subtree: true });
+
+    mutationObserver = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+            for (let i = 0; i < mutation.addedNodes.length; i++) {
+                const node = mutation.addedNodes[i];
+                if (node instanceof HTMLElement) {
+                    // Check for IMG
+                    if (node.tagName === "IMG")
+                        degradeImage(node as HTMLImageElement);
+                    node.querySelectorAll("img").forEach(degradeImage);
+
+                    // Check for VIDEO
+                    if (node.tagName === "VIDEO")
+                        degradeVideo(node as HTMLVideoElement);
+                    node.querySelectorAll("video").forEach(degradeVideo);
+                }
+            }
+        }
+    });
+
+    mutationObserver.observe(document.body, { childList: true, subtree: true });
 }
 
 /**
@@ -315,7 +334,7 @@ export function downgradeImages(): void {
         [Intensity.Medium]: 0.5,
         [Intensity.High]: 0.15,
         [Intensity.Extreme]: 0.05,
-    }
+    };
 
     CONFIG.images.enabled = true;
     CONFIG.images.quality = IMAGE_QUALITY_MAP[getIntensity()];
@@ -336,7 +355,7 @@ export function downgradeVideos(): void {
         [Intensity.Medium]: 0.5,
         [Intensity.High]: 0.15,
         [Intensity.Extreme]: 0.05,
-    }
+    };
 
     CONFIG.videos.enabled = true;
     CONFIG.videos.quality = VIDEO_QUALITY_MAP[getIntensity()];
