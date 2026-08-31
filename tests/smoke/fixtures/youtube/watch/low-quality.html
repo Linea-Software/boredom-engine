@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>YouTube mock — low quality</title>
+</head>
+<body>
+    <!--
+        Served from fixtures/youtube/watch/... so window.location.href contains
+        "/watch", which the script requires before forcing playback quality.
+    -->
+    <div id="ytd-player"></div>
+    <script>
+        window.__qualityCalls = [];
+        const fakePlayer = {
+            setPlaybackQualityRange: (min, max) => window.__qualityCalls.push(["range", min, max]),
+            setPlaybackQuality: (q) => window.__qualityCalls.push(["quality", q]),
+        };
+        document.getElementById("ytd-player").getPlayer = () => fakePlayer;
+    </script>
+</body>
+</html>

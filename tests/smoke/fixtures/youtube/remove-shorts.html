@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>YouTube mock — shorts removal</title>
+</head>
+<body>
+    <!--
+        Filename avoids the "/shorts" substring on purpose: the script
+        redirects away from any URL whose path contains "/shorts", which the
+        fixture path would otherwise trigger. The redirect branch is covered
+        separately over the fake http origin.
+
+        Nav entries mirror YouTube's real structure: each #items child is a
+        wrapper element that CONTAINS the anchor / title span, which is what
+        the script's removal logic queries for.
+    -->
+    <main>
+        <div id="shelf">
+            <span is-shorts>Shorts chip</span>
+            <span is-shorts>Another shorts chip</span>
+            <span>Regular chip</span>
+        </div>
+        <div id="shorts-inner-container">Shorts shelf content</div>
+        <nav>
+            <div id="items">
+                <div class="nav-item"><a title="Shorts" href="/shorts">Shorts</a></div>
+                <div class="nav-item"><a title="Home" href="/">Home</a></div>
+            </div>
+            <div id="items">
+                <div class="nav-item"><yt-formatted-string class="title">Shorts</yt-formatted-string></div>
+            </div>
+            <div id="items">
+                <div class="nav-item"><yt-formatted-string class="title">Home</yt-formatted-string></div>
+            </div>
+        </nav>
+    </main>
+</body>
+</html>

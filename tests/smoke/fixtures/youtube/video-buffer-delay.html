@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>YouTube mock — video buffer delay</title>
+</head>
+<body>
+    <!--
+        The resistance script needs a "playing" video to simulate buffering.
+        A real <video> with no source can never leave the paused state, so the
+        fixture shadows `paused`/`play`/`pause` to look like playback while
+        recording pause/play calls for assertions.
+    -->
+    <script>
+        const video = document.createElement("video");
+        video.id = "player-video";
+        Object.defineProperty(video, "paused", { get: () => false, configurable: true });
+        video.ended = false;
+        video.pause = () => {
+            window.__pauseCalls = (window.__pauseCalls || 0) + 1;
+        };
+        video.play = async () => {
+            window.__playCalls = (window.__playCalls || 0) + 1;
+        };
+        document.body.appendChild(video);
+
+        // Native YouTube buffering spinner the script toggles.
+        const spinner = document.createElement("div");
+        spinner.className = "ytp-spinner";
+        spinner.style.display = "none";
+        document.body.appendChild(spinner);
+    </script>
+</body>
+</html>
