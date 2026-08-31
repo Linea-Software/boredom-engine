@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Reddit mock — video delay</title>
+</head>
+<body>
+    <!--
+        A real <video> with no source can never leave the paused state, so the
+        fixture shadows `paused`/`play`/`pause` to look like playback while
+        recording pause/play calls for assertions.
+    -->
+    <div id="vwrap"></div>
+    <script>
+        const video = document.createElement("video");
+        video.id = "player-video";
+        Object.defineProperty(video, "paused", { get: () => false, configurable: true });
+        video.ended = false;
+        video.pause = () => {
+            window.__pauseCalls = (window.__pauseCalls || 0) + 1;
+        };
+        video.play = async () => {
+            window.__playCalls = (window.__playCalls || 0) + 1;
+        };
+        document.getElementById("vwrap").appendChild(video);
+    </script>
+</body>
+</html>

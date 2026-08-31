@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Reddit mock — block recommendations</title>
+</head>
+<body>
+    <!--
+        The script only acts on the homepage ("/") and reacts to mutations
+        (Reddit is an SPA), so the fixture triggers the observer once by
+        appending a node after load.
+    -->
+    <main>
+        <div id="subgrid-container">
+            <div id="recommendation">Recommended post</div>
+            <div id="regular-post">Regular post</div>
+        </div>
+    </main>
+    <script>
+        setTimeout(() => {
+            const probe = document.createElement("div");
+            probe.id = "probe";
+            document.body.appendChild(probe);
+        }, 50);
+    </script>
+</body>
+</html>
