@@ -1,6 +1,16 @@
 import { build } from "esbuild";
-import { readdir, readFile, writeFile } from "node:fs/promises";
+import { readdir, readFile, writeFile, access } from "node:fs/promises";
 import { join, dirname } from "node:path";
+import {
+    CATALOG_SCHEMA_VERSION,
+    sortCatalog,
+    validateCatalog,
+    type Catalog,
+} from "../catalog-contract.ts";
+import {
+    isCompleteScriptMetadata,
+    parseScriptMetadata,
+} from "../metadata.ts";
 
 async function getFiles(dir: string): Promise<string[]> {
     const dirents = await readdir(dir, { withFileTypes: true });
@@ -49,16 +59,7 @@ export async function buildDefault() {
     // First, determine the type of each script
     for (const file of entryPoints) {
         const content = await readFile(file, "utf-8");
-        const commentMatch = content.match(/^\s*\/\*\*([\s\S]*?)\*\//);
-        let isUsage = false;
-        if (commentMatch) {
-            const commentBody = commentMatch[1];
-            const typeMatch = commentBody.match(/@type\s+(.*)/);
-            if (typeMatch && typeMatch[1].trim() === "usage") {
-                isUsage = true;
-            }
-        }
-        if (isUsage) {
+        if (parseScriptMetadata(content).isUsage) {
             trackingEntryPoints.push(file);
         } else {
             normalEntryPoints.push(file);
@@ -130,30 +131,9 @@ export async function buildDefault() {
         const pathParts = dirname(relPath).split("/");
 
         const content = await readFile(fullPath, "utf-8");
-        const commentMatch = content.match(/^\s*\/\*\*([\s\S]*?)\*\//);
+        const metadata = parseScriptMetadata(content);
 
-        let id: string | undefined;
-        let name: string | undefined;
-        let description: string | undefined;
-        let version: string | undefined;
-        let isUsage = false;
-
-        if (commentMatch) {
-            const commentBody = commentMatch[1];
-            const idMatch = commentBody.match(/@id\s+(.*)/);
-            const nameMatch = commentBody.match(/@name\s+(.*)/);
-            const descMatch = commentBody.match(/@description\s+(.*)/);
-            const verMatch = commentBody.match(/@version\s+(.*)/);
-            const typeMatch = commentBody.match(/@type\s+(.*)/);
-
-            if (idMatch) id = idMatch[1].trim();
-            if (nameMatch) name = nameMatch[1].trim();
-            if (descMatch) description = descMatch[1].trim();
-            if (verMatch) version = verMatch[1].trim();
-            if (typeMatch && typeMatch[1].trim() === "usage") isUsage = true;
-        }
-
-        if (!id || !name || !description || !version) {
+        if (!isCompleteScriptMetadata(metadata)) {
             throw new Error(
                 `Script ${relPath} is missing required metadata options (@id, @name, @description, @version).`
             );
@@ -161,15 +141,15 @@ export async function buildDefault() {
 
         // distPath logic uses the respective directory now
         const scriptData: ScriptData = {
-            id,
+            id: metadata.id!,
             path: distRelPath,
-            name,
-            description,
-            version,
+            name: metadata.name!,
+            description: metadata.description!,
+            version: metadata.version!,
         };
 
         try {
-            if (isUsage) {
+            if (metadata.isUsage) {
                 const node = ensureNode(pathParts, trackingSites);
                 node.scripts.push(scriptData);
             } else {
@@ -182,19 +162,38 @@ export async function buildDefault() {
         }
     }
 
-    const normalOutput = {
+    const normalOutput: Catalog = {
+        schemaVersion: CATALOG_SCHEMA_VERSION,
         projectName: packageJson.name,
         license: packageJson.license || "MIT",
         sites: normalSites,
     };
 
     const trackingOutput = {
+        schemaVersion: CATALOG_SCHEMA_VERSION,
         projectName: packageJson.name,
         license: packageJson.license || "MIT",
         sites: trackingSites,
     };
 
-    await writeFile("dist/scripts-data.json", JSON.stringify(normalOutput, null, 4));
-    await writeFile("dist/tracking-scripts.json", JSON.stringify(trackingOutput, null, 4));
+    // Deterministic output: stable key/script ordering regardless of the
+    // platform's readdir order.
+    const sortedNormal = sortCatalog(normalOutput);
+    const sortedTracking = sortCatalog(trackingOutput);
+
+    // Validate the resistance catalog against the shared contract before
+    // writing anything — a broken catalog must fail the build, not ship.
+    const distRoot = join(process.cwd(), "dist");
+    validateCatalog(sortedNormal, async (relativePath) => {
+        try {
+            await access(join(distRoot, "normal", relativePath));
+            return true;
+        } catch {
+            return false;
+        }
+    });
+
+    await writeFile("dist/scripts-data.json", JSON.stringify(sortedNormal, null, 4));
+    await writeFile("dist/tracking-scripts.json", JSON.stringify(sortedTracking, null, 4));
     console.log("Docs generated at dist/scripts-data.json and dist/tracking-scripts.json");
 }

@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build
+        run: bun run build
+
+      - name: Unit tests
+        run: bun run test
+
+      - name: Artifact tests (build + deploy + zip/catalog validation)
+        run: bun run test:artifact
+
+      - name: Upload resistance artifact (no publishing)
+        uses: actions/upload-artifact@v4
+        with:
+          name: resistance-scripts
+          path: |
+            dist/resistance-scripts.zip
+            dist/scripts-data.json
+          retention-days: 14
+
+      # Publishing to ace-blocker-site is intentionally NOT automated:
+      # production credentials and a release policy do not exist yet. The
+      # release procedure is documented in docs/release.md.

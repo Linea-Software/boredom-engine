@@ -64,17 +64,33 @@ async function main() {
     console.log(`🔍 Remote debugging port:   ${CHROME_DEBUG_PORT}`);
     console.log();
 
-    // Kill existing Chrome instances so we can start fresh with our flags
-    console.log("🧹 Closing existing Chrome instances...");
+    // ⚠️ DANGEROUS STEP — killing every running Chrome instance on the
+    // machine can destroy the user's open tabs. This is OFF unless the
+    // operator explicitly opts in: pass `--kill-chrome` or set
+    // BOREDOM_KILL_CHROME=1.
+    const allowKill =
+        process.argv.includes("--kill-chrome") || Bun.env.BOREDOM_KILL_CHROME === "1";
 
-    if (platform() === "win32") {
-        spawn("taskkill", ["/F", "/IM", "chrome.exe"], { stdio: "ignore" });
+    if (allowKill) {
+        console.log("🧹 Closing existing Chrome instances...");
+
+        if (platform() === "win32") {
+            spawn("taskkill", ["/F", "/IM", "chrome.exe"], { stdio: "ignore" });
+        } else {
+            spawn("pkill", ["-f", "chrome"], { stdio: "ignore" });
+        }
+
+        // Wait for Chrome to shut down
+        await new Promise((resolve) => setTimeout(resolve, 2000));
     } else {
-        spawn("pkill", ["-f", "chrome"], { stdio: "ignore" });
+        console.log(
+            "⏭️  Skipping the Chrome kill (opt-in via --kill-chrome or BOREDOM_KILL_CHROME=1).",
+        );
+        console.log(
+            "    The remote-debugging port needs a fresh Chrome instance; " +
+                "close other Chrome windows manually if the port is busy.",
+        );
     }
-
-    // Wait for Chrome to shut down
-    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     console.log("🚀 Launching Chrome with remote debugging...");
     console.log();

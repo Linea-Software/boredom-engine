@@ -1,3 +1,7 @@
+// ⚠️ UNUSED (development-only): `runAsEarlyAsPossible` is a no-op kept for
+// reference. No shipped script imports it — content scripts are injected
+// before page scripts by the engine's MITM proxy, so "as early as possible"
+// is already guaranteed. Do not rely on it for ordering.
 export function runAsEarlyAsPossible(callback: () => void): void {
     callback();
 }

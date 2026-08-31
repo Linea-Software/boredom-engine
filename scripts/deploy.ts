@@ -1,6 +1,41 @@
-import { cp, mkdir, readdir, rm } from "node:fs/promises";
 import { join } from "node:path";
 import * as zip from "zip-lib";
+import { readdir, stat } from "node:fs/promises";
+
+/**
+ * Creates the distribution ZIP archives from the built `dist/` tree.
+ *
+ * v1 beta output: the Resistance Mode artifact (`resistance-scripts.zip`,
+ * root layout: `scripts-data.json` + reverse-domain script folders).
+ * The tracking ZIP is still produced (existing behavior) but is not part of
+ * the v1 pipeline — nothing injects tracking scripts.
+ *
+ * There is deliberately NO local "deploy" step: the previous code copied the
+ * ZIP into `C:\ProgramData\LineaSoftware\AceBlocker\scripts`, a directory no
+ * engine code reads. Uploads happen through the ace-blocker-site admin panel
+ * (see `docs/release.md`).
+ */
+
+async function addDirectoryToZip(archive: zip.Zip, dir: string, prefix: string) {
+    const entries = await readdir(dir);
+    for (const entry of entries) {
+        const fullPath = join(dir, entry);
+        const entryName = prefix ? `${prefix}/${entry}` : entry;
+        const stats = await stat(fullPath);
+        if (stats.isDirectory()) {
+            await addDirectoryToZip(archive, fullPath, entryName);
+        } else {
+            archive.addFile(fullPath, entryName);
+        }
+    }
+}
+
+async function createZip(sourceDir: string, catalogFile: string, outputZip: string) {
+    const archive = new zip.Zip();
+    await addDirectoryToZip(archive, sourceDir, "");
+    archive.addFile(join("dist", catalogFile), catalogFile);
+    await archive.archive(outputZip);
+}
 
 async function main() {
     console.log("Building project...");
@@ -21,73 +56,34 @@ async function main() {
     console.log("Build successful.");
 
     const distDir = join(process.cwd(), "dist");
-    
+
     // Zipping
     console.log("Creating zip archives...");
     try {
-        // 1. Boredom Scripts Zip (Normal)
-        const scriptsZip = new zip.Zip();
-        // Add all folders/files from dist/normal
-        const normalDir = join(distDir, "normal");
-        const normalFiles = await readdir(normalDir);
-        for (const f of normalFiles) {
-            const fullPath = join(normalDir, f);
-            // zip-lib Zip.addFolder/addFile adds the entry with the name provided as second arg (metadata)
-            // or just the basename if not provided.
-            const stats = await import("node:fs/promises").then(m => m.stat(fullPath));
-            if (stats.isDirectory()) {
-                scriptsZip.addFolder(fullPath, f);
-            } else {
-                scriptsZip.addFile(fullPath, f);
-            }
-        }
-        scriptsZip.addFile(join(distDir, "scripts-data.json"), "scripts-data.json");
-        await scriptsZip.archive(join(distDir, "resistance-scripts.zip"));
-        console.log("Created resistance-scripts.zip");
+        // 1. Resistance scripts zip (root layout: scripts-data.json + com/... + tv/...)
+        await createZip(
+            join(distDir, "normal"),
+            "scripts-data.json",
+            join(distDir, "resistance-scripts.zip"),
+        );
+        console.log("Created dist/resistance-scripts.zip");
 
-        // 2. Boredom Tracking Zip
-        const trackingZip = new zip.Zip();
-        const trackingDir = join(distDir, "tracking");
-        const trackingFiles = await readdir(trackingDir);
-        for (const f of trackingFiles) {
-            const fullPath = join(trackingDir, f);
-            const stats = await import("node:fs/promises").then(m => m.stat(fullPath));
-            if (stats.isDirectory()) {
-                trackingZip.addFolder(fullPath, f);
-            } else {
-                trackingZip.addFile(fullPath, f);
-            }
-        }
-        trackingZip.addFile(join(distDir, "tracking-scripts.json"), "tracking-scripts.json");
-        await trackingZip.archive(join(distDir, "tracking-scripts.zip"));
-        console.log("Created tracking-scripts.zip");
-
+        // 2. Tracking scripts zip (existing behavior; not part of v1).
+        await createZip(
+            join(distDir, "tracking"),
+            "tracking-scripts.json",
+            join(distDir, "tracking-scripts.zip"),
+        );
+        console.log("Created dist/tracking-scripts.zip");
     } catch (e) {
         console.error("Zipping failed:", e);
         process.exit(1);
     }
 
-    const targetDir = "C:\\ProgramData\\LineaSoftware\\AceBlocker\\scripts";
-    console.log(`Deploying zips to ${targetDir}...`);
-
-    try {
-        await mkdir(targetDir, { recursive: true });
-
-        const zips = ["resistance-scripts.zip", "resistance-scripts.zip"];
-
-        for (const zipFile of zips) {
-            const sourcePath = join(distDir, zipFile);
-            const targetPath = join(targetDir, zipFile);
-
-            await cp(sourcePath, targetPath, { force: true });
-            console.log(`Deployed ${zipFile}`);
-        }
-
-        console.log("Deployment complete.");
-    } catch (error) {
-        console.error("Deployment failed:", error);
-        process.exit(1);
-    }
+    console.log("\nDeployment summary:");
+    console.log("  dist/resistance-scripts.zip  — upload via the site admin panel");
+    console.log("  dist/tracking-scripts.zip    — not part of the v1 pipeline");
+    console.log("See docs/release.md for the release procedure.");
 }
 
 main();

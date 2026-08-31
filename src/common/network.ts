@@ -1,3 +1,11 @@
+// ⚠️ UNUSED (development-only): `addDelayToNetwork` and
+// `addPacketLossToNetwork` are not imported by any shipped script — they
+// monkey-patch window.fetch/XMLHttpRequest globally, which is too invasive
+// for content scripts and has no engine counterpart. They are kept as
+// reference for a possible future "network slowdown" engine feature
+// (dead UI in ace-app referenced it as `lagMs`). `blockNetworkRequests`
+// below IS used by shipped scripts.
+
 /**
  * Adds a delay to network requests.
  * @param delay The delay in milliseconds.

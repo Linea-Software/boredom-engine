@@ -26,8 +26,19 @@ const PORT = Number(Bun.env.BOREDOM_PORT) || 3000;
 const DEFAULT_HOSTNAME = "ace-engine.local";
 const HOSTNAME = Bun.env.BOREDOM_HOSTNAME || DEFAULT_HOSTNAME;
 
+// ⚠️ DEVELOPMENT-ONLY TOOL — machine-modifying behavior is OFF by default.
+//
+// This mock server exists to exercise the usage/theme report flow locally.
+// The engine's real endpoints are `POST /report/usage` and
+// `POST /report/theme` (the scripts use exactly those paths). The server
+// does NOT need to install a CA into the Windows trust store or edit the
+// hosts file: set `BOREDOM_ALLOW_SYSTEM_CHANGES=1` ONLY if you explicitly
+// want it to register `ace-engine.local` in the hosts file and install its
+// generated CA into the machine's root store.
+const ALLOW_SYSTEM_CHANGES = Bun.env.BOREDOM_ALLOW_SYSTEM_CHANGES === "1";
+
 // Register hostname if it's the default one
-if (HOSTNAME === DEFAULT_HOSTNAME) {
+if (HOSTNAME === DEFAULT_HOSTNAME && ALLOW_SYSTEM_CHANGES) {
     try {
         hostile.set("127.0.0.1", HOSTNAME);
         console.log(`[Hosts] Registered ${HOSTNAME} -> 127.0.0.1`);
@@ -35,11 +46,16 @@ if (HOSTNAME === DEFAULT_HOSTNAME) {
         console.error(`[Hosts] Failed to register ${HOSTNAME}. Try running with admin/sudo privileges.`);
         console.debug(err);
     }
+} else if (HOSTNAME === DEFAULT_HOSTNAME) {
+    console.warn(
+        "[Hosts] Skipping hosts-file edit (BOREDOM_ALLOW_SYSTEM_CHANGES not set). " +
+            "The mock server stays reachable via 127.0.0.1.",
+    );
 }
 
 // Cleanup on exit
 const cleanup = () => {
-    if (HOSTNAME === DEFAULT_HOSTNAME) {
+    if (HOSTNAME === DEFAULT_HOSTNAME && ALLOW_SYSTEM_CHANGES) {
         try {
             hostile.remove("127.0.0.1", HOSTNAME);
             console.log(`\n[Hosts] Unregistered ${HOSTNAME}`);
@@ -78,8 +94,8 @@ async function startServer() {
         ssl = { key: cert.key, cert: cert.cert };
         console.log(`[SSL] Certificates ready.`);
 
-        // Install CA cert using certutil on Windows
-        if (process.platform === "win32") {
+        // Install CA cert using certutil on Windows — ONLY with explicit opt-in
+        if (process.platform === "win32" && ALLOW_SYSTEM_CHANGES) {
             const caPath = path.join(process.cwd(), "temp_ca.crt");
             fs.writeFileSync(caPath, ca.cert);
             try {
@@ -94,6 +110,11 @@ async function startServer() {
             } finally {
                 if (fs.existsSync(caPath)) fs.unlinkSync(caPath);
             }
+        } else if (process.platform === "win32") {
+            console.warn(
+                "[SSL] Skipping CA installation into the Windows root store " +
+                    "(BOREDOM_ALLOW_SYSTEM_CHANGES not set).",
+            );
         }
     } catch (err) {
         console.error(`[SSL] Failed to setup HTTPS:`, err);
@@ -128,7 +149,7 @@ async function startServer() {
                 });
             }
 
-            if (url.pathname === "/usage" && req.method === "POST") {
+            if (url.pathname === "/report/usage" && req.method === "POST") {
                 try {
                     const report: UsageReport = await req.json();
                     console.log(`[${new Date().toLocaleTimeString()}] Report from ${report.siteHostname}:`, {
@@ -154,6 +175,8 @@ async function startServer() {
                         }
                     }
 
+                    // The engine responds with the ServerAction enum serialized
+                    // as a JSON string (e.g. "nothing").
                     return new Response(JSON.stringify(action), {
                         headers: {
                             "Content-Type": "application/json",
@@ -162,6 +185,17 @@ async function startServer() {
                     });
                 } catch (err) {
                     console.error("Error parsing report:", err);
+                    return new Response("Invalid JSON", { status: 400 });
+                }
+            }
+
+            if (url.pathname === "/report/theme" && req.method === "POST") {
+                try {
+                    const report: { siteHostname: string; color: string } = await req.json();
+                    console.log(`[${new Date().toLocaleTimeString()}] Theme report from ${report.siteHostname}: ${report.color}`);
+                    return new Response("ok", { status: 200 });
+                } catch (err) {
+                    console.error("Error parsing theme report:", err);
                     return new Response("Invalid JSON", { status: 400 });
                 }
             }
