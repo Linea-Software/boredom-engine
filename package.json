@@ -18,7 +18,8 @@
         "dev-chrome": "bun scripts/dev-chrome.ts",
         "mock-server": "bun tests/mock-server/server.ts",
         "test": "bun test tests/unit",
-        "test:artifact": "bun test tests/artifact.test.ts"
+        "test:artifact": "bun test tests/artifact.test.ts",
+        "test:smoke": "playwright test --config tests/smoke/playwright.config.ts"
     },
     "type": "module",
     "dependencies": {

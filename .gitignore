@@ -15,6 +15,10 @@ logs
 _.log
 report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
+# playwright smoke tests
+test-results
+playwright-report
+
 # downloaded browser extensions
 extensions/
 
