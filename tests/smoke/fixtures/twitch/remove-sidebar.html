@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Twitch mock — remove sidebar</title>
+</head>
+<body>
+    <!--
+        Mirrors the exact XPath the script hides:
+        //*[@id="root"]/div[1]/div[1]/div[2]/div[1]
+    -->
+    <div id="root">
+        <div>
+            <div>
+                <div>Header</div>
+                <div>
+                    <div id="sidebar">Sidebar nav</div>
+                    <div id="content">Content</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
