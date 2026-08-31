@@ -14,8 +14,14 @@ import {
     Intensity,
 } from "$common";
 
-if (currentIntensityHigherThan(Intensity.None)) {
-    // Enforce specific color values
+onDOMLoaded(() => {
+    if (!currentIntensityHigherThan(Intensity.None)) {
+        return;
+    }
+
+    // Enforce specific color values. Runs inside onDOMLoaded (not at module
+    // scope): document.documentElement may not exist yet at document-start,
+    // which would make enforceCssVariables throw and kill the whole script.
     setCssVariablesToGray([
         "--ui-shape-primary",
         "--ui-text-primary-display",
@@ -25,12 +31,7 @@ if (currentIntensityHigherThan(Intensity.None)) {
         "--tux-colorPrimary-tint-12",
         "--tux-colorLink",
     ]);
-}
 
-onDOMLoaded(() => {
-    if (!currentIntensityHigherThan(Intensity.None)) {
-        return;
-    }
     applyMediaDesaturation();
 
     // Backup: Inject CSS as well
