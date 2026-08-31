@@ -21,7 +21,6 @@ onDOMLoaded(() => {
 
         /* Target "News Feed" labeled sections */
         section[aria-label*="News Feed"],
-        section[aria-label*="Notizie"],
         div[aria-label*="News Feed"],
         div[aria-label*="Feed"] {
             display: none !important;
@@ -29,9 +28,7 @@ onDOMLoaded(() => {
 
         /* Suggested posts / sponsored content */
         div[aria-label*="Suggested"],
-        div[aria-label*="Suggeriti"],
-        div[aria-label*="Sponsored"],
-        div[aria-label*="Sponsorizzato"] {
+        div[aria-label*="Sponsored"] {
             display: none !important;
         }
     `);
@@ -71,12 +68,9 @@ onDOMLoaded(() => {
             const label = el.getAttribute('aria-label') || '';
             if (
                 label.includes('News Feed') ||
-                label.includes('Notizie') ||
                 label.includes('Feed') ||
                 label.includes('Suggested') ||
-                label.includes('Suggeriti') ||
-                label.includes('Sponsored') ||
-                label.includes('Sponsorizzato')
+                label.includes('Sponsored')
             ) {
                 (el as HTMLElement).style.display = 'none';
             }

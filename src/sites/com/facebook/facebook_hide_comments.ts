@@ -15,37 +15,28 @@ onDOMLoaded(() => {
     injectCss(`
         /* Hide comment buttons */
         a[aria-label*="Comment"],
-        a[aria-label*="Commenta"],
         div[role="button"][aria-label*="Comment"],
-        div[role="button"][aria-label*="Commenta"],
 
         /* Hide comment containers */
         div[aria-label*="Comment"],
-        div[aria-label*="Commenti"],
 
         /* Hide "View X comments" links */
         a[aria-label*="View previous comments"],
-        a[aria-label*="Mostra commenti precedenti"],
-        a[aria-label*="Mostra altri commenti"],
         a[aria-label*="View more comments"],
 
         /* Hide the full comment section in modals */
-        [role="dialog"] div[aria-label*="Comments"],
-        [role="dialog"] div[aria-label*="Commenti"] {
+        [role="dialog"] div[aria-label*="Comments"] {
             display: none !important;
         }
 
         /* Hide comment input */
         form[aria-label*="comment"],
-        form[aria-label*="Commenta"],
-        div[aria-label*="Write a comment"],
-        div[aria-label*="Scrivi un commento"] {
+        div[aria-label*="Write a comment"] {
             display: none !important;
         }
 
         /* Hide comment counts on posts */
-        span[aria-label*="comments"],
-        span[aria-label*="commenti"] {
+        span[aria-label*="comments"] {
             display: none !important;
         }
     `);
@@ -57,11 +48,7 @@ onDOMLoaded(() => {
             const text = el.textContent?.toLowerCase() || '';
             if (
                 text.includes('comment') ||
-                text.includes('commenta') ||
-                text.includes('commenti') ||
-                text.includes('mostra tutti') && text.includes('comment') ||
                 text.includes('view all') && text.includes('comment') ||
-                text.includes('scrivi un commento') ||
                 text.includes('write a comment')
             ) {
                 // Check if this is a dedicated comment element (text is relatively short)

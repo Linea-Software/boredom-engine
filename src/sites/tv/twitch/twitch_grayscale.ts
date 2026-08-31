@@ -26,7 +26,7 @@ onDOMLoaded(() => {
         "img.tw-image",
         "img.chat-line__message--emote",
         ".chat-view",
-        "a[aria-label='Pagina principale di Twitch'] svg", // Logo
+        "a[data-a-target='logo'] svg", // Logo (data-a-target is language-agnostic)
         ".ScNumberBadge-sc-1vsczax-0", // Badges
         ".video-ref"
     ]);
