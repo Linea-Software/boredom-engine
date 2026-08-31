@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>TikTok mock — video delay</title>
+</head>
+<body>
+    <!--
+        Same "always playing" video stub as the other delay fixtures: the
+        script appends its spinner to the video's parent and shows it while
+        "buffering".
+    -->
+    <div id="vwrap"></div>
+    <script>
+        const video = document.createElement("video");
+        video.id = "player-video";
+        Object.defineProperty(video, "paused", { get: () => false, configurable: true });
+        video.ended = false;
+        video.pause = () => {
+            window.__pauseCalls = (window.__pauseCalls || 0) + 1;
+        };
+        video.play = async () => {
+            window.__playCalls = (window.__playCalls || 0) + 1;
+        };
+        document.getElementById("vwrap").appendChild(video);
+    </script>
+</body>
+</html>

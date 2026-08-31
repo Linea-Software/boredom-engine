@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>TikTok mock — remove sidebar buttons</title>
+</head>
+<body>
+    <!--
+        Mirrors the exact XPath layout the script removes:
+        //*[@id="app"]/div[2]/div/div/div[3]/div[1]/div[3] (more button) and
+        h2[2] (explore) / h2[5] (live) under the same div[1] container.
+    -->
+    <div id="app">
+        <div></div>
+        <div>
+            <div>
+                <div>
+                    <div></div>
+                    <div></div>
+                    <div>
+                        <div>
+                            <div></div>
+                            <div></div>
+                            <div id="more-btn">More</div>
+                            <h2 id="home-btn">Home</h2>
+                            <h2 id="explore-btn">Explore</h2>
+                            <h2 id="following-btn">Following</h2>
+                            <h2 id="extra-btn">Saved</h2>
+                            <h2 id="live-btn">Live</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
