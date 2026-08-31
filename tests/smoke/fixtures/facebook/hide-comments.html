@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Facebook mock — hide comments</title>
+</head>
+<body>
+    <!--
+        The script's text-based fallback walks up from any element whose text
+        mentions "comment" to the closest role="article" container and hides
+        it, so the comment elements live in their own article while a clean
+        post article acts as the negative control.
+    -->
+    <main>
+        <div role="article" id="post">
+            <div role="button" aria-label="Like">Like</div>
+            <div role="button" aria-label="Share">Share</div>
+        </div>
+        <div role="article" id="comments-area">
+            <div role="button" aria-label="Comment">Comment</div>
+            <span aria-label="3 comments">3 comments</span>
+            <div aria-label="Write a comment">Write a comment</div>
+        </div>
+    </main>
+</body>
+</html>
