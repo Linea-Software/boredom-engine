@@ -416,12 +416,62 @@ export function generateBootstrapScript(catalog: Catalog): string {
             "margin:4px 12px 8px;background:#141414;color:#8c8;border:1px solid #333;" +
             "border-radius:4px;padding:4px;font:11px monospace;white-space:pre-wrap;" +
             "max-height:140px;overflow:auto";
-        jsRun.addEventListener("click", function () {
+        // CSP-aware runner: try eval first; if the page CSP blocks unsafe-eval
+        // (e.g. Instagram), inject the code as a blob: <script> instead, which is
+        // allowed by script-src blob: and bypasses the unsafe-eval restriction.
+        function runEval(code) {
             try {
-                var out = window.__BOREDOM_ENGINE__.evalJs(jsInput.value);
-                jsResult.textContent = String(out);
+                var out = window.__BOREDOM_ENGINE__.evalJs(code);
+                if (
+                    String(out).indexOf("Error: ") === 0 &&
+                    /Content Security Policy|unsafe-eval|script/i.test(String(out))
+                ) {
+                    return runBlob(code);
+                }
+                return { ok: true, text: String(out) };
             } catch (e) {
-                jsResult.textContent = "Error: " + e.message;
+                var eMsg = e && e.message;
+                if (/Content Security Policy|unsafe-eval|script/i.test(eMsg)) {
+                    return runBlob(code);
+                }
+                return { ok: false, text: "Error: " + eMsg };
+            }
+        }
+        function runBlob(code) {
+            window.__BOREDOM_EVAL_OUT__ = "(running)";
+            var body =
+                "(function(){try{var __r;__r=(" + code + ");window.__BOREDOM_EVAL_OUT__=" +
+                "(typeof __r==='object'&&__r!==null)?(function(){try{return JSON.stringify(__r)}" +
+                "catch(_e){return String(__r)}})():String(__r);}" +
+                "catch(_e){window.__BOREDOM_EVAL_OUT__='Error: '+_e.message;}})();";
+            var blob;
+            try {
+                blob = new Blob([body], { type: "text/javascript" });
+            } catch (e) {
+                return { ok: false, text: "Error: blob unavailable: " + e.message };
+            }
+            var url = URL.createObjectURL(blob);
+            var s = document.createElement("script");
+            s.src = url;
+            s.onload = function () { URL.revokeObjectURL(url); };
+            (document.head || document.documentElement).appendChild(s);
+            return { ok: true, async: true };
+        }
+
+        jsRun.addEventListener("click", function () {
+            var code = jsInput.value;
+            if (!code.trim()) { jsResult.textContent = "(empty)"; return; }
+            var res = runEval(code);
+            jsResult.textContent = res.text;
+            if (res.async) {
+                var tries = 0;
+                var timer = setInterval(function () {
+                    tries++;
+                    if (window.__BOREDOM_EVAL_OUT__ !== "(running)" || tries > 60) {
+                        clearInterval(timer);
+                        jsResult.textContent = String(window.__BOREDOM_EVAL_OUT__);
+                    }
+                }, 25);
             }
         });
         jsDiv.appendChild(jsInput);
