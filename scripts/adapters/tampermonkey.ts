@@ -1,39 +1,56 @@
 /**
  * Tampermonkey adapter — generates a single test userscript that loads the
- * Boredom Engine resistance scripts on supported sites, with a control menu
- * (FAB + panel) for humans and a `window.__BOREDOM_ENGINE__` API for LLMs.
+ * Boredom Engine resistance scripts on supported sites via Tampermonkey
+ * `@require` (local `file://` files), with a control menu (FAB + panel) for
+ * humans and a `window.__BOREDOM_ENGINE__` API for LLMs.
  *
- * The generated file (`dist/tampermonkey/boredom-engine.user.js`) is meant for
- * manual testing in a real browser: install it into Tampermonkey from disk
- * (file inclusion), keep `bun run dev` running to serve `dist/`, and it will
- * run ONLY on sites covered by the catalog (`@match`) and inject ONLY the
- * enabled scripts of that host (the site tree is embedded in the userscript
- * and matched at runtime with the same reverse-domain walk the engine uses).
+ * Why `@require` instead of runtime `<script src>` injection? Injected script
+ * tags are subject to the page's CSP and can be blocked; `@require` files are
+ * read by Tampermonkey at install/update time and become part of the
+ * userscript, so no server needs to serve them at runtime.
+ *
+ * Generated artifacts under `dist/tampermonkey/`:
+ * - `boredom-engine.user.js` — the userscript to install. Its header lists
+ *   `@match` for every covered host and `@require`s (in order) the bootstrap
+ *   and every wrapped site script via absolute `file://` URLs.
+ * - `bootstrap.js` — loader core: reads persisted state, sets
+ *   `window.__BOREDOM_INTENSITY__` and `window.__BOREDOM_STATE__` BEFORE the
+ *   site scripts execute, exposes `window.__BOREDOM_ENGINE__`, and builds the
+ *   🧠 control menu.
+ * - `scripts/<site-path>` — each dist/normal bundle wrapped in a guard that
+ *   only runs the script when the current host's site matches and the script
+ *   is enabled.
  *
  * Features:
  * - intensity selector (none/low/medium/high/extreme), applied live and
  *   persisted to localStorage;
- * - per-script enable/disable toggles, persisted to localStorage (enabling
- *   applies live, disabling needs a reload to fully remove effects);
+ * - per-script enable/disable toggles, persisted to localStorage (reload to
+ *   fully apply — @require'd scripts execute at load time);
  * - `window.__BOREDOM_ENGINE__` API: getState/getScripts/setIntensity/
  *   enableScript/disableScript/toggleScript/reload.
  *
  * It is NOT part of the engine artifact: `resistance-scripts.zip` (the thing
  * ace-engine consumes) is unaffected.
  *
- * Prerequisite: the resistance catalog must exist (`dist/scripts-data.json`).
- * `bun run build` produces it before this adapter runs.
+ * Prerequisite: the resistance catalog and the normal bundles must exist
+ * (`dist/scripts-data.json`, `dist/normal/...`). `bun run build` produces them
+ * before this adapter runs.
  */
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { pathToFileURL } from "node:url";
 import type { Catalog, SiteNode } from "../catalog-contract.ts";
 
 const OUTPUT_DIR = "dist/tampermonkey";
-const OUTPUT_FILE = "boredom-engine.user.js";
-const SCRIPT_VERSION = "2.0.0";
+const BOOTSTRAP_FILE = "bootstrap.js";
+const SCRIPTS_DIR = "scripts";
+const USERSCRIPT_FILE = "boredom-engine.user.js";
+const SCRIPT_VERSION = "3.0.0";
 
 /** A node of the embedded reverse-domain tree; scripts carry id/name/path. */
 interface TreeScriptNode {
+    /** Site path (e.g. "com/youtube") — set on nodes that carry scripts. */
+    site?: string;
     scripts: { id: string; name: string; path: string }[];
     children: Record<string, TreeScriptNode>;
 }
@@ -45,6 +62,11 @@ function emptyNode(): TreeScriptNode {
 /** `["com", "youtube"]` → `youtube.com` (the host the engine would match). */
 export function reverseDomainToHost(labels: string[]): string {
     return [...labels].reverse().join(".");
+}
+
+/** `"com/youtube/youtube_grayscale.js"` → `"com/youtube"`. */
+function sitePathOf(scriptPath: string): string {
+    return dirname(scriptPath).replace(/\\/g, "/");
 }
 
 /**
@@ -63,12 +85,13 @@ function collectSiteTree(
             scripts: child.scripts.map((entry) => ({
                 id: entry.id,
                 name: entry.name,
-                path: `normal/${entry.path}`,
+                path: entry.path,
             })),
             children: {},
         };
         out.children[label] = childOut;
         if (child.scripts.length > 0) {
+            childOut.site = nextLabels.join("/");
             hosts.add(reverseDomainToHost(nextLabels));
         }
         collectSiteTree(child, nextLabels, hosts, childOut);
@@ -88,12 +111,13 @@ function buildTree(catalog: Catalog): { hosts: Set<string>; root: TreeScriptNode
             scripts: siteNode.scripts.map((entry) => ({
                 id: entry.id,
                 name: entry.name,
-                path: `normal/${entry.path}`,
+                path: entry.path,
             })),
             children: {},
         };
         root.children[label] = nodeOut;
         if (siteNode.scripts.length > 0) {
+            nodeOut.site = label;
             hosts.add(reverseDomainToHost([label]));
         }
         collectSiteTree(siteNode, [label], hosts, nodeOut);
@@ -101,43 +125,51 @@ function buildTree(catalog: Catalog): { hosts: Set<string>; root: TreeScriptNode
     return { hosts, root };
 }
 
-/** Pure generation: catalog → userscript source. Exported for unit testing. */
-export function generateTampermonkeyScript(catalog: Catalog): string {
-    const { hosts, root } = buildTree(catalog);
+/** All catalog script entries with their site path. */
+function flattenEntries(catalog: Catalog): { id: string; name: string; path: string; site: string }[] {
+    const out: { id: string; name: string; path: string; site: string }[] = [];
+    const walk = (node: SiteNode) => {
+        for (const entry of node.scripts) {
+            out.push({
+                id: entry.id,
+                name: entry.name,
+                path: entry.path,
+                site: sitePathOf(entry.path),
+            });
+        }
+        for (const child of Object.values(node.children)) walk(child);
+    };
+    for (const site of Object.values(catalog.sites)) walk(site);
+    return out;
+}
 
-    if (hosts.size === 0) {
-        throw new Error("The catalog contains no resistance scripts; nothing to generate.");
-    }
+/**
+ * Wraps a built site bundle so it only executes when the loader matched the
+ * script's site and the script is enabled. Exported for unit testing.
+ */
+export function wrapScript(original: string, scriptId: string, sitePath: string): string {
+    const idJson = JSON.stringify(scriptId);
+    const siteJson = JSON.stringify(sitePath);
+    return (
+        `if (window.__BOREDOM_STATE__ && window.__BOREDOM_STATE__.currentSite === ${siteJson} ` +
+        `&& window.__BOREDOM_STATE__.enabled[${idJson}] !== false) {\n` +
+        `${original}\n` +
+        `}\n`
+    );
+}
 
-    const sortedHosts = [...hosts].sort();
-    // Tampermonkey follows Chrome match patterns: `*://*.example.com/*`
-    // covers subdomains but NOT the bare domain, so emit both variants.
-    const matchLines = sortedHosts
-        .map((host) => `// @match        *://${host}/*\n// @match        *://*\.${host}/*`)
-        .join("\n");
-
+/**
+ * Pure generation: catalog → bootstrap loader core (the FIRST `@require`). It
+ * runs before the site scripts and sets the state + intensity + API + menu.
+ */
+export function generateBootstrapScript(catalog: Catalog): string {
+    const { root } = buildTree(catalog);
     const treeJson = JSON.stringify(root);
 
-    return `// ==UserScript==
-// @name         Boredom Engine — Tampermonkey test loader
-// @namespace    boredom-engine
-// @version      ${SCRIPT_VERSION}
-// @description  Loads the Boredom Engine resistance scripts on supported sites. Menu + window.__BOREDOM_ENGINE__ API. Test-only: not part of the engine artifact.
-${matchLines}
-// @noframes
-// @run-at       document-start
-// @grant        none
-// ==/UserScript==
-
-// GENERATED BY scripts/adapters/tampermonkey.ts — do not edit by hand.
-// Rebuild with \`bun run build\` (or \`bun run deploy\`).
-
-(function () {
+    return `(function () {
     "use strict";
 
     var CONFIG = {
-        // Base URL that serves dist/ (run \`bun run dev\`, default http://localhost:48325).
-        BASE: "http://localhost:48325",
         // Default intensity when nothing is stored yet.
         DEFAULT_INTENSITY: "medium",
         // localStorage key for { intensity, enabled } state.
@@ -146,7 +178,7 @@ ${matchLines}
     };
 
     // Reverse-domain tree of supported sites → scripts [{id, name, path}].
-    // path is relative to the dist/ root, prefixed with "normal/".
+    // Nodes that carry scripts also carry their site path (e.g. "com/youtube").
     var TREE = ${treeJson};
 
     // In-memory fallback so state works even where localStorage is unavailable.
@@ -179,42 +211,22 @@ ${matchLines}
         }
     }
 
-    function scriptsForHost(hostname) {
-        if (!hostname) return [];
+    // Mirrors the engine's walk: descend through children by reversed host
+    // label and stop at the first node that carries scripts.
+    function nodeForHost(hostname) {
+        if (!hostname) return null;
         var parts = hostname.toLowerCase().replace(/^www\\./, "").split(".").reverse();
-        // Mirrors the engine's walk: descend through children by reversed host
-        // label and stop at the first node that carries scripts.
         var node = TREE;
         for (var i = 0; i < parts.length; i++) {
             node = node.children[parts[i]];
-            if (!node) return [];
-            if (node.scripts && node.scripts.length) return node.scripts;
+            if (!node) return null;
+            if (node.scripts && node.scripts.length) return node;
         }
-        return [];
+        return null;
     }
 
     function isEnabled(state, id) {
         return state.enabled[id] !== false;
-    }
-
-    function appendScript(script) {
-        if (!document.head) return;
-        var s = document.createElement("script");
-        s.src = CONFIG.BASE + "/" + script.path;
-        s.setAttribute("data-boredom-engine", script.id);
-        document.head.appendChild(s);
-    }
-
-    function injectEnabledScripts(scripts) {
-        if (!document.head) return;
-        var state = readState();
-        applyIntensity(state.intensity);
-        for (var i = 0; i < scripts.length; i++) {
-            if (isEnabled(state, scripts[i].id)) appendScript(scripts[i]);
-        }
-        console.debug(
-            "[boredom-engine] injected enabled scripts for " + location.hostname,
-        );
     }
 
     function applyIntensity(intensity) {
@@ -229,22 +241,17 @@ ${matchLines}
         }
     }
 
-    function makePublicApi(scripts) {
+    function makePublicApi(node) {
+        var scripts = node ? node.scripts : [];
         function setScriptEnabled(id, on) {
             var state = readState();
             state.enabled[id] = on;
             writeState(state);
             console.debug(
                 "[boredom-engine] script " + id + (on ? " enabled" : " disabled") +
-                    " — reload to fully apply",
+                    " — reload to apply",
             );
-            if (on) {
-                // Live-enable: re-inject the script now so it takes effect
-                // without a reload. Disabling needs a reload to remove effects.
-                for (var i = 0; i < scripts.length; i++) {
-                    if (scripts[i].id === id) appendScript(scripts[i]);
-                }
-            }
+            reloadPage();
             return api.getState();
         }
 
@@ -262,6 +269,7 @@ ${matchLines}
             },
             getState: function () {
                 var state = readState();
+                state.currentSite = node ? node.site : null;
                 state.scripts = api.getScripts();
                 return state;
             },
@@ -276,6 +284,7 @@ ${matchLines}
                 state.intensity = intensity;
                 writeState(state);
                 applyIntensity(intensity);
+                window.__BOREDOM_STATE__.intensity = intensity;
                 console.debug("[boredom-engine] intensity set to " + intensity);
                 return api.getState();
             },
@@ -358,7 +367,6 @@ ${matchLines}
                 checkbox.addEventListener("change", function () {
                     if (checkbox.checked) api.enableScript(s.id);
                     else api.disableScript(s.id);
-                    checkbox.checked = api.getState().enabled[s.id] !== false;
                 });
                 label.appendChild(checkbox);
                 label.appendChild(document.createTextNode(s.name));
@@ -371,7 +379,7 @@ ${matchLines}
         hint.className = "be-hint";
         hint.appendChild(
             document.createTextNode(
-                "Toggles persist. Enabling applies live; disabling needs a reload — ",
+                "Toggles persist and reload to apply; intensity applies live — ",
             ),
         );
         var reloadLink = document.createElement("a");
@@ -391,31 +399,29 @@ ${matchLines}
         (document.body || document.documentElement).appendChild(panel);
     }
 
-    var scripts = scriptsForHost(location.hostname);
-    var api = makePublicApi(scripts);
-    window.__BOREDOM_ENGINE__ = api;
+    var node = nodeForHost(location.hostname);
+    var state = readState();
+    var currentSite = node ? node.site : null;
+
+    // Publish state BEFORE the site scripts (later @require files) execute.
+    window.__BOREDOM_STATE__ = {
+        currentSite: currentSite,
+        enabled: state.enabled,
+        intensity: state.intensity,
+    };
+    applyIntensity(state.intensity);
+    window.__BOREDOM_ENGINE__ = makePublicApi(node);
     console.debug(
-        "[boredom-engine] ready on " + location.hostname +
+        "[boredom-engine] ready on " + location.hostname + " (site: " + currentSite + ")" +
             " — control via window.__BOREDOM_ENGINE__ or the 🧠 menu",
     );
 
-    if (scripts.length > 0) {
-        // Inject enabled scripts as soon as <head> exists (document-start).
-        var headAttempts = 0;
-        (function pollHead() {
-            if (document.head) {
-                injectEnabledScripts(scripts);
-                return;
-            }
-            if (++headAttempts > 10000) return;
-            setTimeout(pollHead, 1);
-        })();
-
+    if (node && node.scripts.length > 0) {
         // Build the control menu once <body> exists.
         var bodyAttempts = 0;
         (function pollBody() {
             if (document.body) {
-                buildMenu(scripts, api);
+                buildMenu(node.scripts, window.__BOREDOM_ENGINE__);
                 return;
             }
             if (++bodyAttempts > 10000) return;
@@ -426,7 +432,64 @@ ${matchLines}
 `;
 }
 
-/** Build step: read the catalog, generate, and write dist/tampermonkey/. */
+/** Script URL fragments for the `@require` list. */
+interface RequireFiles {
+    bootstrapUrl: string;
+    scriptUrls: string[];
+}
+
+/**
+ * Pure generation: catalog + local file URLs → the `.user.js` to install.
+ * The bootstrap is required FIRST so it runs before every site script.
+ */
+export function generateUserscript(catalog: Catalog, files: RequireFiles): string {
+    const { hosts } = buildTree(catalog);
+
+    if (hosts.size === 0) {
+        throw new Error("The catalog contains no resistance scripts; nothing to generate.");
+    }
+
+    const sortedHosts = [...hosts].sort();
+    // Tampermonkey follows Chrome match patterns: `*://*.example.com/*`
+    // covers subdomains but NOT the bare domain, so emit both variants.
+    const matchLines = sortedHosts
+        .map((host) => `// @match        *://${host}/*\n// @match        *://*\.${host}/*`)
+        .join("\n");
+
+    const requireLines = [files.bootstrapUrl, ...files.scriptUrls]
+        .map((url) => `// @require      ${url}`)
+        .join("\n");
+
+    return `// ==UserScript==
+// @name         Boredom Engine — Tampermonkey test loader
+// @namespace    boredom-engine
+// @version      ${SCRIPT_VERSION}
+// @description  Loads the Boredom Engine resistance scripts on supported sites via @require. Menu + window.__BOREDOM_ENGINE__ API. Test-only: not part of the engine artifact.
+${matchLines}
+${requireLines}
+// @noframes
+// @run-at       document-start
+// @grant        none
+// ==/UserScript==
+
+// GENERATED BY scripts/adapters/tampermonkey.ts — do not edit by hand.
+// Rebuild with \`bun run build\` (or \`bun run deploy\`), then reload this
+// script in Tampermonkey so it re-reads the @require files.
+
+(function () {
+    "use strict";
+    // Everything lives in the @require'd files (bootstrap first, then the
+    // wrapped site scripts). This body is intentionally minimal.
+    if (typeof console !== "undefined" && typeof console.debug === "function") {
+        console.debug(
+            "[boredom-engine] userscript loaded — control via window.__BOREDOM_ENGINE__ or the 🧠 menu",
+        );
+    }
+})();
+`;
+}
+
+/** Build step: read the catalog + normal bundles, write all tampermonkey files. */
 export async function buildTampermonkey(): Promise<void> {
     console.log("Building Tampermonkey userscript...");
 
@@ -440,12 +503,42 @@ export async function buildTampermonkey(): Promise<void> {
         );
     }
 
-    const script = generateTampermonkeyScript(catalog);
     const { hosts } = buildTree(catalog);
+    const entries = flattenEntries(catalog);
+    if (entries.length === 0) {
+        throw new Error("The catalog contains no resistance scripts; nothing to generate.");
+    }
 
-    await mkdir(join(process.cwd(), OUTPUT_DIR), { recursive: true });
-    const outputPath = join(process.cwd(), OUTPUT_DIR, OUTPUT_FILE);
-    await writeFile(outputPath, script, "utf-8");
+    const tampermonkeyDir = join(process.cwd(), OUTPUT_DIR);
+    const scriptsOutDir = join(tampermonkeyDir, SCRIPTS_DIR);
+    await mkdir(scriptsOutDir, { recursive: true });
 
-    console.log(`Tampermonkey userscript written to ${outputPath} (${hosts.size} site(s)).`);
+    // 1. Wrapped site scripts (guard: matching site + enabled).
+    const scriptUrls: string[] = [];
+    for (const entry of entries) {
+        const original = await readFile(join(process.cwd(), "dist", "normal", entry.path), "utf-8");
+        const wrapped = wrapScript(original, entry.id, entry.site);
+        const outPath = join(scriptsOutDir, entry.path);
+        await mkdir(join(scriptsOutDir, dirname(entry.path)), { recursive: true });
+        await writeFile(outPath, wrapped, "utf-8");
+        scriptUrls.push(pathToFileURL(outPath).href);
+    }
+
+    // 2. Bootstrap loader (must be required first).
+    const bootstrap = generateBootstrapScript(catalog);
+    const bootstrapPath = join(tampermonkeyDir, BOOTSTRAP_FILE);
+    await writeFile(bootstrapPath, bootstrap, "utf-8");
+
+    // 3. The userscript itself.
+    const userscript = generateUserscript(catalog, {
+        bootstrapUrl: pathToFileURL(bootstrapPath).href,
+        scriptUrls,
+    });
+    const userscriptPath = join(tampermonkeyDir, USERSCRIPT_FILE);
+    await writeFile(userscriptPath, userscript, "utf-8");
+
+    console.log(
+        `Tampermonkey userscript written to ${userscriptPath} (${hosts.size} site(s), ` +
+            `${entries.length} script(s) via @require).`,
+    );
 }

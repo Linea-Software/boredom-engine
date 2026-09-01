@@ -65,31 +65,43 @@ bun run test:artifact   # end-to-end: real build + deploy + zip/catalog validati
 ### Test in a browser with Tampermonkey
 
 `bun run build` (and `bun run deploy`) also generates a **Tampermonkey test
-loader**: `dist/tampermonkey/boredom-engine.user.js`. It is a single userscript
-that runs only on the sites covered by the catalog (its `@match` list) and
-injects only the **enabled** scripts of that host (all enabled by default),
-using the same reverse-domain matching as the engine. It ships a **🧠 control
-menu** (intensity selector + per-script toggles) and a
-`window.__BOREDOM_ENGINE__` API for LLMs/automation. It is **test-only** — it
-is not part of `resistance-scripts.zip`, so ace-engine never sees it.
+loader** under `dist/tampermonkey/`:
+
+- `boredom-engine.user.js` — the userscript to install. It runs only on the
+  sites covered by the catalog (its `@match` list) and `@require`s the loader
+  and the site scripts as **local `file://` files** (baked-in absolute paths).
+- `bootstrap.js` — loader core: publishes `window.__BOREDOM_STATE__` and
+  `window.__BOREDOM_INTENSITY__` **before** the site scripts run, exposes
+  `window.__BOREDOM_ENGINE__`, and builds the 🧠 control menu.
+- `scripts/...` — each site script wrapped in a guard so it only executes on
+  its own site and only while enabled.
+
+The site scripts are delivered through Tampermonkey's `@require` at
+install/update time, so no server needs to serve them at runtime — injected
+`<script>` tags are subject to the page's CSP, `@require` is not.
 
 **Auto-connect through file inclusion:**
 
-1. Serve the built scripts: `bun run dev` (serves `dist/` on
-   `http://localhost:48325`).
+1. Give Tampermonkey access to local files: chrome://extensions →
+   Tampermonkey → **Details** → enable **Allow access to file URLs**. Newer
+   Tampermonkey versions may additionally ask for **All Sites** permission when
+   a script uses `file://` resources — grant it.
 2. Load the generated userscript into Tampermonkey **from the file**:
    - Tampermonkey dashboard → **Utilities** → **Import from file** → select
      `dist/tampermonkey/boredom-engine.user.js`; or
    - drag-and-drop the `.user.js` onto the Tampermonkey dashboard; or
    - open the file directly in the browser
      (`file://.../boredom-engine/dist/tampermonkey/boredom-engine.user.js`) —
-     Tampermonkey auto-detects `.user.js` files and offers to install them. If
-     the browser blocks local-file access, enable the extension's **Allow
-     access to file URLs** (chrome://extensions → Tampermonkey → Details →
-     toggle), or use *Import from file* instead.
-3. Tampermonkey auto-enables it. It connects to the dev server and, on a
-   supported site, injects that host's enabled scripts automatically. Verify in
-   the page console: `[boredom-engine] injected enabled scripts for <host>`.
+     Tampermonkey auto-detects `.user.js` files and offers to install them.
+3. On a supported site, the bootstrap runs first, then the wrapped site
+   scripts; only the current site's **enabled** scripts execute. Verify in the
+   page console: `[boredom-engine] ready on <host> (site: <site>)`.
+
+**After every `bun run build`**, re-import the `.user.js` (or open it in the
+Tampermonkey dashboard → **Reload**/reinstall) so Tampermonkey re-reads the
+`@require` files — they are read at install/update time, not per page load.
+The `file://` paths are absolute and machine-specific, so each checkout needs
+its own install.
 
 ### Control menu (🧠)
 
@@ -98,9 +110,9 @@ opens a panel with:
 
 - an **intensity selector** (`None / Low / Medium / High / Extreme`) — applied
   live, no reload needed;
-- a **checkbox per script** of the current site — enabling applies live,
-  disabling persists and needs a reload to fully remove the effects (use the
-  *reload now* link in the panel).
+- a **checkbox per script** of the current site — toggles persist; because
+  `@require` scripts execute at load time, a toggle applies on the next page
+  load (use the *reload now* link in the panel).
 
 Both settings are persisted in `localStorage` (`boredom-engine:state`, keyed by
 script `id`), so they survive page reloads and browser restarts.
@@ -110,13 +122,13 @@ script `id`), so they survive page reloads and browser restarts.
 The loader exposes `window.__BOREDOM_ENGINE__` with a small, deterministic API:
 
 ```js
-window.__BOREDOM_ENGINE__.getState()                    // { intensity, enabled, scripts[] }
+window.__BOREDOM_ENGINE__.getState()                    // { intensity, currentSite, enabled, scripts[] }
 window.__BOREDOM_ENGINE__.getScripts()                  // [{ id, name, path, enabled }]
 window.__BOREDOM_ENGINE__.setIntensity("high")          // live; none|low|medium|high|extreme
-window.__BOREDOM_ENGINE__.enableScript("youtube_grayscale")
-window.__BOREDOM_ENGINE__.disableScript("youtube_grayscale")  // persists; reload to fully apply
+window.__BOREDOM_ENGINE__.enableScript("youtube_grayscale")   // persists; reload to apply
+window.__BOREDOM_ENGINE__.disableScript("youtube_grayscale")  // persists; reload to apply
 window.__BOREDOM_ENGINE__.toggleScript("youtube_grayscale")
-window.__BOREDOM_ENGINE__.reload()                      // reload to fully apply a toggle
+window.__BOREDOM_ENGINE__.reload()                      // reload to apply a toggle
 ```
 
 `getState()` returns the persisted state; `getScripts()` reports the current
@@ -126,22 +138,22 @@ Every mutation logs a `[boredom-engine]` line to the console.
 
 ### Config
 
-The generated file has a small `CONFIG` block at the top:
+`bootstrap.js` has a small `CONFIG` block at the top:
 
-- `BASE` — where the site scripts are loaded from (defaults to the dev server).
 - `DEFAULT_INTENSITY` — used until the user picks an intensity.
+- `STORAGE_KEY` — the `localStorage` key for the persisted state.
 
 Notes:
 
-- The site scripts are injected into the page's main world via `<script>`
-  tags; pages with a strict Content-Security-Policy may block them. ace-engine
-  does not have this problem because the MITM proxy injects the scripts before
-  CSP enforcement.
+- Scripts are loaded via `@require` and run in Tampermonkey's context, so page
+  CSP does not block them. If a site script does not take effect, open the
+  userscript in the dashboard and check that its `@require` files resolved
+  (red entries) — usually a file-URL access permission issue.
 - Usage statistics are not reported in this mode: reporting needs the
   `__BOREDOM_SERVER_PORT__` / `__BOREDOM_SERVER_HOSTNAME__` globals, which only
   the engine sets.
-- Rebuild with `bun run build` to refresh the loader whenever scripts or sites
-  change.
+- Rebuild with `bun run build`, then reload the userscript in Tampermonkey,
+  whenever scripts or sites change.
 
 ## Project Structure
 
