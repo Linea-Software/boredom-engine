@@ -67,9 +67,11 @@ bun run test:artifact   # end-to-end: real build + deploy + zip/catalog validati
 `bun run build` (and `bun run deploy`) also generates a **Tampermonkey test
 loader**: `dist/tampermonkey/boredom-engine.user.js`. It is a single userscript
 that runs only on the sites covered by the catalog (its `@match` list) and
-injects only that host's resistance scripts, using the same reverse-domain
-matching as the engine. It is **test-only** — it is not part of
-`resistance-scripts.zip`, so ace-engine never sees it.
+injects only the **enabled** scripts of that host (all enabled by default),
+using the same reverse-domain matching as the engine. It ships a **🧠 control
+menu** (intensity selector + per-script toggles) and a
+`window.__BOREDOM_ENGINE__` API for LLMs/automation. It is **test-only** — it
+is not part of `resistance-scripts.zip`, so ace-engine never sees it.
 
 **Auto-connect through file inclusion:**
 
@@ -86,15 +88,48 @@ matching as the engine. It is **test-only** — it is not part of
      access to file URLs** (chrome://extensions → Tampermonkey → Details →
      toggle), or use *Import from file* instead.
 3. Tampermonkey auto-enables it. It connects to the dev server and, on a
-   supported site, injects that site's scripts automatically. Verify in the
-   page console: `[boredom-engine] injected N script(s) for <host>`.
+   supported site, injects that host's enabled scripts automatically. Verify in
+   the page console: `[boredom-engine] injected enabled scripts for <host>`.
+
+### Control menu (🧠)
+
+Every supported page gets a floating **🧠** button (bottom-right). Clicking it
+opens a panel with:
+
+- an **intensity selector** (`None / Low / Medium / High / Extreme`) — applied
+  live, no reload needed;
+- a **checkbox per script** of the current site — enabling applies live,
+  disabling persists and needs a reload to fully remove the effects (use the
+  *reload now* link in the panel).
+
+Both settings are persisted in `localStorage` (`boredom-engine:state`, keyed by
+script `id`), so they survive page reloads and browser restarts.
+
+### Control API (for LLMs / automation)
+
+The loader exposes `window.__BOREDOM_ENGINE__` with a small, deterministic API:
+
+```js
+window.__BOREDOM_ENGINE__.getState()                    // { intensity, enabled, scripts[] }
+window.__BOREDOM_ENGINE__.getScripts()                  // [{ id, name, path, enabled }]
+window.__BOREDOM_ENGINE__.setIntensity("high")          // live; none|low|medium|high|extreme
+window.__BOREDOM_ENGINE__.enableScript("youtube_grayscale")
+window.__BOREDOM_ENGINE__.disableScript("youtube_grayscale")  // persists; reload to fully apply
+window.__BOREDOM_ENGINE__.toggleScript("youtube_grayscale")
+window.__BOREDOM_ENGINE__.reload()                      // reload to fully apply a toggle
+```
+
+`getState()` returns the persisted state; `getScripts()` reports the current
+host's scripts with their enabled flag. Script ids are the catalog's stable
+`@id` values (the same keys ace-engine persists by). Invalid intensities throw.
+Every mutation logs a `[boredom-engine]` line to the console.
+
+### Config
 
 The generated file has a small `CONFIG` block at the top:
 
 - `BASE` — where the site scripts are loaded from (defaults to the dev server).
-- `INTENSITY` — `"none" | "low" | "medium" | "high" | "extreme"` (default
-  `"medium"`); it is applied as `window.__BOREDOM_INTENSITY__` before the site
-  scripts run.
+- `DEFAULT_INTENSITY` — used until the user picks an intensity.
 
 Notes:
 
