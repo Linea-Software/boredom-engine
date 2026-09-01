@@ -236,6 +236,10 @@ export class FakeCaptcha {
     public async trigger(): Promise<void> {
         return new Promise((resolve) => {
             if (this.overlay) return;
+            // Reset from any previous captcha: the single reused instance must
+            // start un-checked, otherwise a stale isChecked=true renders the
+            // checkbox pre-ticked and trigger() never resolves (hang).
+            this.state = { isChecked: false, isLoading: false };
             this.resolvePromise = resolve;
 
             this.overlay = document.createElement("div");

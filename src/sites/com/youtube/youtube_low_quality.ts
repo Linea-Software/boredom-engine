@@ -31,8 +31,11 @@ onDOMLoaded(() => {
         const targetQuality = QUALITY_MAP[intensity];
 
         if (window.location.href.includes("/watch")) {
-            const ytdPlayer = document.getElementById("ytd-player") as any;
-            const player = ytdPlayer?.getPlayer ? ytdPlayer.getPlayer() : null;
+            // YouTube's player element is the #movie_player div (.html5-video-player),
+            // which exposes setPlaybackQuality/setPlaybackQualityRange directly. There
+            // is no element with id "ytd-player", so the previous lookup always missed
+            // and the quality was never actually forced.
+            const player = document.getElementById("movie_player") as any;
 
             if (player) {
                 // Try both new and old APIs

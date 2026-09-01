@@ -51,23 +51,14 @@ onDOMLoaded(() => {
                 text.includes('view all') && text.includes('comment') ||
                 text.includes('write a comment')
             ) {
-                // Check if this is a dedicated comment element (text is relatively short)
-                if (text.length < 80) {
-                    // Try to find and hide the parent comment container
-                    let container = el.parentElement;
-                    let depth = 0;
-                    while (container && depth < 6) {
-                        if (
-                            container.getAttribute('role') === 'article' ||
-                            container.tagName === 'SECTION'
-                        ) {
-                            (container as HTMLElement).style.display = 'none';
-                            break;
-                        }
-                        container = container.parentElement;
-                        depth++;
-                    }
-                }
+            // Text-based removal for comment counts/links/buttons. We only hide
+            // the matched element itself. Climbing up to the nearest
+            // role="article"/SECTION hidden the WHOLE post on the feed, which is
+            // far beyond the described "hide comment sections and comment buttons"
+            // and wiped out every post with a comment count.
+            if (text.length < 80) {
+                (el as HTMLElement).style.display = 'none';
+            }
             }
         });
     };

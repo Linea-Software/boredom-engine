@@ -92,7 +92,11 @@ onDOMLoaded(() => {
                 delete document.body.dataset.boredomBufferingActive;
 
                 // Resume playback
-                video.play();
+                video.play().catch(() => {
+                    // Autoplay policy / tab hidden can reject play(); swallow it
+                    // so we don't leave an unhandled rejection. The video stays
+                    // paused and the next interval tick will retry buffering.
+                });
 
                 if (spinner) {
                     spinner.style.display = originalDisplay;

@@ -29,7 +29,7 @@ const BUFFER_DELAY_RANDOM_MAP: Record<Intensity, number> = {
 };
 
 onDOMLoaded(() => {
-    if (!currentIntensityHigherThan(Intensity.Low)) {
+    if (!currentIntensityHigherThan(Intensity.None)) {
         return;
     }
     

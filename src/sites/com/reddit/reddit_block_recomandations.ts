@@ -30,7 +30,11 @@ onDOMLoaded(() => {
         );
         if (element) {
             console.log("Blocking recommendation element.");
-            element.hidden = true;
+            // The `hidden` attribute relies on the UA [hidden]{display:none}
+            // rule (lowest precedence), which Reddit feed containers override
+            // with their own display:flex/grid. Set inline display:none so the
+            // block reliably hides the recommendation feed.
+            (element as HTMLElement).style.setProperty("display", "none", "important");
         }
     });
 
