@@ -62,6 +62,52 @@ bun run test:artifact   # end-to-end: real build + deploy + zip/catalog validati
 | `bun run mock-server` | Local mock of the engine's `/report/usage` and `/report/theme` endpoints | **opt-in only** — set `BOREDOM_ALLOW_SYSTEM_CHANGES=1` to also register `ace-engine.local` in the hosts file and install the generated CA into the Windows root store |
 | `bun run dev-chrome` | Launch Chrome with remote debugging on port 9222 | **opt-in only** — pass `--kill-chrome` (or set `BOREDOM_KILL_CHROME=1`) to force-kill running Chrome instances |
 
+### Test in a browser with Tampermonkey
+
+`bun run build` (and `bun run deploy`) also generates a **Tampermonkey test
+loader**: `dist/tampermonkey/boredom-engine.user.js`. It is a single userscript
+that runs only on the sites covered by the catalog (its `@match` list) and
+injects only that host's resistance scripts, using the same reverse-domain
+matching as the engine. It is **test-only** — it is not part of
+`resistance-scripts.zip`, so ace-engine never sees it.
+
+**Auto-connect through file inclusion:**
+
+1. Serve the built scripts: `bun run dev` (serves `dist/` on
+   `http://localhost:48325`).
+2. Load the generated userscript into Tampermonkey **from the file**:
+   - Tampermonkey dashboard → **Utilities** → **Import from file** → select
+     `dist/tampermonkey/boredom-engine.user.js`; or
+   - drag-and-drop the `.user.js` onto the Tampermonkey dashboard; or
+   - open the file directly in the browser
+     (`file://.../boredom-engine/dist/tampermonkey/boredom-engine.user.js`) —
+     Tampermonkey auto-detects `.user.js` files and offers to install them. If
+     the browser blocks local-file access, enable the extension's **Allow
+     access to file URLs** (chrome://extensions → Tampermonkey → Details →
+     toggle), or use *Import from file* instead.
+3. Tampermonkey auto-enables it. It connects to the dev server and, on a
+   supported site, injects that site's scripts automatically. Verify in the
+   page console: `[boredom-engine] injected N script(s) for <host>`.
+
+The generated file has a small `CONFIG` block at the top:
+
+- `BASE` — where the site scripts are loaded from (defaults to the dev server).
+- `INTENSITY` — `"none" | "low" | "medium" | "high" | "extreme"` (default
+  `"medium"`); it is applied as `window.__BOREDOM_INTENSITY__` before the site
+  scripts run.
+
+Notes:
+
+- The site scripts are injected into the page's main world via `<script>`
+  tags; pages with a strict Content-Security-Policy may block them. ace-engine
+  does not have this problem because the MITM proxy injects the scripts before
+  CSP enforcement.
+- Usage statistics are not reported in this mode: reporting needs the
+  `__BOREDOM_SERVER_PORT__` / `__BOREDOM_SERVER_HOSTNAME__` globals, which only
+  the engine sets.
+- Rebuild with `bun run build` to refresh the loader whenever scripts or sites
+  change.
+
 ## Project Structure
 
 Scripts are organized using Reverse Domain Name Notation in `src/sites`:
