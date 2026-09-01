@@ -298,6 +298,27 @@ export function generateBootstrapScript(catalog: Catalog): string {
                 return setScriptEnabled(id, !isEnabled(readState(), id));
             },
             reload: reloadPage,
+            // Test-only eval: run arbitrary JS in the page context. Used by the
+            // test harness (menu textarea) to inspect the live DOM / verify
+            // effects, since the loader cannot otherwise be introspected.
+            evalJs: function (code) {
+                try {
+                    var result = (0, eval)(code);
+                    if (result === undefined) return "(void 0)";
+                    if (result === null) return "null";
+                    var json;
+                    try {
+                        json = JSON.stringify(result);
+                    } catch (e) {
+                        json = null;
+                    }
+                    return json !== undefined && json !== null
+                        ? json
+                        : String(result);
+                } catch (e) {
+                    return "Error: " + (e && e.message);
+                }
+            },
         };
         return api;
     }
@@ -375,6 +396,39 @@ export function generateBootstrapScript(catalog: Catalog): string {
         }
         panel.appendChild(scriptsRow);
 
+        // Test-only JS eval runner: type code, click Run, read the result.
+        // Lets the test harness inspect the live DOM / verify script effects.
+        var jsDiv = document.createElement("div");
+        var jsInput = document.createElement("textarea");
+        jsInput.rows = 2;
+        jsInput.placeholder = "window.__BOREDOM_ENGINE__.getScripts()";
+        jsInput.style.cssText =
+            "display:block;width:100%;box-sizing:border-box;margin:6px 12px 0;" +
+            "background:#222;color:#eee;border:1px solid #555;border-radius:4px;" +
+            "padding:4px;font:12px monospace;resize:vertical";
+        var jsRun = document.createElement("button");
+        jsRun.textContent = "Run";
+        jsRun.style.cssText =
+            "margin:4px 12px 0;padding:3px 10px;border:1px solid #555;background:#222;" +
+            "color:#ccc;border-radius:4px;cursor:pointer;font:inherit";
+        var jsResult = document.createElement("pre");
+        jsResult.style.cssText =
+            "margin:4px 12px 8px;background:#141414;color:#8c8;border:1px solid #333;" +
+            "border-radius:4px;padding:4px;font:11px monospace;white-space:pre-wrap;" +
+            "max-height:140px;overflow:auto";
+        jsRun.addEventListener("click", function () {
+            try {
+                var out = window.__BOREDOM_ENGINE__.evalJs(jsInput.value);
+                jsResult.textContent = String(out);
+            } catch (e) {
+                jsResult.textContent = "Error: " + e.message;
+            }
+        });
+        jsDiv.appendChild(jsInput);
+        jsDiv.appendChild(jsRun);
+        panel.appendChild(jsDiv);
+        panel.appendChild(jsResult);
+
         var hint = document.createElement("div");
         hint.className = "be-hint";
         hint.appendChild(
@@ -411,6 +465,7 @@ export function generateBootstrapScript(catalog: Catalog): string {
     };
     applyIntensity(state.intensity);
     window.__BOREDOM_ENGINE__ = makePublicApi(node);
+    window.__BOREDOM_EVAL__ = window.__BOREDOM_ENGINE__.evalJs;
     console.debug(
         "[boredom-engine] ready on " + location.hostname + " (site: " + currentSite + ")" +
             " — control via window.__BOREDOM_ENGINE__ or the 🧠 menu",
