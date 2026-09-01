@@ -29,6 +29,9 @@ extensions/
 .env.production.local
 .env.local
 
+# local browser-test login credentials (NEVER commit)
+.accounts.local.json
+
 # caches
 .eslintcache
 .cache
