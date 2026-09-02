@@ -2,8 +2,7 @@
  * JSDoc metadata parsing for script sources.
  *
  * Every script file under `src/sites/` must start with a JSDoc block
- * declaring `@id`, `@name`, `@description`, `@version` (and optionally
- * `@type usage` for tracking scripts).
+ * declaring `@id`, `@name`, `@description`, `@version`.
  */
 
 export interface ScriptMetadata {
@@ -11,8 +10,6 @@ export interface ScriptMetadata {
     name: string | undefined;
     description: string | undefined;
     version: string | undefined;
-    /** True when `@type usage` — a tracking script, not part of the resistance catalog. */
-    isUsage: boolean;
 }
 
 /** Matches the leading JSDoc block of a script file. */
@@ -23,7 +20,6 @@ export function parseScriptMetadata(content: string): ScriptMetadata {
         name: undefined,
         description: undefined,
         version: undefined,
-        isUsage: false,
     };
 
     if (!commentMatch) return metadata;
@@ -38,7 +34,6 @@ export function parseScriptMetadata(content: string): ScriptMetadata {
     metadata.name = field("name");
     metadata.description = field("description");
     metadata.version = field("version");
-    metadata.isUsage = field("type") === "usage";
     return metadata;
 }
 

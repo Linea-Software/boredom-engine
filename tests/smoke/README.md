@@ -3,7 +3,7 @@
 Browser-level smoke tests for the **full resistance-script catalog** (release
 plan Step 5.4): mock pages + script injection + DOM-effect assertions. Every
 shipped script in `src/sites/` has a fixture and at least one spec:
-40 resistance scripts + 7 tracking (`@type usage`) scripts = 47.
+40 resistance scripts.
 
 ## Running
 
@@ -45,7 +45,6 @@ bundled in memory.
 | `openFixture(page, "site/name.html")` | `file://` navigation to a fixture (init scripts run). |
 | `openFixtureAt(page, path, url)` | Serves a fixture over a fake `http://boredom-fixture.test` origin with a controllable path — needed when a script branches on `window.location.pathname`/`href` (e.g. Reddit recommendations only run on `/`, YouTube low-quality on `/watch`). |
 | `stubMathRandom(page, value=0)` | Pins `Math.random` so chance rolls (buffering, delays) succeed deterministically. |
-| `stubUsageReporting(page)` | Configures the server globals and records `window.fetch` calls — how the tracking scripts are tested. |
 | `stubReplaceState(page)` | Recording no-op for `history.replaceState` (throws on `file://`); captcha URL-spoofing is asserted from the recorded calls. |
 | `stubAudioContext(page)` | Fake `AudioContext` recording DelayNode wiring for audio-delay scripts. |
 
@@ -114,21 +113,9 @@ bundled in memory.
 | twitch_remove_featured_carousel | twitch/remove-featured-carousel.html | carousel removed from DOM | high |
 | twitch_remove_sidebar | twitch/remove-sidebar.html | sidebar nav hidden | high |
 | twitch_video_delay | twitch/video-delay.html | video pause recorded (buffering roll) | medium |
-| youtube_usage_stats (tracking) | _shared/blank.html | `POST /report/usage` with `type:"opened"` | medium |
-| instagram_usage_stats (tracking) | _shared/blank.html | `POST /report/usage` with `type:"opened"` | medium |
-| facebook_usage_stats (tracking) | _shared/blank.html | `POST /report/usage` with `type:"opened"` | medium |
-| reddit_usage_stats (tracking) | _shared/blank.html | `POST /report/usage` with `type:"opened"` | medium |
-| twitch_usage_stats (tracking) | _shared/blank.html | `POST /report/usage` with `type:"opened"` | medium |
-| generic_usage_stats (tracking) | _shared/blank.html | `POST /report/usage` | medium |
-| generic_dominant_color (tracking) | generic/dominant-color.html | `POST /report/theme` with hex color | — |
 
 ## Notes & limitations
 
-- **Tracking scripts** (`@type usage`) have no DOM effect; their only
-  observable behaviour is the report POST to the local boredom server. The
-  harness stubs `window.fetch` and asserts the report payload (see
-  `usage-stats.spec.ts`). The generic dominant-color script additionally
-  needs a readable image, so its fixture paints a canvas-drawn data: PNG.
 - **Pathname-dependent branches** that a Windows `file://` URL can never
   reach are covered over the fake http origin (`openFixtureAt`): Reddit
   recommendations (`/`), YouTube `/watch` quality (fixture under

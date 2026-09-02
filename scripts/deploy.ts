@@ -3,12 +3,10 @@ import * as zip from "zip-lib";
 import { readdir, stat } from "node:fs/promises";
 
 /**
- * Creates the distribution ZIP archives from the built `dist/` tree.
+ * Creates the distribution ZIP archive from the built `dist/` tree.
  *
  * v1 beta output: the Resistance Mode artifact (`resistance-scripts.zip`,
  * root layout: `scripts-data.json` + reverse-domain script folders).
- * The tracking ZIP is still produced (existing behavior) but is not part of
- * the v1 pipeline — nothing injects tracking scripts.
  *
  * There is deliberately NO local "deploy" step: the previous code copied the
  * ZIP into `C:\ProgramData\LineaSoftware\AceBlocker\scripts`, a directory no
@@ -60,21 +58,13 @@ async function main() {
     // Zipping
     console.log("Creating zip archives...");
     try {
-        // 1. Resistance scripts zip (root layout: scripts-data.json + com/... + tv/...)
+        // Resistance scripts zip (root layout: scripts-data.json + com/... + tv/...)
         await createZip(
             join(distDir, "normal"),
             "scripts-data.json",
             join(distDir, "resistance-scripts.zip"),
         );
         console.log("Created dist/resistance-scripts.zip");
-
-        // 2. Tracking scripts zip (existing behavior; not part of v1).
-        await createZip(
-            join(distDir, "tracking"),
-            "tracking-scripts.json",
-            join(distDir, "tracking-scripts.zip"),
-        );
-        console.log("Created dist/tracking-scripts.zip");
     } catch (e) {
         console.error("Zipping failed:", e);
         process.exit(1);
@@ -82,7 +72,6 @@ async function main() {
 
     console.log("\nDeployment summary:");
     console.log("  dist/resistance-scripts.zip  — upload via the site admin panel");
-    console.log("  dist/tracking-scripts.zip    — not part of the v1 pipeline");
     console.log("See docs/release.md for the release procedure.");
 }
 

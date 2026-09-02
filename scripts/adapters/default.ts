@@ -7,10 +7,7 @@ import {
     validateCatalog,
     type Catalog,
 } from "../catalog-contract.ts";
-import {
-    isCompleteScriptMetadata,
-    parseScriptMetadata,
-} from "../metadata.ts";
+import { isCompleteScriptMetadata, parseScriptMetadata } from "../metadata.ts";
 
 async function getFiles(dir: string): Promise<string[]> {
     const dirents = await readdir(dir, { withFileTypes: true });
@@ -53,22 +50,11 @@ export async function buildDefault() {
 
     console.log(`Found ${entryPoints.length} entry points.`);
 
-    const normalEntryPoints: string[] = [];
-    const trackingEntryPoints: string[] = [];
-    
-    // First, determine the type of each script
-    for (const file of entryPoints) {
-        const content = await readFile(file, "utf-8");
-        if (parseScriptMetadata(content).isUsage) {
-            trackingEntryPoints.push(file);
-        } else {
-            normalEntryPoints.push(file);
-        }
-    }
-
-    if (normalEntryPoints.length > 0) {
+    // The resistance catalog is the only output: every script under
+    // `src/sites/` is a resistance script shipped in the v1 artifact.
+    if (entryPoints.length > 0) {
         await build({
-            entryPoints: normalEntryPoints,
+            entryPoints,
             outdir: "dist/normal",
             bundle: true,
             platform: "browser",
@@ -76,19 +62,6 @@ export async function buildDefault() {
             outbase: "src/sites",
             minify: true,
             format: "iife", // Just to be safe for browser content scripts
-        });
-    }
-
-    if (trackingEntryPoints.length > 0) {
-        await build({
-            entryPoints: trackingEntryPoints,
-            outdir: "dist/tracking",
-            bundle: true,
-            platform: "browser",
-            target: "es2020",
-            outbase: "src/sites",
-            minify: true,
-            format: "iife",
         });
     }
 
@@ -102,7 +75,6 @@ export async function buildDefault() {
     const tsFiles = entryPoints; // Reusing the already filtered list
 
     const normalSites: Record<string, SiteNode> = {};
-    const trackingSites: Record<string, SiteNode> = {};
 
     const ensureNode = (pathParts: string[], sitesObj: Record<string, SiteNode>): SiteNode => {
         let currentLevel = sitesObj;
@@ -139,7 +111,6 @@ export async function buildDefault() {
             );
         }
 
-        // distPath logic uses the respective directory now
         const scriptData: ScriptData = {
             id: metadata.id!,
             path: distRelPath,
@@ -149,16 +120,11 @@ export async function buildDefault() {
         };
 
         try {
-            if (metadata.isUsage) {
-                const node = ensureNode(pathParts, trackingSites);
-                node.scripts.push(scriptData);
-            } else {
-                const node = ensureNode(pathParts, normalSites);
-                node.scripts.push(scriptData);
-            }
+            const node = ensureNode(pathParts, normalSites);
+            node.scripts.push(scriptData);
         } catch (e) {
             console.error(`Error processing ${relPath}:`, e);
-            throw e; 
+            throw e;
         }
     }
 
@@ -169,17 +135,9 @@ export async function buildDefault() {
         sites: normalSites,
     };
 
-    const trackingOutput = {
-        schemaVersion: CATALOG_SCHEMA_VERSION,
-        projectName: packageJson.name,
-        license: packageJson.license || "MIT",
-        sites: trackingSites,
-    };
-
     // Deterministic output: stable key/script ordering regardless of the
     // platform's readdir order.
     const sortedNormal = sortCatalog(normalOutput);
-    const sortedTracking = sortCatalog(trackingOutput);
 
     // Validate the resistance catalog against the shared contract before
     // writing anything — a broken catalog must fail the build, not ship.
@@ -194,6 +152,5 @@ export async function buildDefault() {
     });
 
     await writeFile("dist/scripts-data.json", JSON.stringify(sortedNormal, null, 4));
-    await writeFile("dist/tracking-scripts.json", JSON.stringify(sortedTracking, null, 4));
-    console.log("Docs generated at dist/scripts-data.json and dist/tracking-scripts.json");
+    console.log("Docs generated at dist/scripts-data.json");
 }

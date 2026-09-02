@@ -72,7 +72,6 @@ When implementing a new site, these common scripts can be adapted:
 - Random captcha
 - Media quality downgrade
 - Video/audio delay
-- Usage stats tracking
 
 ### Site-Specific Patterns
 - Reels / Shorts removal
@@ -87,7 +86,7 @@ When implementing a new site, these common scripts can be adapted:
 ## Contribution Notes
 
 - Use **reverse domain notation** for directory names (e.g., `com.facebook`, `com.x`).
-- Each script file needs a JSDoc comment with `@id`, `@name`, `@description`, `@version`, and optionally `@type usage` for tracking scripts.
+- Each script file needs a JSDoc comment with `@id`, `@name`, `@description`, `@version`.
 - Import shared utilities from `$common`.
 - The build system auto-discovers scripts — no config changes needed.
 - Run `bun run build` to bundle and test.

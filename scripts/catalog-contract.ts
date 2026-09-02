@@ -19,8 +19,6 @@
  *   enable state BY ID, so IDs must never be renamed casually), `path`
  *   (relative to the catalog file, forward slashes, no `..`, no absolute
  *   paths), `name`, `description`, `version`.
- * - `@type usage` scripts are tracking scripts and are NOT part of the
- *   resistance catalog (the tracking pipeline is not a v1 feature).
  */
 
 export interface ScriptData {

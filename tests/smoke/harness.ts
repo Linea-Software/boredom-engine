@@ -93,31 +93,6 @@ export async function stubMathRandom(page: Page, value = 0): Promise<void> {
 }
 
 /**
- * Configures the boredom server globals and records `window.fetch` calls
- * instead of performing real network requests. Lets tracking scripts
- * (`@type usage`) be smoke-tested: their only observable effect is the
- * report they POST to the local server.
- */
-export async function stubUsageReporting(page: Page): Promise<void> {
-    await page.addInitScript(() => {
-        (window as unknown as Record<string, unknown>).__BOREDOM_SERVER_PORT__ = "12345";
-        (window as unknown as Record<string, unknown>).__BOREDOM_SERVER_HOSTNAME__ = "127.0.0.1";
-        const calls: Array<{ url: string; body: string | null }> = [];
-        (window as unknown as Record<string, unknown>).__FETCH_CALLS__ = calls;
-        (window as unknown as Record<string, unknown>).fetch = async (
-            input: RequestInfo | URL,
-            init?: RequestInit,
-        ): Promise<Response> => {
-            calls.push({
-                url: String(input),
-                body: typeof init?.body === "string" ? init.body : null,
-            });
-            return { ok: true, status: 200, json: async () => ({}) } as Response;
-        };
-    });
-}
-
-/**
  * Replaces `history.replaceState` with a recording no-op. Captcha scripts
  * spoof the URL via replaceState, which throws a SecurityError on `file://`
  * pages (opaque origin). Recording the calls still lets tests assert the

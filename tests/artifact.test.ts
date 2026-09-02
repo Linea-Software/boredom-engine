@@ -77,10 +77,9 @@ async function pathExists(path: string): Promise<boolean> {
 }
 
 describe("production artifact", () => {
-    test("build + deploy succeed and produce both zip archives", async () => {
+    test("build + deploy succeed and produce the resistance zip archive", async () => {
         expect(await pathExists(join(REPO_ROOT, "dist", "resistance-scripts.zip"))).toBe(true);
         expect(await pathExists(join(REPO_ROOT, "dist", "scripts-data.json"))).toBe(true);
-        expect(await pathExists(join(REPO_ROOT, "dist", "tracking-scripts.zip"))).toBe(true);
     });
 
     test("catalog validates against the shared contract", async () => {
@@ -115,9 +114,6 @@ describe("production artifact", () => {
             expect(entries.some((e) => e.startsWith("tv/twitch/"))).toBe(true);
             expect(entries.some((e) => e.startsWith("dist/") || e.startsWith("normal/"))).toBe(false);
             expect(entries.some((e) => e.startsWith("../"))).toBe(false);
-            // No generic/ node in the beta catalog: both generic sources are
-            // tracking-type and excluded from the resistance artifact.
-            expect(entries.some((e) => e.startsWith("generic/"))).toBe(false);
 
             // Every catalog entry exists in the extracted zip at the exact path.
             const catalog = JSON.parse(
@@ -151,12 +147,6 @@ describe("production artifact", () => {
             expect(treeMatchesHost(catalog, host), `host ${host} should be covered`).toBe(true);
         }
         expect(treeMatchesHost(catalog, "uncovered-site.example")).toBe(false);
-
-        // Content note: the v1 beta catalog has no `generic` node — both
-        // generic sources are `@type usage` (tracking), which is not part of
-        // the resistance pipeline. If a normal generic script is ever added,
-        // this assertion documents that every host then becomes covered.
-        expect(catalog.sites["generic"]).toBeUndefined();
     });
 
     test("dist/normal and the catalog are consistent (every built file is referenced)", async () => {
@@ -183,5 +173,37 @@ describe("production artifact", () => {
         const referenced = new Set(normalFiles.filter((f) => catalogPaths.has(f)));
         expect(referenced.size).toBe(catalogPaths.size);
         expect(referenced.size).toBeGreaterThan(20);
+    });
+
+    test("no `dist/normal` bundle initializes usage tracking (regression: barrel leak)", async () => {
+        // Approved requirement: no normal Resistance Mode bundle may initialize
+        // usage tracking. Previously `src/common/index.ts` re-exported
+        // `usage-stats`, whose module-level `onDOMLoaded(initUsageTracking)`
+        // side effect pulled the tracking init (+ `POST /report/usage`
+        // heartbeat) into every resistance bundle. After the barrel export is
+        // removed, none of these markers may appear in the fresh dist/normal
+        // output.
+        const forbidden = ["report/usage", "__BOREDOM_TRACKING_INIT__", "report/theme"];
+        const distNormal = join(REPO_ROOT, "dist", "normal");
+        const files: string[] = [];
+        const list = async (dir: string, prefix: string) => {
+            for (const entry of await readdir(dir, { withFileTypes: true })) {
+                const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
+                if (entry.isDirectory()) await list(join(dir, entry.name), rel);
+                else files.push(rel);
+            }
+        };
+        await list(distNormal, "");
+
+        expect(files.length).toBeGreaterThan(0);
+        for (const rel of files) {
+            const code = await readFile(join(distNormal, rel), "utf-8");
+            for (const marker of forbidden) {
+                expect(
+                    code,
+                    `dist/normal/${rel} must not contain '${marker}' (usage tracking must not init)`,
+                ).not.toContain(marker);
+            }
+        }
     });
 });

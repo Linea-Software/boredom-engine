@@ -54,20 +54,8 @@ export function main() {}`;
             name: "YouTube Grayscale",
             description: "Dulls the colors on YouTube.",
             version: "1.2.3",
-            isUsage: false,
         });
         expect(isCompleteScriptMetadata(metadata)).toBe(true);
-    });
-
-    test("detects usage (tracking) scripts", () => {
-        const content = `/**
- * @id youtube-usage-stats
- * @name Usage Stats
- * @description Reports usage.
- * @version 1.0.0
- * @type usage
- */`;
-        expect(parseScriptMetadata(content).isUsage).toBe(true);
     });
 
     test("missing metadata fields are reported as incomplete", () => {
@@ -93,7 +81,7 @@ describe("validateCatalog", () => {
                     youtube: node([script()]),
                 },
             ),
-            generic: node([script({ id: "generic-dominant-color", path: "generic/dominant-color.js" })]),
+            generic: node([script({ id: "generic-grayscale", path: "generic/grayscale.js" })]),
         });
         await expect(validateCatalog(catalog, alwaysExists)).resolves.toBeUndefined();
     });
@@ -188,7 +176,7 @@ describe("sortCatalog", () => {
                 com: node([], {
                     youtube: node([script()]),
                 }),
-                generic: node([script({ id: "generic-dominant-color", path: "generic/dominant-color.js" })]),
+                generic: node([script({ id: "generic-grayscale", path: "generic/grayscale.js" })]),
             }),
         );
         const flat = flattenCatalog(catalog);
@@ -211,7 +199,7 @@ describe("treeMatchesHost", () => {
         ...catalog,
         sites: {
             ...catalog.sites,
-            generic: node([script({ id: "generic-dominant-color", path: "generic/dominant-color.js" })]),
+            generic: node([script({ id: "generic-grayscale", path: "generic/grayscale.js" })]),
         },
     });
 

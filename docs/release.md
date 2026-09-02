@@ -61,10 +61,9 @@ different content.
 
 ## Notes
 
-- **Id normalization is deferred.** Some catalog ids use hyphens
-  (`youtube-usage-stats`, `generic-dominant-color`) while most use
-  snake_case. The engine persists per-script enable state **by id**, so a
-  rename would orphan user toggles until a compatibility alias/migration
+- Catalog ids are all snake_case (the tracking scripts that used hyphenated
+  ids were removed). The engine persists per-script enable state **by id**,
+  so a rename would orphan user toggles until a compatibility alias/migration
   map exists. Do not rename ids in this beta.
-- The tracking ZIP (`dist/tracking-scripts.zip`) is **not** part of the v1
-  pipeline; do not upload it.
+- Usage tracking is fully removed: there is no tracking ZIP, and no tracking
+  catalog or tracking scripts exist in the build output.

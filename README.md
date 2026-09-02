@@ -38,9 +38,8 @@ absolute/traversal paths, missing files, ...).
 bun run deploy
 ```
 
-Produces `dist/resistance-scripts.zip` (the v1 beta artifact) and
-`dist/tracking-scripts.zip` (kept for reference; not part of the v1
-pipeline — nothing injects tracking scripts).
+Produces `dist/resistance-scripts.zip` (the v1 beta artifact). Usage tracking
+is fully removed — there is no distributed tracking artifact.
 
 > There is deliberately no local "deploy" copy step anymore: the old code
 > copied the ZIP into `C:\ProgramData\LineaSoftware\AceBlocker\scripts`, a
@@ -59,7 +58,6 @@ bun run test:artifact   # end-to-end: real build + deploy + zip/catalog validati
 | Command | Purpose | Machine-modifying? |
 |---|---|---|
 | `bun run dev` | Rebuild on source change and serve `dist/` on `http://localhost:48325` | no |
-| `bun run mock-server` | Local mock of the engine's `/report/usage` and `/report/theme` endpoints | **opt-in only** — set `BOREDOM_ALLOW_SYSTEM_CHANGES=1` to also register `ace-engine.local` in the hosts file and install the generated CA into the Windows root store |
 | `bun run dev-chrome` | Launch Chrome with remote debugging on port 9222 | **opt-in only** — pass `--kill-chrome` (or set `BOREDOM_KILL_CHROME=1`) to force-kill running Chrome instances |
 
 ### Test in a browser with Tampermonkey
@@ -149,9 +147,8 @@ Notes:
   CSP does not block them. If a site script does not take effect, open the
   userscript in the dashboard and check that its `@require` files resolved
   (red entries) — usually a file-URL access permission issue.
-- Usage statistics are not reported in this mode: reporting needs the
-  `__BOREDOM_SERVER_PORT__` / `__BOREDOM_SERVER_HOSTNAME__` globals, which only
-  the engine sets.
+- Usage statistics are not reported: tracking-script reporting was removed
+  from the product and is no longer part of the resistance bundles.
 - Rebuild with `bun run build`, then reload the userscript in Tampermonkey,
   whenever scripts or sites change.
 
