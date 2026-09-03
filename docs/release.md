@@ -31,6 +31,8 @@ Get-FileHash .\dist\resistance-scripts.zip -Algorithm SHA256
    and version format (see `src/lib/server/api/routers/admin/resistance.ts`),
    stores the object on BunnyCDN and records `version`/`sha256`/`size` in
    Postgres.
+5. The upload starts in **Staged** state. Click **Make available** for the new
+   row so the public release metadata and signed download endpoint can serve it.
 
 ## 3. Verify metadata
 
