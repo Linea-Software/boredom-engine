@@ -1,29 +1,19 @@
 /**
  * @id twitch_remove_sidebar
  * @name Twitch Remove Sidebar
- * @description Removes the sidebar navigation on Twitch to reduce distraction.
- * @version 1.0.0
+ * @description Hides the Twitch navigation sidebar using stable selectors with a legacy structural fallback.
+ * @version 1.1.0
  */
-import {
-    onDOMLoaded,
-    getElementByXpath,
-    currentIntensityHigherThan,
-    Intensity,
-} from "$common";
 
-onDOMLoaded(() => {
-    if (!currentIntensityHigherThan(Intensity.None)) {
-        return;
-    }
+import { blockInterface, currentIntensityHigherThan, Intensity } from "$common";
 
-    // XPath provided by user: //*[@id="root"]/div[1]/div[1]/div[2]/div[1]
-    const sidebarXpath = '//*[@id="root"]/div[1]/div[1]/div[2]/div[1]';
-
-    setInterval(() => {
-        const sidebar = getElementByXpath(sidebarXpath);
-        if (sidebar) {
-            sidebar.style.display = "none";
-            // Optional: sidebar.remove(); but display:none is often safer for layout stability
-        }
-    }, 1000);
-});
+if (currentIntensityHigherThan(Intensity.None)) {
+    blockInterface({
+        id: "twitch_remove_sidebar",
+        selectors: [
+            "#sideNav",
+            '[data-a-target="side-nav"]',
+            '#root > div:first-child > div:first-child > div:nth-child(2) > div:first-child',
+        ],
+    });
+}

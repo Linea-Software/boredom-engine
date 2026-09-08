@@ -1,84 +1,46 @@
 /**
  * @id facebook_block_sidebar
  * @name Facebook Block Sidebar
- * @description Removes sidebar elements (Marketplace, Groups, Notifications, Events, etc.) to reduce distractions.
- * @version 1.0.0
+ * @description Hides distracting Facebook sidebars, discovery links, suggestions, and chat surfaces.
+ * @version 1.1.0
  */
-import { onDOMLoaded, currentIntensityHigherThan, Intensity, injectCss } from "$common";
 
-onDOMLoaded(() => {
-    if (!currentIntensityHigherThan(Intensity.None)) {
-        return;
-    }
+import { blockInterface, currentIntensityHigherThan, Intensity } from "$common";
 
-    // Hide sidebar and distracting navigation elements
-    injectCss(`
-        /* Hide navigation sidebars - Facebook typically has left and/or right sidebars */
-        [role="navigation"][aria-label*="Menu"]:not([aria-label*="Main"]),
-        [role="navigation"]:has(a[href*="/marketplace"]),
-        [role="navigation"]:has(a[href*="/groups"]),
-        [role="navigation"]:has(a[href*="/events"]),
-        [role="navigation"]:has(a[href*="/gaming"]),
-        [role="navigation"]:has(a[href*="/watch/"]),
-        [role="navigation"]:has(a[href*="/friends"]),
-        [role="navigation"]:has(a[href*="/notifications"]),
-        [role="complementary"],
-
-        /* Hide specific sidebar link sections */
-        a[href*="/marketplace/"],
-        a[href*="/groups/"],
-        a[href*="/events/"],
-        a[href*="/gaming/"],
-        a[href*="/pages/"],
-        a[href="/friends/"],
-        a[href*="/friends/list"],
-        a[href*="/friends/suggestions"],
-        a[href*="/saved/"],
-
-        /* Hide notification badges */
-        [aria-label*="notifications"]:not([aria-label*="turn off"]),
-
-        /* Hide "People You May Know" / friend suggestions */
-        div[aria-label*="People you may know"],
-        div[aria-label*="Friend requests"],
-        div[aria-label*="Friends suggestions"],
-
-        /* Hide "Birthdays" section */
-        div[aria-label*="Birthdays"],
-
-        /* Hide contacts/chat sidebar */
-        [role="navigation"][aria-label*="Contacts"],
-        [role="navigation"][aria-label*="Chat"] {
-            display: none !important;
-        }
-    `);
-
-    // Also remove any "Suggested" or discovery elements
-    const hideSuggestions = () => {
-        const elements = document.querySelectorAll('div, section, span');
-        elements.forEach(el => {
-            const label = el.getAttribute('aria-label') || '';
-            const text = (el as HTMLElement).textContent || '';
-
-            if (
-                label.includes('Suggested for you') ||
-                label.includes('Suggested Groups') ||
-                label.includes('Suggested Pages') ||
-                label.includes('People you may know')
-            ) {
-                (el as HTMLElement).style.display = 'none';
-            }
-        });
-    };
-
-    const observer = new MutationObserver(() => {
-        hideSuggestions();
+if (currentIntensityHigherThan(Intensity.None)) {
+    blockInterface({
+        id: "facebook_block_sidebar",
+        selectors: [
+            '[role="navigation"][aria-label*="Menu"]:not([aria-label*="Main"])',
+            '[role="navigation"]:has(a[href*="/marketplace"])',
+            '[role="navigation"]:has(a[href*="/groups"])',
+            '[role="navigation"]:has(a[href*="/events"])',
+            '[role="navigation"]:has(a[href*="/gaming"])',
+            '[role="navigation"]:has(a[href*="/watch/"])',
+            '[role="navigation"]:has(a[href*="/friends"])',
+            '[role="complementary"]',
+            'a[href*="/marketplace/"]',
+            'a[href*="/groups/"]',
+            'a[href*="/events/"]',
+            'a[href*="/gaming/"]',
+            'a[href*="/pages/"]',
+            'a[href="/friends/"]',
+            'a[href*="/friends/list"]',
+            'a[href*="/friends/suggestions"]',
+            'a[href*="/saved/"]',
+            '[data-pagelet="ChatTab"]',
+            '[aria-label="New Message"]',
+            '[aria-label="New message"]',
+            'div[aria-label*="Messenger"]',
+            'div[aria-label*="People you may know"]',
+            'div[aria-label*="Friend requests"]',
+            'div[aria-label*="Friends suggestions"]',
+            'div[aria-label*="Suggested for you"]',
+            'div[aria-label*="Suggested Groups"]',
+            'div[aria-label*="Suggested Pages"]',
+            'div[aria-label*="Birthdays"]',
+            '[role="navigation"][aria-label*="Contacts"]',
+            '[role="navigation"][aria-label*="Chat"]',
+        ],
     });
-
-    observer.observe(document.body, {
-        childList: true,
-        subtree: true,
-    });
-
-    hideSuggestions();
-});
+}

@@ -1,17 +1,28 @@
-import { getIntensity, Intensity } from "$common";
+import { getIntensity, Intensity } from "./intensity";
 
 /**
  * Injects a CSS string into the document head.
  * @param css The CSS string to inject.
  */
-export function injectCss(css: string): void {
+export function injectCss(css: string): HTMLStyleElement {
     const style = document.createElement("style");
     style.textContent = css;
-    // document.head may not exist at document-start timing; fall back to documentElement
-    const target = document.head || document.documentElement;
-    if (target) {
-        target.appendChild(style);
+
+    const mount = () => {
+        const target = document.head || document.documentElement;
+        if (target && !style.isConnected) target.appendChild(style);
+    };
+
+    // Resistance scripts run at document-start. Usually documentElement already
+    // exists, but the deferred fallback prevents very-early injection from
+    // silently losing the stylesheet.
+    mount();
+    if (!style.isConnected) {
+        document.addEventListener("readystatechange", mount, { once: true });
+        document.addEventListener("DOMContentLoaded", mount, { once: true });
     }
+
+    return style;
 }
 
 /**

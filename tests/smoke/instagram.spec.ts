@@ -17,6 +17,17 @@ test("instagram block explore hides explore navigation links", async ({ page }) 
 
     await expect(page.locator('nav a[href="/explore/"]')).toBeHidden();
     await expect(page.locator('nav a[href="/"]')).toBeVisible();
+
+    // CSS blocking applies automatically to SPA-inserted nodes; no observer or
+    // periodic scan is required.
+    await page.evaluate(() => {
+        const link = document.createElement("a");
+        link.id = "dynamic-explore";
+        link.href = "/explore/";
+        link.textContent = "Explore";
+        document.body.appendChild(link);
+    });
+    await expect(page.locator("#dynamic-explore")).toBeHidden();
 });
 
 test("instagram block explore redirects away from /explore pages", async ({ page }) => {
@@ -27,6 +38,18 @@ test("instagram block explore redirects away from /explore pages", async ({ page
     );
     await openFixtureAt(page, "instagram/block-explore.html", "http://boredom-fixture.test/explore");
 
+    await expect(page).toHaveURL(/^https:\/\/instagram\.com\/?$/, { timeout: 10_000 });
+});
+
+test("instagram block explore redirects after SPA navigation", async ({ page }) => {
+    await setIntensity(page, "high");
+    await loadScript(page, SRC("com/instagram/instagram_block_explore.ts"));
+    await page.route("https://instagram.com/**", (route) =>
+        route.fulfill({ status: 200, contentType: "text/html", body: "<html><body>stub</body></html>" }),
+    );
+    await openFixtureAt(page, "instagram/block-explore.html", "http://boredom-fixture.test/");
+
+    await page.evaluate(() => history.pushState({}, "", "/explore/"));
     await expect(page).toHaveURL(/^https:\/\/instagram\.com\/?$/, { timeout: 10_000 });
 });
 

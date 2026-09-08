@@ -91,21 +91,19 @@ test("youtube random captcha shows the overlay and spoofs the URL at high intens
     await expect(page.locator("#boredom-captcha-host .boredom-captcha-overlay")).toBeVisible();
 });
 
-test("youtube shorts remove hides and removes Shorts elements", async ({ page }) => {
+test("youtube shorts remove hides Shorts surfaces without detaching them", async ({ page }) => {
     await setIntensity(page, "high");
     await loadScript(page, SRC("com/youtube/youtube_shorts_remove.ts"));
     await openFixture(page, "youtube/remove-shorts.html");
 
-    // CSS: [is-shorts] gets display:none.
     await expect(page.locator("#shelf [is-shorts]").first()).toBeHidden();
     await expect(page.locator("#shelf span:not([is-shorts])")).toBeVisible();
-    // Main shorts container is removed from the DOM.
-    await expect(page.locator("#shorts-inner-container")).toHaveCount(0);
-    // Nav entries pointing at Shorts are removed; Home entries stay.
-    await expect(page.locator("div#items a[title='Shorts']")).toHaveCount(0);
-    await expect(page.locator("div#items a[title='Home']")).toHaveCount(1);
-    await expect(page.locator("div#items").nth(1).locator("yt-formatted-string.title")).toHaveCount(0);
-    await expect(page.locator("div#items").nth(2).locator("yt-formatted-string.title")).toHaveCount(1);
+    await expect(page.locator("#shorts-inner-container")).toHaveCount(1);
+    await expect(page.locator("#shorts-inner-container")).toBeHidden();
+    await expect(page.locator("div#items a[title='Shorts']")).toBeHidden();
+    await expect(page.locator("div#items a[title='Home']")).toBeVisible();
+    await expect(page.locator("div#items").nth(1).locator("yt-formatted-string.title")).toBeHidden();
+    await expect(page.locator("div#items").nth(2).locator("yt-formatted-string.title")).toBeVisible();
 });
 
 test("youtube shorts remove redirects away from /shorts pages", async ({ page }) => {

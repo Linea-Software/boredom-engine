@@ -1,42 +1,23 @@
 /**
  * @id instagram_block_reels
  * @name Instagram Block Reels
- * @description Blocks Instagram reels elements and fetch requests on the reels page.
- * @version 1.0.0
+ * @description Blocks Instagram Reels navigation and redirects away from Reels routes.
+ * @version 1.1.0
  */
-import { onDOMLoaded, blockNetworkRequests, currentIntensityHigherThan, Intensity, injectCss } from "$common";
 
-onDOMLoaded(() => {
-    if (!currentIntensityHigherThan(Intensity.None)) {
-        return;
-    }
+import { blockInterface, currentIntensityHigherThan, Intensity } from "$common";
 
-    const checkPath = () => {
-        if (
-            window.location.pathname.startsWith("/reels") ||
-            window.location.pathname.includes("/reels/")
-        ) {
-            window.location.replace("https://instagram.com");
-        }
-    };
-
-    // Hide Reels icons/links via CSS
-    injectCss(`
-        a[href*="/reels/"] {
-            display: none !important;
-        }
-    `);
-
-    // Monitor for navigation and dynamic elements
-    const observer = new MutationObserver(() => {
-        checkPath();
+if (currentIntensityHigherThan(Intensity.None)) {
+    blockInterface({
+        id: "instagram_block_reels",
+        selectors: [
+            'a[href="/reels/"]',
+            'a[href^="/reels/"]',
+            'a[href^="/reels?"]',
+        ],
+        redirect: {
+            when: (url) => url.pathname.startsWith("/reels"),
+            to: "https://instagram.com/",
+        },
     });
-
-    observer.observe(document.body, {
-        childList: true,
-        subtree: true,
-    });
-
-    // Initial check
-    checkPath();
-});
+}

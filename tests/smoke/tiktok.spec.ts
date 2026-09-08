@@ -17,7 +17,7 @@ test("tiktok block main content hides the FYP container and mutes its media", as
     await expect(page.locator("#main-content-homepage_hot")).toBeHidden();
     await expect(page.locator("#sidebar")).toBeVisible();
 
-    // The 500ms interval mutes any media inside the hidden container.
+    // The shared blocker suppresses media inside the hidden feed without polling.
     await expect
         .poll(() => page.locator("#fyp-video").evaluate((el) => (el as HTMLVideoElement).muted))
         .toBe(true);

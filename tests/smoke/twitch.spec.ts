@@ -70,15 +70,27 @@ test("twitch random captcha shows the overlay at high intensity", async ({ page 
     await expect(page.locator("#boredom-captcha-host .boredom-captcha-overlay")).toBeVisible();
 });
 
-test("twitch remove featured carousel removes the carousel from the DOM", async ({ page }) => {
+test("twitch remove featured carousel hides the carousel without detaching it", async ({ page }) => {
     await setIntensity(page, "high");
     await loadScript(page, SRC("tv/twitch/twitch_remove_featured_carousel.ts"));
     await openFixture(page, "twitch/remove-featured-carousel.html");
 
-    // removeCarousel() detaches the element (both selectors are covered by one
-    // element with the class and the data attribute).
-    await expect(page.locator("#carousel")).toHaveCount(0);
+    // Keep Twitch-owned DOM attached; declarative CSS is enough to keep both
+    // current and future carousel nodes hidden without fighting React.
+    await expect(page.locator("#carousel")).toHaveCount(1);
+    await expect(page.locator("#carousel")).toBeHidden();
+    await expect
+        .poll(() => page.locator("#carousel-video").evaluate((el) => (el as HTMLVideoElement).muted))
+        .toBe(true);
     await expect(page.locator("#channel-grid")).toBeVisible();
+
+    await page.evaluate(() => {
+        const carousel = document.createElement("div");
+        carousel.id = "dynamic-carousel";
+        carousel.className = "front-page-carousel";
+        document.body.appendChild(carousel);
+    });
+    await expect(page.locator("#dynamic-carousel")).toBeHidden();
 });
 
 test("twitch remove sidebar hides the navigation sidebar", async ({ page }) => {
@@ -86,7 +98,7 @@ test("twitch remove sidebar hides the navigation sidebar", async ({ page }) => {
     await loadScript(page, SRC("tv/twitch/twitch_remove_sidebar.ts"));
     await openFixture(page, "twitch/remove-sidebar.html");
 
-    // XPath-driven hide on a 1s interval.
+    // Stable/structural CSS selectors hide the sidebar without polling.
     await expect(page.locator("#sidebar")).toBeHidden();
     await expect(page.locator("#content")).toBeVisible();
 });

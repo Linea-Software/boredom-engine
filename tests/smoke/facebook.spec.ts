@@ -91,7 +91,8 @@ test("facebook hide comments hides the comment area but keeps the post", async (
     await loadScript(page, SRC("com/facebook/facebook_hide_comments.ts"));
     await openFixture(page, "facebook/hide-comments.html");
 
-    // The text-based fallback walks up to the closest role="article" container.
+    // Semantic aria selectors hide the comment controls/count/input; with no
+    // visible children left, the dedicated comment area collapses as well.
     await expect(page.locator("#comments-area")).toBeHidden();
     // Negative control: the post article stays.
     await expect(page.locator("#post")).toBeVisible();

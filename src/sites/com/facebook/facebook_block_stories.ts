@@ -1,48 +1,22 @@
 /**
  * @id facebook_block_stories
  * @name Facebook Block Stories
- * @description Removes the Stories tray from Facebook to reduce the "fear of missing out" loop.
- * @version 1.0.0
+ * @description Hides Facebook Stories surfaces without removing framework-owned nodes.
+ * @version 1.1.0
  */
-import { onDOMLoaded, currentIntensityHigherThan, Intensity, injectCss } from "$common";
 
-onDOMLoaded(() => {
-    if (!currentIntensityHigherThan(Intensity.None)) {
-        return;
-    }
+import { blockInterface, currentIntensityHigherThan, Intensity } from "$common";
 
-    // Hide stories tray via CSS - broad selectors that work with Facebook's UI
-    injectCss(`
-        /* Target the stories container using aria labels */
-        div[aria-label*="Stories"],
-        div[aria-label*="stories"],
-
-        /* Parent containers that hold stories */
-        div:has(> div[aria-label*="Stories"]),
-        div:has(> div[aria-label*="stories"]),
-
-        /* Story creation button/link */
-        a[aria-label*="Create story"],
-        a[aria-label*="Your story"],
-
-        /* Story viewer elements */
-        [role="dialog"][aria-label*="story"] {
-            display: none !important;
-        }
-    `);
-
-    // Also watch for dynamically injected stories
-    const observer = new MutationObserver(() => {
-        const storyContainers = document.querySelectorAll(
-            'div[aria-label*="Stories"], div[aria-label*="stories"]'
-        );
-        storyContainers.forEach(el => {
-            (el as HTMLElement).style.display = "none";
-        });
+if (currentIntensityHigherThan(Intensity.None)) {
+    blockInterface({
+        id: "facebook_block_stories",
+        selectors: [
+            '[data-pagelet="story_tray"]',
+            'div[aria-label*="Stories"]',
+            'div[aria-label*="stories"]',
+            'a[aria-label*="Create story"]',
+            'a[aria-label*="Your story"]',
+            '[role="dialog"][aria-label*="story"]',
+        ],
     });
-
-    observer.observe(document.body, {
-        childList: true,
-        subtree: true,
-    });
-});
+}

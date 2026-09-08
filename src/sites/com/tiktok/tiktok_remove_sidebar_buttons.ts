@@ -1,33 +1,37 @@
 /**
  * @id tiktok_remove_sidebar_buttons
  * @name TikTok Remove Sidebar Buttons
- * @description Removes specific buttons from the TikTok sidebar (e.g. "Following" or specific nav items) to reduce clutter.
- * @version 1.0.0
+ * @description Hides distracting TikTok Explore, LIVE, and More sidebar entries.
+ * @version 1.1.0
  */
-import { onDOMLoaded, getElementByXpath, getIntensity, Intensity, currentIntensityHigherThan } from "$common";
 
-onDOMLoaded(() => {
-        if (!currentIntensityHigherThan(Intensity.None)) {
-            return;
-        }
-    if (getIntensity() === Intensity.Low) return;
+import {
+    blockInterface,
+    currentIntensityHigherThan,
+    getIntensity,
+    Intensity,
+} from "$common";
 
-    // List of XPaths to remove
-    const buttonsToRemove = [
-        '//*[@id="app"]/div[2]/div/div/div[3]/div[1]/div[3]', // more button
-        '//*[@id="app"]/div[2]/div/div/div[3]/div[1]/h2[2]', // explore button
-        '//*[@id="app"]/div[2]/div/div/div[3]/div[1]/h2[5]', // live button
-    ];
-
-    setInterval(() => {
-        buttonsToRemove.forEach((xpath) => {
-            const element = getElementByXpath(xpath);
-            if (element) {
-                element.style.display = "none";
-                element.style.pointerEvents = "none";
-                // Optional: element.remove();
-                // Using display:none is safer for SPAs to prevent crashes if the framework tries to update it.
-            }
-        });
-    }, 1000);
-});
+if (
+    currentIntensityHigherThan(Intensity.None) &&
+    getIntensity() !== Intensity.Low
+) {
+    blockInterface({
+        id: "tiktok_remove_sidebar_buttons",
+        selectors: [
+            '[data-e2e="nav-explore"]',
+            'a[href="/explore"]',
+            'a[href^="/explore?"]',
+            '[data-e2e="nav-live"]',
+            'a[href="/live"]',
+            'a[href^="/live/"]',
+            'a[href^="/live?"]',
+            '[data-e2e="nav-more"]',
+            '[data-e2e="more-menu"]',
+            '[class*="DivMoreContainer"]',
+            '#app > div:nth-child(2) > div > div > div:nth-child(3) > div:first-child > div:nth-child(3)',
+            '#app > div:nth-child(2) > div > div > div:nth-child(3) > div:first-child > h2:nth-of-type(2)',
+            '#app > div:nth-child(2) > div > div > div:nth-child(3) > div:first-child > h2:nth-of-type(5)',
+        ],
+    });
+}

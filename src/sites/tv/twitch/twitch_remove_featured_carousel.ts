@@ -1,71 +1,25 @@
 /**
  * @id twitch_remove_featured_carousel
  * @name Twitch Remove Featured Carousel
- * @description Removes the featured carousel from the Twitch homepage.
- * @version 1.2.0
+ * @description Hides the Twitch featured carousel and suppresses its media without detaching app-owned DOM.
+ * @version 1.3.0
  */
-import { onDOMLoaded, injectCss, currentIntensityHigherThan, Intensity } from "$common";
 
-onDOMLoaded(() => {
-    if (!currentIntensityHigherThan(Intensity.None)) {
-        return;
-    }
+import { blockInterface, currentIntensityHigherThan, Intensity } from "$common";
 
-    // Inject style to hide it immediately for better performance/UX
-    injectCss(`
-        [data-a-target="front-page-carousel"],
-        .front-page-carousel {
-            display: none !important;
-        }
-    `);
+if (currentIntensityHigherThan(Intensity.None)) {
+    const carouselSelectors = [
+        '[data-a-target="front-page-carousel"]',
+        ".front-page-carousel",
+    ];
 
-    const removeCarousel = () => {
-        const selectors = [
-            '[data-a-target="front-page-carousel"]',
-            ".front-page-carousel",
-        ];
-
-        for (const selector of selectors) {
-            const elements = document.querySelectorAll(selector);
-            elements.forEach((el) => {
-                console.log("Removing Twitch featured carousel:", selector);
-                el.remove();
-            });
-        }
-    };
-
-    // Run immediately
-    removeCarousel();
-
-    // Run on mutations because Twitch is an SPA
-    const observer = new MutationObserver(() => {
-        removeCarousel();
+    blockInterface({
+        id: "twitch_remove_featured_carousel",
+        selectors: carouselSelectors,
+        media: {
+            containers: carouselSelectors,
+            mute: true,
+            pause: true,
+        },
     });
-
-    // Ensure any media inside is muted/paused (even if hidden or about to be removed)
-    setInterval(() => {
-        const selectors = [
-            '[data-a-target="front-page-carousel"]',
-            ".front-page-carousel",
-        ];
-
-        for (const selector of selectors) {
-            const containers = document.querySelectorAll(selector);
-            containers.forEach((container) => {
-                const mediaElements =
-                    container.querySelectorAll("video, audio");
-                mediaElements.forEach((media) => {
-                    if (media instanceof HTMLMediaElement) {
-                        if (!media.paused) media.pause();
-                        if (!media.muted) media.muted = true;
-                    }
-                });
-            });
-        }
-    }, 500);
-
-    observer.observe(document.body, {
-        childList: true,
-        subtree: true,
-    });
-});
+}
