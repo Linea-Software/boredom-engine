@@ -1,0 +1,34 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>X fixture</title></head>
+<body>
+<nav id="intentional-nav"><a href="/messages">Messages</a><a href="/search">Search</a></nav>
+<main data-testid="primaryColumn" id="primary">
+  <div role="tablist" id="tabs">
+    <div><button id="for-you" role="tab" aria-selected="true">For You</button></div>
+    <div><button id="following" role="tab" aria-selected="false" onclick="document.body.dataset.followingClicked='true'">Following</button></div>
+  </div>
+  <article data-testid="tweet" id="tweet">
+    <div role="group">
+      <button data-testid="reply"><svg aria-hidden="true"></svg><span id="reply-count">3</span></button>
+      <button data-testid="retweet"><svg aria-hidden="true"></svg><span id="repost-count">4</span></button>
+      <button data-testid="like"><svg aria-hidden="true"></svg><span id="like-count">5</span></button>
+      <a href="/user/status/1/analytics"><span id="view-count">99</span></a>
+    </div>
+    <img id="x-media" alt="photo">
+  </article>
+</main>
+<aside data-testid="sidebarColumn">
+  <section id="trends"><h2>What's happening</h2><div data-testid="trend">Trend</div></section>
+  <div id="suggestion" data-testid="UserCell">Who to follow</div>
+</aside>
+<script>
+window.replaceXTabs = () => {
+  document.body.dataset.followingClicked = "false";
+  document.getElementById("tabs").innerHTML =
+    '<div><button id="late-for-you" role="tab" aria-selected="true">For You</button></div>' +
+    '<div><button id="late-following" role="tab" onclick="document.body.dataset.followingClicked=\'true\'">Following</button></div>';
+};
+</script>
+</body>
+</html>

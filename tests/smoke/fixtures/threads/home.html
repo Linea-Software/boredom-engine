@@ -1,0 +1,27 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Threads fixture</title></head>
+<body>
+<nav id="threads-nav"><a href="/search">Search</a><a href="/activity">Activity</a></nav>
+<main id="threads-main">
+  <div role="tablist" id="threads-tabs">
+    <a id="threads-for-you" role="tab" aria-selected="true" href="/for_you">For You</a>
+    <a id="threads-following" role="tab" aria-selected="false" href="/following" onclick="event.preventDefault();document.body.dataset.followingClicked='true'">Following</a>
+  </div>
+  <article role="article">
+    <button aria-label="Like"><svg></svg><span id="threads-like-count">12</span></button>
+    <button aria-label="Reply"><svg></svg><span id="threads-reply-count">3</span></button>
+    <img id="threads-media" alt="thread media">
+  </article>
+</main>
+<aside role="complementary" id="threads-suggestions">Suggested for you</aside>
+<script>
+window.replaceThreadsTabs = () => {
+  document.body.dataset.followingClicked = "false";
+  document.getElementById("threads-tabs").innerHTML =
+    '<a role="tab" aria-selected="true" href="/for_you">For You</a>' +
+    '<a id="late-threads-following" role="tab" href="/following" onclick="event.preventDefault();document.body.dataset.followingClicked=\'true\'">Following</a>';
+};
+</script>
+</body>
+</html>

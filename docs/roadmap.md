@@ -1,10 +1,10 @@
 # Boredom Engine — Site Roadmap
 
-This document tracks which sites are currently supported and which ones are planned for future implementation.
+This document tracks which sites are currently supported and which ones remain planned for future implementation.
 
 ## Legend
 
-- ✅ **Done** — Fully implemented with scripts
+- ✅ **Done** — Fully implemented with scripts and tests
 - 🔄 **In Progress** — Being worked on
 - 📋 **Planned** — Identified as a good candidate, not yet started
 - ❌ **Not Planned** — Considered but decided against
@@ -13,14 +13,21 @@ This document tracks which sites are currently supported and which ones are plan
 
 ## Currently Supported
 
-| Site | Domain | Scripts | Status |
-|------|--------|---------|--------|
-| **YouTube** | `com.youtube` | 8 scripts | ✅ Done |
-| **Instagram** | `com.instagram` | 9 scripts | ✅ Done |
-| **Reddit** | `com.reddit` | 6 scripts | ✅ Done |
+| Site | Domain Path | Scripts | Status |
+|------|-------------|---------|--------|
+| **YouTube** | `com.youtube` | 7 scripts | ✅ Done |
+| **Instagram** | `com.instagram` | 8 scripts | ✅ Done |
+| **Reddit** | `com.reddit` | 5 scripts | ✅ Done |
 | **TikTok** | `com.tiktok` | 5 scripts | ✅ Done |
-| **Twitch** | `tv.twitch` | 7 scripts | ✅ Done |
-| **Facebook** | `com.facebook` | 10 scripts | ✅ Done |
+| **Twitch** | `tv.twitch` | 6 scripts | ✅ Done |
+| **Facebook** | `com.facebook` | 9 scripts | ✅ Done |
+| **X / Twitter** | `com.x` | 7 scripts | ✅ Done |
+| **LinkedIn** | `com.linkedin` | 7 scripts | ✅ Done |
+| **Pinterest** | `com.pinterest` | 7 scripts | ✅ Done |
+| **Threads** | `net.threads` | 6 scripts | ✅ Done |
+| **Netflix** | `com.netflix` | 6 scripts | ✅ Done |
+| **Hacker News** | `com.ycombinator.news` | 6 scripts | ✅ Done |
+| **Snapchat Web** | `com.snapchat` | 6 scripts | ✅ Done |
 
 ---
 
@@ -30,11 +37,6 @@ This document tracks which sites are currently supported and which ones are plan
 
 | Site | Domain Path | Priority | Notes | Status |
 |------|-------------|----------|-------|--------|
-| **Facebook** | `com.facebook` | 🔴 High | Feed blocking, reels/stories removal, grayscale, captcha, hide reactions/comments, sidebar removal, scrolling limits. | ✅ Done |
-| **X / Twitter** | `com.x` | 🔴 High | Timeline blocking, trending topics removal, scrolling limits, captcha. | 📋 Planned |
-| **LinkedIn** | `com.linkedin` | 🔴 High | Feed blocking, notification reduction, scroll limits, captcha. Increasingly addictive. | 📋 Planned |
-| **Pinterest** | `com.pinterest` | 🟡 Medium | Infinite visual discovery feed — natural fit for content blocking, desaturation, scroll limits, captcha. | 📋 Planned |
-| **Snapchat** | `com.snapchat` | 🟡 Medium | Stories, streaks, and discovery content. Web version is limited though. | 📋 Planned |
 | **WhatsApp** | `com.whatsapp` | 🟢 Low | Mostly utilitarian messaging; status updates are the main addictive element. Web version only. | 📋 Planned |
 
 ### Content & Communities
@@ -42,10 +44,9 @@ This document tracks which sites are currently supported and which ones are plan
 | Site | Domain Path | Priority | Notes | Status |
 |------|-------------|----------|-------|--------|
 | **9GAG** | `com.9gag` | 🟡 Medium | Infinite meme scrolling, addictive by design. | 📋 Planned |
-| **Imgur** | `com.imgur` | 🟡 Medium | Image-based infinite scroll, gallery browsing loops. | 📋 Planned |
+| **Imgur** | `com.imgur` | 🟡 Medium | Image-based infinite scroll and gallery browsing loops. | 📋 Planned |
 | **BuzzFeed** | `com.buzzfeed` | 🟢 Low | Clickbait and listicles; less relevant today. | 📋 Planned |
-| **Hacker News** | `news.ycombinator.com` | 🟡 Medium | Addictive tech news cycle. Could use feed blocking, scroll limits. | 📋 Planned |
-| **Product Hunt** | `com.producthunt` | 🟢 Low | Daily dopamine hit of new products, but less time-sink overall. | 📋 Planned |
+| **Product Hunt** | `com.producthunt` | 🟢 Low | Daily novelty loop around new products. | 📋 Planned |
 | **Medium** | `com.medium` | 🟡 Medium | Infinite reading recommendations. | 📋 Planned |
 | **Quora** | `com.quora` | 🟢 Low | Addictive Q&A feed, but lower traffic nowadays. | 📋 Planned |
 
@@ -53,9 +54,8 @@ This document tracks which sites are currently supported and which ones are plan
 
 | Site | Domain Path | Priority | Notes | Status |
 |------|-------------|----------|-------|--------|
-| **Netflix** | `com.netflix` | 🟡 Medium | Auto-play and binge-watching loops. Patterns reusable from YouTube/Twitch. | 📋 Planned |
-| **Hulu** | `com.hulu` | 🟢 Low | Similar to Netflix but smaller audience. | 📋 Planned |
-| **Dailymotion** | `com.dailymotion` | 🟢 Low | Lower priority — smaller user base. | 📋 Planned |
+| **Hulu** | `com.hulu` | 🟢 Low | Similar binge/friction opportunities to Netflix. | 📋 Planned |
+| **Dailymotion** | `com.dailymotion` | 🟢 Low | Lower priority due to smaller audience. | 📋 Planned |
 
 ---
 
@@ -69,7 +69,7 @@ When implementing a new site, these common scripts can be adapted:
 - Content blocking (feed, sidebar, recommendations)
 - Network request blocking
 - CSS injection
-- Random captcha
+- Random captcha / friction
 - Media quality downgrade
 - Video/audio delay
 
@@ -77,17 +77,19 @@ When implementing a new site, these common scripts can be adapted:
 - Reels / Shorts removal
 - Stories blocking
 - Comment hiding
-- Like count hiding
-- Explore tab blocking
-- Featured carousel removal
+- Like / engagement count hiding
+- Explore / algorithmic-tab blocking
+- Featured carousel and recommendation removal
+- Autoplay-preview suppression
+- Binge playback friction
 
 ---
 
 ## Contribution Notes
 
-- Use **reverse domain notation** for directory names (e.g., `com.facebook`, `com.x`).
+- Use **reverse domain notation** for directory names (for example `src/sites/com/facebook`, `src/sites/net/threads`, and `src/sites/com/ycombinator/news`).
 - Each script file needs a JSDoc comment with `@id`, `@name`, `@description`, `@version`.
-- Import shared utilities from `$common`.
-- The build system auto-discovers scripts — no config changes needed.
-- Run `bun run build` to bundle and test.
-- Follow the patterns in existing sites (e.g., `com.instagram`) as a reference.
+- Import shared utilities from `$common` or a focused `$common/*` module.
+- The build system auto-discovers scripts — no config changes are needed for a new reverse-domain directory.
+- Run `bun run build`, `bun run test`, `bun run test:artifact`, and `bun run test:smoke` before marking a site Done.
+- Follow the patterns in existing sites rather than creating a parallel framework.

@@ -143,6 +143,13 @@ describe("production artifact", () => {
             "reddit.com",
             "www.tiktok.com",
             "twitch.tv",
+            "x.com",
+            "www.linkedin.com",
+            "www.pinterest.com",
+            "www.threads.net",
+            "www.netflix.com",
+            "news.ycombinator.com",
+            "web.snapchat.com",
         ]) {
             expect(treeMatchesHost(catalog, host), `host ${host} should be covered`).toBe(true);
         }

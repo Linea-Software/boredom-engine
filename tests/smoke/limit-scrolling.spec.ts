@@ -51,3 +51,20 @@ test("reddit limit scrolling clamps scroll depth at high intensity", async ({ pa
 
     await assertScrollClamped(page);
 });
+
+for (const [site, relative] of [
+    ["X", "com/x/x_limit_scrolling.ts"],
+    ["LinkedIn", "com/linkedin/linkedin_limit_scrolling.ts"],
+    ["Pinterest", "com/pinterest/pinterest_limit_scrolling.ts"],
+    ["Threads", "net/threads/threads_limit_scrolling.ts"],
+    ["Hacker News", "com/ycombinator/news/hackernews_limit_scrolling.ts"],
+    ["Snapchat", "com/snapchat/snapchat_limit_scrolling.ts"],
+] as const) {
+    test(`${site} limit scrolling clamps scroll depth at high intensity`, async ({ page }) => {
+        await setIntensity(page, "high");
+        await loadScript(page, SRC(relative));
+        await openFixture(page, "_shared/tall-page.html");
+
+        await assertScrollClamped(page);
+    });
+}

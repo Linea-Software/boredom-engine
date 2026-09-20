@@ -1,0 +1,22 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Netflix fixture</title></head>
+<body>
+<nav id="netflix-nav"><a href="/browse/my-list">My List</a></nav>
+<section class="billboard-row" id="billboard"><div class="video-merch-player-container"><video id="preview"></video></div></section>
+<section class="top-10-container" id="top-ten">Top 10</section>
+<section data-uia="recommendation-row" id="recommendations">Recommended for you</section>
+<section id="normal-row">Continue Watching</section>
+<img id="netflix-art" alt="artwork">
+<video id="watch-video" class="watch-video--player-view"></video>
+<script>
+const preview = document.getElementById("preview");
+Object.defineProperty(preview, "paused", { configurable: true, get: () => false });
+preview.pause = () => { preview.dataset.pausedByScript = "true"; };
+const watch = document.getElementById("watch-video");
+Object.defineProperty(watch, "paused", { configurable: true, get: () => false });
+watch.pause = () => { watch.dataset.pauseCalls = String(Number(watch.dataset.pauseCalls || "0") + 1); };
+watch.play = () => { watch.dataset.playCalls = String(Number(watch.dataset.playCalls || "0") + 1); return Promise.resolve(); };
+</script>
+</body>
+</html>

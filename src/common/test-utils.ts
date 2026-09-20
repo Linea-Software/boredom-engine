@@ -29,7 +29,7 @@ export async function injectScript(page: Page, scriptPath: string) {
     await page.addInitScript({
         content: `
       (function() {
-        console.log("Injecting test script: ${scriptPath}");
+        console.log("Injecting test script:", ${JSON.stringify(scriptPath)});
         try {
             ${code}
         } catch (e) {
