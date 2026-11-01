@@ -1,0 +1,29 @@
+version: 2
+updates:
+  - package-ecosystem: bun
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      build-tooling-minor-patch:
+        patterns:
+          - esbuild
+          - "@types/bun"
+          - "@types/node"
+        update-types: [minor, patch]
+      ui-minor-patch:
+        patterns:
+          - lit
+          - lucide
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      github-actions:
+        patterns: ["*"]
+        update-types: [minor, patch]
