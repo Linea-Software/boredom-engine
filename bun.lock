@@ -6,7 +6,7 @@
       "name": "boredom-engine",
       "dependencies": {
         "lit": "^3.3.3",
-        "lucide": "^1.62.0",
+        "lucide": "^1.64.0",
         "zip-lib": "^1.4.0",
       },
       "devDependencies": {
@@ -137,7 +137,7 @@
 
     "lit-html": ["lit-html@3.3.3", "", { "dependencies": { "@types/trusted-types": "^2.0.2" } }, "sha512-el8M6jK2o3RXBnrSHX3ZKrsN8zEV63pSExTO1wYJz7QndGYZ8353e2a5PPX+qHe2aGayfnchQmkAojaWAREOIA=="],
 
-    "lucide": ["lucide@1.62.0", "", {}, "sha512-/8NUdyLCNCHGd103wuw4s4RLs/nZyXhs+cs5dx1qDjv7zFgmExkVr/LUythjxhy+oWIoYbAU8llv+c0Jsz69QQ=="],
+    "lucide": ["lucide@1.64.0", "", {}, "sha512-2k481p+2dnI88E5chX8D1niwJzar/0EMFZwS93E/umHVxl+Po5uoDIGuo64Ij3a35YaD1J6EsWulDzKaod5wOw=="],
 
     "pend": ["pend@1.2.0", "", {}, "sha512-F3asv42UuXchdzt+xXqfW1OGlVBe+mxa2mqI0pg5yAHZPvFmY3Y6drSf/GQ1A86WgWEN9Kzh/WrgKa6iGcHXLg=="],
 
