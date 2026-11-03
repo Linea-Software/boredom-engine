@@ -7,25 +7,35 @@ downloadable by Ace Engine clients.
 
 ## 1. Publish a GitHub Release
 
-The `Release` GitHub Action follows the same model as `ace-hosts`:
+The `Publish Resistance Mode Release` GitHub Action supports two paths:
 
-- **Automatically:** on the first day of every month at **03:00 UTC**.
-- **On demand:** GitHub → **Actions** → **Release** → **Run workflow**
-  (select `main`).
+1. **Manual (recommended):** open GitHub → **Actions** →
+   **Publish Resistance Mode Release** → **Run workflow**. Choose `main` and
+   enter the required **version**, for example `1.2.3` or `v1.2.3`.
+   Click **Run workflow**. GitHub Actions validates the version, runs the build
+   and tests, creates the `v1.2.3` tag automatically and publishes the Release.
+2. **Push an existing version tag (optional):**
+   ```bash
+   git tag v1.2.3
+   git push origin v1.2.3
+   ```
+   This also triggers the action, which validates, builds, tests and publishes
+   the GitHub Release for the pushed tag.
 
-No manual Git tag is needed. The workflow generates the tag from the UTC run
-date, e.g. `v2026.11.03`, and publishes a GitHub Release only after Bun's type
-check, unit tests and full artifact tests succeed. The release contains:
+There is **no scheduled publication**. The workflow creates a GitHub Release
+only after Bun's type check, unit tests and full artifact tests succeed. Each
+release contains:
 
 - `resistance-scripts.zip` — the artifact Ace Engine consumes
 - `sha256_checksums.txt` — SHA-256 digest for the ZIP
 - `scripts-data.json` — the catalog for inspection
 
 The workflow uses the repository's built-in `GITHUB_TOKEN` with
-`contents: write`; no site/CDN credentials are needed. As in `ace-hosts`, a
-second run on the same UTC date replaces the GitHub Release/tag for that date.
-**Do not re-run a release after importing it into ace-blocker-site unless the
-archive is unchanged:** the site treats versions as immutable and rejects a
+`contents: write`; no site/CDN credentials are needed. Versions must match
+`vMAJOR.MINOR.PATCH` (the manual input also accepts `MAJOR.MINOR.PATCH`).
+An already-existing release is **never overwritten**; a manual run also
+refuses to reuse an existing tag. Use a new version for each build because
+ace-blocker-site treats imported versions as immutable and rejects a
 different SHA-256 for an existing version.
 
 ## Local build and validation (optional)
@@ -52,9 +62,9 @@ Get-FileHash .\dist\resistance-scripts.zip -Algorithm SHA256
 3. The site fetches the latest stable `Linea-Software/boredom-engine` release,
    verifies the pinned `resistance-scripts.zip` URL, size, ZIP signature and
    SHA-256 (GitHub digest and/or `sha256_checksums.txt`), and mirrors it to
-   BunnyCDN. The site uses the dated `vYYYY.MM.DD` tag without its `v` as
-   the version identifier (e.g. `2026.11.03`). An already-imported identical version is skipped;
-   a conflicting version/checksum is rejected.
+   BunnyCDN. The site uses the `vMAJOR.MINOR.PATCH` tag without its `v`
+   as the version identifier (e.g. `1.2.3`). An already-imported identical
+   version is skipped; a conflicting version/checksum is rejected.
 4. Poll the status shown on the page. The imported release is **Staged** and
    will **not** be downloaded by clients until an admin clicks **Make available**.
 5. If needed, the existing **Deploy new** file-upload workflow remains available
