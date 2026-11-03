@@ -41,6 +41,13 @@ bun run deploy
 Produces `dist/resistance-scripts.zip` (the v1 beta artifact). Usage tracking
 is fully removed — there is no distributed tracking artifact.
 
+**GitHub Releases:** pushing a stable tag such as `v1.2.3` triggers the
+`Publish Resistance Mode Release` action, which checks, tests and publishes
+`resistance-scripts.zip`, `sha256_checksums.txt` and `scripts-data.json`.
+An admin can then import the latest release from GitHub through
+`/admin/releases/resistance` on ace-blocker-site, verify its import status,
+and explicitly make it available to clients. See `docs/release.md`.
+
 > There is deliberately no local "deploy" copy step anymore: the old code
 > copied the ZIP into `C:\ProgramData\LineaSoftware\AceBlocker\scripts`, a
 > directory no engine code reads. Uploads go through the ace-blocker-site
