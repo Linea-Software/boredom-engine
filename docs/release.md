@@ -1,10 +1,44 @@
 # Release procedure — resistance-scripts artifact
 
-The release procedure for the v1 beta is a documented, reproducible manual
-runbook (fully automated publishing is deliberately not implemented —
-credentials and release policy for production publishing do not exist yet).
+Release packaging and publication to **GitHub Releases** is automated by
+`.github/workflows/release.yml`. The ace-blocker-site admin controls when
+a published GitHub archive is imported to BunnyCDN and when it becomes
+downloadable by Ace Engine clients.
 
-## 1. Build and validate (boredom-engine)
+## 1. Publish a GitHub Release
+
+The `Publish Resistance Mode Release` GitHub Action supports two paths:
+
+1. **Manual (recommended):** open GitHub → **Actions** →
+   **Publish Resistance Mode Release** → **Run workflow**. Choose `main` and
+   enter the required **version**, for example `1.2.3` or `v1.2.3`.
+   Click **Run workflow**. GitHub Actions validates the version, runs the build
+   and tests, creates the `v1.2.3` tag automatically and publishes the Release.
+2. **Push an existing version tag (optional):**
+   ```bash
+   git tag v1.2.3
+   git push origin v1.2.3
+   ```
+   This also triggers the action, which validates, builds, tests and publishes
+   the GitHub Release for the pushed tag.
+
+There is **no scheduled publication**. The workflow creates a GitHub Release
+only after Bun's type check, unit tests and full artifact tests succeed. Each
+release contains:
+
+- `resistance-scripts.zip` — the artifact Ace Engine consumes
+- `sha256_checksums.txt` — SHA-256 digest for the ZIP
+- `scripts-data.json` — the catalog for inspection
+
+The workflow uses the repository's built-in `GITHUB_TOKEN` with
+`contents: write`; no site/CDN credentials are needed. Versions must match
+`vMAJOR.MINOR.PATCH` (the manual input also accepts `MAJOR.MINOR.PATCH`).
+An already-existing release is **never overwritten**; a manual run also
+refuses to reuse an existing tag. Use a new version for each build because
+ace-blocker-site treats imported versions as immutable and rejects a
+different SHA-256 for an existing version.
+
+## Local build and validation (optional)
 
 ```bash
 cd boredom-engine
@@ -21,18 +55,25 @@ Record the SHA-256 of the artifact:
 Get-FileHash .\dist\resistance-scripts.zip -Algorithm SHA256
 ```
 
-## 2. Upload via the ace-blocker-site admin panel
+## 2. Import via the ace-blocker-site admin panel
 
 1. Sign in to the site as an **admin**.
-2. Open the admin release manager (`/admin/releases/resistance`).
-3. Choose a **version identifier** (e.g. `2026-09-01` or `1.2.0`). Keep it
-   stable: the engine compares it as an exact string.
-4. Upload `dist/resistance-scripts.zip`. The site validates size, file type,
-   and version format (see `src/lib/server/api/routers/admin/resistance.ts`),
-   stores the object on BunnyCDN and records `version`/`sha256`/`size` in
-   Postgres.
-5. The upload starts in **Staged** state. Click **Make available** for the new
-   row so the public release metadata and signed download endpoint can serve it.
+2. Open `/admin/releases/resistance` and click **Import latest from GitHub**.
+3. The site fetches the latest stable `Linea-Software/boredom-engine` release,
+   verifies the pinned `resistance-scripts.zip` URL, size, ZIP signature and
+   SHA-256 (GitHub digest and/or `sha256_checksums.txt`), and mirrors it to
+   BunnyCDN. The site uses the `vMAJOR.MINOR.PATCH` tag without its `v`
+   as the version identifier (e.g. `1.2.3`). An already-imported identical
+   version is skipped; a conflicting version/checksum is rejected.
+4. Poll the status shown on the page. The imported release is **Staged** and
+   will **not** be downloaded by clients until an admin clicks **Make available**.
+5. If needed, the existing **Deploy new** file-upload workflow remains available
+   for manually uploading `dist/resistance-scripts.zip` with a safe unique
+   version identifier.
+
+The import endpoint is accessible only to authenticated admins. GitHub
+credentials and inbound callbacks are not required; downloads are
+initiated by the site, not by GitHub Actions.
 
 ## 3. Verify metadata
 
