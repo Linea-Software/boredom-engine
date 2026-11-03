@@ -1,5 +1,5 @@
 import { build } from "esbuild";
-import { readdir, readFile, writeFile, access } from "node:fs/promises";
+import { readdir, readFile, writeFile, access, rm } from "node:fs/promises";
 import { join, dirname } from "node:path";
 import {
     CATALOG_SCHEMA_VERSION,
@@ -8,6 +8,7 @@ import {
     type Catalog,
 } from "../catalog-contract.ts";
 import { isCompleteScriptMetadata, parseScriptMetadata } from "../metadata.ts";
+import { buildSharedSites } from "../shared-build.ts";
 
 async function getFiles(dir: string): Promise<string[]> {
     const dirents = await readdir(dir, { withFileTypes: true });
@@ -26,11 +27,13 @@ interface ScriptData {
     name: string;
     description: string;
     version: string;
+    sharedChunks?: string[];
 }
 
 interface SiteNode {
     scripts: ScriptData[];
     children: Record<string, SiteNode>;
+    runtimePath?: string;
 }
 
 export async function buildDefault() {
@@ -50,19 +53,39 @@ export async function buildDefault() {
 
     console.log(`Found ${entryPoints.length} entry points.`);
 
-    // The resistance catalog is the only output: every script under
-    // `src/sites/` is a resistance script shipped in the v1 artifact.
+    // First preserve the original independent IIFEs for fallback and sizing.
+    // ACE's normal artifact can use a site-scoped shared runtime when it
+    // improves total payload size; Tampermonkey remains entirely independent.
+    let runtimePaths = new Map<string, string>();
+    let scriptChunks = new Map<string, string[]>();
+    // Avoid keeping removed scripts in the local standalone fallback output.
+    await rm("dist/standalone", { recursive: true, force: true });
     if (entryPoints.length > 0) {
         await build({
             entryPoints,
-            outdir: "dist/normal",
+            outdir: "dist/standalone",
             bundle: true,
             platform: "browser",
             target: "es2020",
             outbase: "src/sites",
             minify: true,
-            format: "iife", // Just to be safe for browser content scripts
+            format: "iife",
         });
+        const shared = await buildSharedSites(
+            entryPoints,
+            srcSitesDir,
+            join(process.cwd(), "dist/normal"),
+            join(process.cwd(), "dist/standalone"),
+        );
+        runtimePaths = shared.runtimePaths;
+        scriptChunks = shared.scriptChunks;
+        await writeFile(
+            "dist/shared-build-stats.json",
+            JSON.stringify(shared.stats, null, 2),
+        );
+        console.log(
+            `Shared runtimes: ${runtimePaths.size}/${shared.stats.length} site groups`,
+        );
     }
 
     console.log("Bundling complete.");
@@ -117,10 +140,13 @@ export async function buildDefault() {
             name: metadata.name!,
             description: metadata.description!,
             version: metadata.version!,
+            sharedChunks: scriptChunks.get(distRelPath),
         };
 
         try {
             const node = ensureNode(pathParts, normalSites);
+            const runtimePath = runtimePaths.get(dirname(relPath));
+            if (runtimePath) node.runtimePath = runtimePath;
             node.scripts.push(scriptData);
         } catch (e) {
             console.error(`Error processing ${relPath}:`, e);

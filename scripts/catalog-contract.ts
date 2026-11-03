@@ -15,6 +15,11 @@
  *   `youtube.com` / `www.youtube.com` (the engine strips `www.` and walks
  *   the reversed host labels). `sites.generic` is special: its scripts are
  *   global (injected on every host).
+ * - Scripts may declare `sharedChunks` (transitive catalog-relative files)
+ *   required by their IIFE. ACE loads the union for enabled scripts only.
+ * - Site nodes may include `runtimePath`, a local JavaScript artifact that
+ *   ACE injects before the enabled scripts of that node. It must remain in
+ *   the package and use a safe catalog-relative path.
  * - Every script entry has: `id` (stable — the engine persists per-script
  *   enable state BY ID, so IDs must never be renamed casually), `path`
  *   (relative to the catalog file, forward slashes, no `..`, no absolute
@@ -27,11 +32,15 @@ export interface ScriptData {
     name: string;
     description: string;
     version: string;
+    /** Transitive chunks required by this entry when the site has a runtime. */
+    sharedChunks?: string[];
 }
 
 export interface SiteNode {
     scripts: ScriptData[];
     children: Record<string, SiteNode>;
+    /** Site-scoped dependency runtime injected before this node's scripts. */
+    runtimePath?: string;
 }
 
 export interface Catalog {
@@ -151,6 +160,49 @@ export async function validateCatalog(
         }
     }
 
+    // A shared runtime is executable. It obeys the same path contract
+    // as a resistance script, including existing-file validation.
+    const checkRuntime = async (node: SiteNode, sitePath: string): Promise<void> => {
+        for (const entry of node.scripts) {
+            if (entry.sharedChunks?.length && !node.runtimePath) {
+                issues.push({
+                    message: "script has shared chunks but node has no runtime",
+                    path: `${sitePath}/${entry.id}`,
+                });
+            }
+            const seen = new Set<string>();
+            for (const path of entry.sharedChunks ?? []) {
+                if (seen.has(path)) {
+                    issues.push({ message: `duplicate shared chunk '${path}'`, path: sitePath });
+                }
+                seen.add(path);
+                if (!path || path.startsWith("/") || /^[a-zA-Z]:/.test(path) ||
+                    path.includes("\\") || !path.endsWith(".js") ||
+                    path.split("/").some((part) => !part || part === "." || part === "..")) {
+                    issues.push({ message: `invalid shared chunk path '${path}'`, path: sitePath });
+                } else if (!(await fileExists(path))) {
+                    issues.push({ message: `shared chunk missing: '${path}'`, path: sitePath });
+                }
+            }
+        }
+        if (node.runtimePath !== undefined) {
+            const path = node.runtimePath;
+            if (!path || path.startsWith("/") || /^[a-zA-Z]:/.test(path) ||
+                path.includes("\\") || !path.endsWith(".js") ||
+                path.split("/").some((part) => !part || part === "." || part === "..")) {
+                issues.push({ message: `invalid shared runtime path '${path}'`, path: sitePath });
+            } else if (!(await fileExists(path))) {
+                issues.push({ message: `shared runtime missing: '${path}'`, path: sitePath });
+            }
+        }
+        for (const [childName, child] of Object.entries(node.children)) {
+            await checkRuntime(child, `${sitePath}.${childName}`);
+        }
+    };
+    for (const [site, node] of Object.entries(catalog.sites)) {
+        await checkRuntime(node, site);
+    }
+
     if (issues.length > 0) {
         throw new CatalogValidationError(issues);
     }
@@ -164,7 +216,9 @@ export function sortCatalog(catalog: Catalog): Catalog {
         for (const name of Object.keys(node.children).sort()) {
             children[name] = sortNode(node.children[name]);
         }
-        return { scripts, children };
+        return node.runtimePath !== undefined
+            ? { scripts, children, runtimePath: node.runtimePath }
+            : { scripts, children };
     };
 
     const sites: Record<string, SiteNode> = {};

@@ -139,6 +139,35 @@ describe("validateCatalog", () => {
         );
     });
 
+    test("validates shared runtime and transitive chunk assets", async () => {
+        const sharedNode = node([script({
+            sharedChunks: ["com/youtube/__chunks/chunk-abc.js"],
+        })]);
+        sharedNode.runtimePath = "com/youtube/__ace_shared.js";
+        const catalog = makeCatalog({
+            com: node([], { youtube: sharedNode }),
+        });
+        await expect(validateCatalog(catalog, alwaysExists)).resolves.toBeUndefined();
+        await expect(validateCatalog(
+            catalog,
+            (path) => !path.endsWith("chunk-abc.js"),
+        )).rejects.toThrow(/shared chunk missing/);
+
+        sharedNode.runtimePath = undefined;
+        await expect(validateCatalog(catalog, alwaysExists))
+            .rejects.toThrow(/no runtime/);
+
+        sharedNode.runtimePath = "com/youtube/__ace_shared.js";
+        sharedNode.scripts[0].sharedChunks = ["../escape.js"];
+        await expect(validateCatalog(catalog, alwaysExists))
+            .rejects.toThrow(/invalid shared chunk path/);
+
+        sharedNode.scripts[0].sharedChunks = [];
+        sharedNode.runtimePath = "../escape.js";
+        await expect(validateCatalog(catalog, alwaysExists))
+            .rejects.toThrow(/invalid shared runtime path/);
+    });
+
     test("rejects non-js paths", async () => {
         const catalog = makeCatalog({
             com: node([], { youtube: node([script({ path: "com/youtube/grayscale.txt" })]) }),

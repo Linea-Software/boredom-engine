@@ -114,19 +114,19 @@ describe("wrapScript", () => {
     });
 
     test("runs the original when the site matches and the script is enabled", () => {
-        const win = { __BOREDOM_STATE__: { currentSite: "com/youtube", enabled: {} } };
+        const win: { __BOREDOM_STATE__: { currentSite: string; enabled: Record<string, boolean> }; __RAN__?: boolean } = { __BOREDOM_STATE__: { currentSite: "com/youtube", enabled: {} } };
         new Function("window", wrapped)(win);
         expect(win.__RAN__).toBe(true);
     });
 
     test("skips the script on a different site", () => {
-        const win = { __BOREDOM_STATE__: { currentSite: "com/facebook", enabled: {} } };
+        const win: { __BOREDOM_STATE__: { currentSite: string; enabled: Record<string, boolean> }; __RAN__?: boolean } = { __BOREDOM_STATE__: { currentSite: "com/facebook", enabled: {} } };
         new Function("window", wrapped)(win);
         expect(win.__RAN__).toBeUndefined();
     });
 
     test("skips the script when disabled", () => {
-        const win = {
+        const win: { __BOREDOM_STATE__: { currentSite: string; enabled: Record<string, boolean> }; __RAN__?: boolean } = {
             __BOREDOM_STATE__: { currentSite: "com/youtube", enabled: { youtube_grayscale: false } },
         };
         new Function("window", wrapped)(win);
