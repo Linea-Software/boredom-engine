@@ -41,9 +41,12 @@ bun run deploy
 Produces `dist/resistance-scripts.zip` (the v1 beta artifact). Usage tracking
 is fully removed — there is no distributed tracking artifact.
 
-**GitHub Releases:** pushing a stable tag such as `v1.2.3` triggers the
-`Publish Resistance Mode Release` action, which checks, tests and publishes
-`resistance-scripts.zip`, `sha256_checksums.txt` and `scripts-data.json`.
+**GitHub Releases:** the `Release` GitHub Action runs automatically on the
+**1st of each month at 03:00 UTC**, or manually through **Actions → Release →
+Run workflow** on `main`. Like `ace-hosts`, it creates a dated tag such as
+`v2026.11.03` after checking types, running tests and validating the build,
+then publishes `resistance-scripts.zip`, `sha256_checksums.txt` and
+`scripts-data.json`. No manual tagging is needed.
 An admin can then import the latest release from GitHub through
 `/admin/releases/resistance` on ace-blocker-site, verify its import status,
 and explicitly make it available to clients. See `docs/release.md`.

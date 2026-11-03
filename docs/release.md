@@ -7,26 +7,26 @@ downloadable by Ace Engine clients.
 
 ## 1. Publish a GitHub Release
 
-Create and push a new stable semver tag (for example `v1.2.3`) on the desired
-commit:
+The `Release` GitHub Action follows the same model as `ace-hosts`:
 
-```bash
-git tag v1.2.3
-git push origin v1.2.3
-```
+- **Automatically:** on the first day of every month at **03:00 UTC**.
+- **On demand:** GitHub → **Actions** → **Release** → **Run workflow**
+  (select `main`).
 
-The `Publish Resistance Mode Release` GitHub Action runs Bun's type check,
-unit tests and full artifact tests. Only after successful validation does it
-create the tagged GitHub Release, containing:
+No manual Git tag is needed. The workflow generates the tag from the UTC run
+date, e.g. `v2026.11.03`, and publishes a GitHub Release only after Bun's type
+check, unit tests and full artifact tests succeed. The release contains:
 
 - `resistance-scripts.zip` — the artifact Ace Engine consumes
 - `sha256_checksums.txt` — SHA-256 digest for the ZIP
 - `scripts-data.json` — the catalog for inspection
 
 The workflow uses the repository's built-in `GITHUB_TOKEN` with
-`contents: write`; no site/CDN credentials are needed. It rejects
-non-`vMAJOR.MINOR.PATCH` tags and will not overwrite an existing release.
-Do not reuse a version tag with different content.
+`contents: write`; no site/CDN credentials are needed. As in `ace-hosts`, a
+second run on the same UTC date replaces the GitHub Release/tag for that date.
+**Do not re-run a release after importing it into ace-blocker-site unless the
+archive is unchanged:** the site treats versions as immutable and rejects a
+different SHA-256 for an existing version.
 
 ## Local build and validation (optional)
 
@@ -52,8 +52,8 @@ Get-FileHash .\dist\resistance-scripts.zip -Algorithm SHA256
 3. The site fetches the latest stable `Linea-Software/boredom-engine` release,
    verifies the pinned `resistance-scripts.zip` URL, size, ZIP signature and
    SHA-256 (GitHub digest and/or `sha256_checksums.txt`), and mirrors it to
-   BunnyCDN. The site uses the `vMAJOR.MINOR.PATCH` tag without its `v` as
-   the version identifier. An already-imported identical version is skipped;
+   BunnyCDN. The site uses the dated `vYYYY.MM.DD` tag without its `v` as
+   the version identifier (e.g. `2026.11.03`). An already-imported identical version is skipped;
    a conflicting version/checksum is rejected.
 4. Poll the status shown on the page. The imported release is **Staged** and
    will **not** be downloaded by clients until an admin clicks **Make available**.
