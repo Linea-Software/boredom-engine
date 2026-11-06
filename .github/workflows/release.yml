@@ -70,6 +70,12 @@ jobs:
       - name: Build and validate resistance archive
         run: bun run test:artifact
 
+      - name: Install Chromium for ACE direct-injection smoke tests
+        run: bunx playwright install --with-deps chromium
+
+      - name: ACE direct-injection smoke tests
+        run: bun run test:smoke --grep "ACE direct injection"
+
       - name: Generate checksums
         run: |
           test -s dist/resistance-scripts.zip
