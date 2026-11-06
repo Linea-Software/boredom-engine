@@ -13,6 +13,12 @@ scripts into covered sites together with the configured intensity.
 
 ## Development
 
+**Research policy:** Before implementing or repairing a site-specific action,
+look for and download relevant Chrome extension and userscript source code as
+references for how that action is achieved on that website; cross-check with
+live site behavior. Follow [Site reference research](docs/SITE_REFERENCE_RESEARCH.md)
+for safety, licensing, verification and test expectations.
+
 ### Install Dependencies
 
 ```bash

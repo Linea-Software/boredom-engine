@@ -32,6 +32,17 @@ This project contains a set of site-specific scripts aimed at transforming addic
 - **Type Safety**: Design data structures and types such that **invalid states are unrepresentable**.
 - **Commits**: Always commit your changes using Git. Follow the Conventional Commits style. Messages must start with a prefix like `feat:`, `fix:`, `chore:`, `refactor:`, etc.
 
+## Reference-first Site Development
+
+For each website-specific action, research and download the source of existing
+Chrome extensions and userscripts that already implement the same action on the
+same website. Inspect their manifests, selectors, injection and SPA navigation
+techniques as references before designing our own code. Follow
+`docs/SITE_REFERENCE_RESEARCH.md`: treat downloads as untrusted, test in an
+isolated browser profile, observe licenses and verify the live DOM rather than
+copying code blindly. Apply this to repairs of existing scripts, not only new
+sites.
+
 ## Researching New Sites
 
 When implementing scripts for a new site, **use the browser to inspect the site live** before writing any code. This is critical for understanding the site's actual DOM structure:
