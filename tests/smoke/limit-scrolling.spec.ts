@@ -36,6 +36,30 @@ test("youtube limit scrolling clamps scroll depth at high intensity", async ({ p
     await assertScrollClamped(page);
 });
 
+test("youtube limit scrolling activates and releases on live intensity changes", async ({ page }) => {
+    await setIntensity(page, "none");
+    await loadScript(page, SRC("com/youtube/youtube_limit_scrolling.ts"));
+    await openFixture(page, "_shared/tall-page.html");
+
+    await page.evaluate(() => window.scrollTo(0, 9000));
+    await expect(page.locator("#boredom-scroll-limit-style")).toHaveCount(0);
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(5000);
+
+    await page.evaluate(() => {
+        (window as any).__BOREDOM_INTENSITY__ = "high";
+        window.dispatchEvent(new Event("boredom-engine:intensitychange"));
+    });
+    await assertScrollClamped(page);
+
+    await page.evaluate(() => {
+        (window as any).__BOREDOM_INTENSITY__ = "none";
+        window.dispatchEvent(new Event("boredom-engine:intensitychange"));
+    });
+    await expect(page.locator("#boredom-scroll-limit-style")).toHaveCount(0);
+    await page.evaluate(() => window.scrollTo(0, 9000));
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(5000);
+});
+
 test("facebook limit scrolling clamps scroll depth at high intensity", async ({ page }) => {
     await setIntensity(page, "high");
     await loadScript(page, SRC("com/facebook/facebook_limit_scrolling.ts"));

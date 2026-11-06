@@ -38,12 +38,35 @@ test("youtube audio delay wires a DelayNode with the intensity-scaled delay", as
         .toEqual({ sources: 1, delayValue: 3 });
 });
 
+test("youtube audio delay starts after a live intensity change and clears at none", async ({ page }) => {
+    await setIntensity(page, "none");
+    await stubAudioContext(page);
+    await loadScript(page, SRC("com/youtube/youtube_audio_delay.ts"));
+    await openFixture(page, "youtube/audio-delay.html");
+
+    await page.waitForTimeout(1100);
+    expect(await page.evaluate(() => (window as any).__AUDIO_STUB__.sources.length)).toBe(0);
+
+    await page.evaluate(() => {
+        (window as any).__BOREDOM_INTENSITY__ = "high";
+    });
+    await expect
+        .poll(() => page.evaluate(() => (window as any).__AUDIO_STUB__.delays[0]?.node.delayTime.value))
+        .toBe(3);
+
+    await page.evaluate(() => {
+        (window as any).__BOREDOM_INTENSITY__ = "none";
+    });
+    await expect
+        .poll(() => page.evaluate(() => (window as any).__AUDIO_STUB__.delays[0]?.node.delayTime.value))
+        .toBe(0);
+});
+
 test("youtube low quality forces the intensity-mapped playback quality", async ({ page }) => {
     await setIntensity(page, "high"); // QUALITY_MAP[High] = "small" (240p)
     await loadScript(page, SRC("com/youtube/youtube_low_quality.ts"));
-    // Fixture lives under fixtures/youtube/watch/ so window.location.href
-    // contains "/watch" — the script's gate for forcing player quality.
-    await openFixture(page, "youtube/watch/low-quality.html");
+    // Match the real YouTube route, not a /watch/ substring in a file path.
+    await openFixtureAt(page, "youtube/watch/low-quality.html", "http://boredom-fixture.test/watch?v=abc");
 
     await expect
         .poll(
@@ -56,6 +79,29 @@ test("youtube low quality forces the intensity-mapped playback quality", async (
         () => (window as unknown as Record<string, unknown>).__qualityCalls as unknown[][],
     );
     expect(calls).toContainEqual(["range", "small", "small"]);
+});
+
+test("youtube quality starts after intensity changes from none and resets to auto", async ({ page }) => {
+    await setIntensity(page, "none");
+    await loadScript(page, SRC("com/youtube/youtube_low_quality.ts"));
+    await openFixtureAt(page, "youtube/watch/low-quality.html", "http://boredom-fixture.test/watch?v=abc");
+
+    await page.waitForTimeout(650);
+    expect(await page.evaluate(() => (window as any).__qualityCalls)).toEqual([]);
+
+    await page.evaluate(() => {
+        (window as unknown as Record<string, unknown>).__BOREDOM_INTENSITY__ = "high";
+    });
+    await expect
+        .poll(() => page.evaluate(() => (window as any).__qualityCalls as string[][]))
+        .toContainEqual(["quality", "small"]);
+
+    await page.evaluate(() => {
+        (window as unknown as Record<string, unknown>).__BOREDOM_INTENSITY__ = "none";
+    });
+    await expect
+        .poll(() => page.evaluate(() => (window as any).__qualityCalls as string[][]))
+        .toContainEqual(["quality", "auto"]);
 });
 
 test("youtube random captcha shows the overlay and spoofs the URL at high intensity", async ({ page }) => {
@@ -89,6 +135,20 @@ test("youtube random captcha shows the overlay and spoofs the URL at high intens
 
     // The overlay renders into an open shadow root (Lit).
     await expect(page.locator("#boredom-captcha-host .boredom-captcha-overlay")).toBeVisible();
+});
+
+test("youtube captcha activates after increasing intensity on the same page", async ({ page }) => {
+    await setIntensity(page, "none");
+    await stubReplaceState(page);
+    await loadScript(page, SRC("com/youtube/youtube_random_captcha.ts"));
+    await openFixture(page, "youtube/random-captcha.html");
+
+    await page.waitForTimeout(1400);
+    expect(await page.locator("#boredom-captcha-host").count()).toBe(0);
+    await page.evaluate(() => {
+        (window as any).__BOREDOM_INTENSITY__ = "high";
+    });
+    await expect(page.locator("#boredom-captcha-host")).toHaveCount(1, { timeout: 12_000 });
 });
 
 test("youtube shorts remove hides Shorts surfaces without detaching them", async ({ page }) => {
@@ -150,6 +210,23 @@ test("youtube shorts remove reacts to live intensity changes", async ({ page }) 
         window.dispatchEvent(new Event("boredom-engine:intensitychange"));
     });
     await expect(page.locator("#modern-mini-shorts")).toBeVisible();
+});
+
+test("youtube buffering starts after a live intensity change", async ({ page }) => {
+    await setIntensity(page, "none");
+    await stubMathRandom(page, 0);
+    await loadScript(page, SRC("com/youtube/youtube_video_buffer_delay.ts"));
+    await openFixture(page, "youtube/video-buffer-delay.html");
+
+    await page.waitForTimeout(1200);
+    expect(await page.evaluate(() => document.body.dataset.boredomBufferingActive)).toBeUndefined();
+
+    await page.evaluate(() => {
+        (window as any).__BOREDOM_INTENSITY__ = "high";
+    });
+    await expect
+        .poll(() => page.evaluate(() => document.body.dataset.boredomBufferingActive), { timeout: 10_000 })
+        .toBe("true");
 });
 
 test("youtube video buffer delay pauses playback and shows the buffering spinner", async ({ page }) => {

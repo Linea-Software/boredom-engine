@@ -1,70 +1,82 @@
 import { Intensity, getIntensity } from "./intensity";
 import { onDOMLoaded } from "./dom";
 
+const DEFAULT_LIMITS: Record<Intensity, number> = {
+    [Intensity.None]: Infinity,
+    [Intensity.Low]: 5,
+    [Intensity.Medium]: 3,
+    [Intensity.High]: 1.5,
+    [Intensity.Extreme]: 0.5,
+};
+
 /**
- * Limits the scrolling depth on a page based on the current intensity.
- * Uses requestAnimationFrame (not setInterval) and pauses when the tab is
- * not visible to avoid wasting CPU in background tabs.
- * @param vhMultiplierMap Optional map to override default VH multipliers for different intensities.
+ * Limits scrolling depth by intensity, including live changes from/to None.
+ * The rAF loop is suspended while the tab is hidden.
  */
 export function limitScrolling(
     vhMultiplierMap?: Partial<Record<Intensity, number>>,
-) {
-    const intensity = getIntensity();
-    if (intensity === Intensity.None) return;
-
-    // Default multipliers for Viewport Height (VH)
-    const DEFAULT_LIMITS: Record<Intensity, number> = {
-        [Intensity.None]: Infinity,
-        [Intensity.Low]: 5,
-        [Intensity.Medium]: 3,
-        [Intensity.High]: 1.5,
-        [Intensity.Extreme]: 0.5,
-    };
-
-    const multiplier =
-        vhMultiplierMap?.[intensity] ?? DEFAULT_LIMITS[intensity];
-
+): void {
     onDOMLoaded(() => {
-        let maxScroll = window.innerHeight * multiplier;
-        let limitReached = false;
+        const multiplier = () =>
+            vhMultiplierMap?.[getIntensity()] ?? DEFAULT_LIMITS[getIntensity()];
+        let maxScroll = window.innerHeight * multiplier();
         let isScrollingBack = false;
         let animationId: number | null = null;
         let isVisible = !document.hidden;
+        let limitReached = false;
+
+        const styleId = "boredom-scroll-limit-style";
+        const removeLimit = () => {
+            document.getElementById(styleId)?.remove();
+            limitReached = false;
+        };
 
         const enforceLimit = () => {
-            // Prevent re-entrant calls: scrollTo triggers another scroll event,
-            // which would otherwise cause an infinite loop and freeze the page.
-            if (isScrollingBack) return;
+            if (isScrollingBack || !Number.isFinite(maxScroll)) return;
+            if (window.scrollY <= maxScroll) return;
 
-            if (window.scrollY > maxScroll) {
-                if (!limitReached) {
-                    limitReached = true;
-                    // Silently "kill" the page height to prevent further scrolling
-                    // and potentially stop infinite loaders
-                    const style = document.createElement("style");
-                    style.id = "boredom-scroll-limit-style";
+            if (!limitReached) {
+                limitReached = true;
+                const style = document.createElement("style");
+                style.id = styleId;
+                style.textContent = `
+                    body, html {
+                        max-height: ${maxScroll + window.innerHeight}px !important;
+                        overflow: hidden !important;
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+
+            isScrollingBack = true;
+            window.scrollTo(0, maxScroll);
+            setTimeout(() => {
+                isScrollingBack = false;
+            }, 0);
+        };
+
+        const refreshLimit = () => {
+            const previousMax = maxScroll;
+            maxScroll = window.innerHeight * multiplier();
+
+            // Relaxation or disablement must restore page overflow. The old
+            // style otherwise keeps the page locked even at intensity None.
+            if (!Number.isFinite(maxScroll) || maxScroll > previousMax) {
+                removeLimit();
+            } else if (limitReached) {
+                const style = document.getElementById(styleId);
+                if (style) {
                     style.textContent = `
                         body, html {
                             max-height: ${maxScroll + window.innerHeight}px !important;
                             overflow: hidden !important;
                         }
                     `;
-                    document.head.appendChild(style);
                 }
-
-                // Force scroll back to the limit
-                isScrollingBack = true;
-                window.scrollTo(0, maxScroll);
-                // Reset the guard on the next microtask so future scrolls (user or programmatic) work
-                setTimeout(() => {
-                    isScrollingBack = false;
-                }, 0);
             }
+            enforceLimit();
         };
 
-        // Use rAF loop instead of setInterval — respects background tabs
-        // (browsers throttle rAF to ~1 fps when the tab is hidden).
         const scheduleFrame = () => {
             if (!isVisible) {
                 animationId = null;
@@ -77,7 +89,7 @@ export function limitScrolling(
         const startLoop = () => {
             if (animationId !== null) return;
             isVisible = !document.hidden;
-            animationId = requestAnimationFrame(scheduleFrame);
+            if (isVisible) animationId = requestAnimationFrame(scheduleFrame);
         };
 
         const stopLoop = () => {
@@ -87,11 +99,11 @@ export function limitScrolling(
             }
         };
 
-        // Scroll / touch listeners still needed for immediate response
-        window.addEventListener("scroll", enforceLimit, { passive: false });
-        window.addEventListener("touchmove", enforceLimit, { passive: false });
+        window.addEventListener("scroll", enforceLimit, { passive: true });
+        window.addEventListener("touchmove", enforceLimit, { passive: true });
+        window.addEventListener("boredom-engine:intensitychange", refreshLimit);
+        window.addEventListener("resize", refreshLimit);
 
-        // Pause the polling loop when the tab is hidden
         document.addEventListener("visibilitychange", () => {
             if (document.hidden) {
                 isVisible = false;
@@ -101,14 +113,6 @@ export function limitScrolling(
             }
         });
 
-        // Handle resize
-        window.addEventListener("resize", () => {
-            if (!limitReached) {
-                maxScroll = window.innerHeight * multiplier;
-            }
-        });
-
-        // Start the rAF loop
         startLoop();
     });
 }

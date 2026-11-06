@@ -2,11 +2,10 @@
  * @id youtube_video_buffer_delay
  * @name YouTube Video Buffer Delay
  * @description Simulates buffering by pausing the video and showing the native YouTube spinner.
- * @version 1.0.4
+ * @version 1.0.5
  */
 
 import {
-    currentIntensityHigherThan,
     getIntensity,
     Intensity,
     onDOMLoaded,
@@ -29,9 +28,6 @@ const BUFFER_DELAY_RANDOM_MAP: Record<Intensity, number> = {
 };
 
 onDOMLoaded(() => {
-    if (!currentIntensityHigherThan(Intensity.None)) {
-        return;
-    }
     
     let isBuffering = false;
 

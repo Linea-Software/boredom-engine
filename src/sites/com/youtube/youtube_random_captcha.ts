@@ -2,7 +2,7 @@
  * @id youtube_random_captcha
  * @name YouTube Random Captcha
  * @description Randomly triggers a captcha to annoy the user while watching YouTube, pausing the video until solved.
- * @version 1.0.0
+ * @version 1.1.0
  */
 
 import {
@@ -14,10 +14,6 @@ import {
 import { FakeCaptcha } from "$common/captcha";
 
 onDOMLoaded(() => {
-    if (!currentIntensityHigherThan(Intensity.Medium)) {
-        return;
-    }
-
     const minInterval = 2 * 60 * 1000; // 2 minutes
     const maxInterval = 5 * 60 * 1000; // 5 minutes
 
@@ -56,6 +52,13 @@ onDOMLoaded(() => {
         setTimeout(async () => {
             // If we're already active (edge case), skip
             if (isCaptchaActive) return;
+
+            // A live intensity change from None/Medium to High must activate
+            // this script without a page reload. Do not show captchas below High.
+            if (!currentIntensityHigherThan(Intensity.Medium)) {
+                scheduleNextCaptcha(5000);
+                return;
+            }
 
             // Synchronization: If buffering is active, defer captcha
             if (document.body.dataset.boredomBufferingActive === "true") {

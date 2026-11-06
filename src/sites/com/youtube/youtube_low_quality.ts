@@ -2,53 +2,62 @@
  * @id youtube_low_quality
  * @name YouTube Low Quality
  * @description Forces YouTube video quality based on intensity setting to reduce engagement and make the experience less enjoyable.
- * @version 1.0.0
+ * @version 1.1.0
  */
+import { onDOMLoaded, getIntensity, Intensity } from "$common";
 
-import {
-    onDOMLoaded,
-    getIntensity,
-    Intensity,
-    currentIntensityHigherThan,
-} from "$common";
-
-const QUALITY_MAP: Record<Intensity, string> = {
-    [Intensity.None]: "hd1080", // unused
-    [Intensity.Low]: "hd720", // 720p - Mild annoyance
-    [Intensity.Medium]: "large", // 480p - Distracting
-    [Intensity.High]: "small", // 240p - Very annoying
-    [Intensity.Extreme]: "tiny", // 144p - Almost unwatchable
+const QUALITY_MAP: Record<Exclude<Intensity, Intensity.None>, string> = {
+    [Intensity.Low]: "hd720",
+    [Intensity.Medium]: "large",
+    [Intensity.High]: "small",
+    [Intensity.Extreme]: "tiny",
 };
 
+interface YouTubePlayer extends HTMLElement {
+    setPlaybackQualityRange?: (min: string, max: string) => void;
+    setPlaybackQuality?: (quality: string) => void;
+    getPlaybackQuality?: () => string;
+}
+
+function forceQuality(player: YouTubePlayer, quality: string): void {
+    player.setPlaybackQualityRange?.(quality, quality);
+    player.setPlaybackQuality?.(quality);
+}
+
 onDOMLoaded(() => {
-    if (!currentIntensityHigherThan(Intensity.None)) {
-        return;
-    }
-    // Aggressively force quality check every 0.5 seconds
+    let lastPlayer: YouTubePlayer | null = null;
+    let lastForcedQuality: string | null = null;
+
+    // YouTube is a SPA: the player may appear late, change on navigation,
+    // and/or autonomously switch back to adaptive quality.
     setInterval(() => {
-        // We re-check intensity every loop to allow dynamic updates from the external program
-        const intensity = getIntensity();
-        const targetQuality = QUALITY_MAP[intensity];
-
-        if (window.location.href.includes("/watch")) {
-            // YouTube's player element is the #movie_player div (.html5-video-player),
-            // which exposes setPlaybackQuality/setPlaybackQualityRange directly. There
-            // is no element with id "ytd-player", so the previous lookup always missed
-            // and the quality was never actually forced.
-            const player = document.getElementById("movie_player") as any;
-
-            if (player) {
-                // Try both new and old APIs
-                if (typeof player.setPlaybackQualityRange === "function") {
-                    player.setPlaybackQualityRange(
-                        targetQuality,
-                        targetQuality,
-                    );
-                }
-                if (typeof player.setPlaybackQuality === "function") {
-                    player.setPlaybackQuality(targetQuality);
-                }
-            }
+        if (window.location.pathname !== "/watch") {
+            lastPlayer = null;
+            lastForcedQuality = null;
+            return;
         }
+        const player = document.getElementById("movie_player") as YouTubePlayer | null;
+        if (!player) return;
+        const intensity = getIntensity();
+
+        if (intensity === Intensity.None) {
+            // "None" must not impose 1080p; relinquish a previous forced
+            // choice to YouTube's automatic selection.
+            if (lastPlayer === player && lastForcedQuality !== null) {
+                forceQuality(player, "auto");
+            }
+            lastForcedQuality = null;
+            lastPlayer = player;
+            return;
+        }
+
+        const target = QUALITY_MAP[intensity];
+        const actual = player.getPlaybackQuality?.();
+        // Avoid repeatedly toggling YouTube's player when it already uses
+        // the desired quality; reassert when it adapts away from that level.
+        if (lastPlayer === player && lastForcedQuality === target && actual === target) return;
+        forceQuality(player, target);
+        lastPlayer = player;
+        lastForcedQuality = target;
     }, 500);
 });

@@ -116,13 +116,13 @@ describe("wrapScript", () => {
     test("runs the original when the site matches and the script is enabled", () => {
         const win = { __BOREDOM_STATE__: { currentSite: "com/youtube", enabled: {} } };
         new Function("window", wrapped)(win);
-        expect(win.__RAN__).toBe(true);
+        expect((win as Record<string, unknown>).__RAN__).toBe(true);
     });
 
     test("skips the script on a different site", () => {
         const win = { __BOREDOM_STATE__: { currentSite: "com/facebook", enabled: {} } };
         new Function("window", wrapped)(win);
-        expect(win.__RAN__).toBeUndefined();
+        expect((win as Record<string, unknown>).__RAN__).toBeUndefined();
     });
 
     test("skips the script when disabled", () => {
@@ -130,7 +130,7 @@ describe("wrapScript", () => {
             __BOREDOM_STATE__: { currentSite: "com/youtube", enabled: { youtube_grayscale: false } },
         };
         new Function("window", wrapped)(win);
-        expect(win.__RAN__).toBeUndefined();
+        expect((win as Record<string, unknown>).__RAN__).toBeUndefined();
     });
 });
 
@@ -162,6 +162,14 @@ describe("generateBootstrapScript", () => {
         expect(win.__BOREDOM_INTENSITY__).toBe("extreme");
         expect(api.getState().intensity).toBe("extreme");
         expect(() => api.setIntensity("insane")).toThrow(/Invalid intensity/);
+    });
+
+    test("setIntensity emits a browser event for live site-script updates", () => {
+        const { win } = runScript(generateBootstrapScript(sampleCatalog), "youtube.com");
+        const events: string[] = [];
+        win.dispatchEvent = (event: Event) => events.push(event.type);
+        win.__BOREDOM_ENGINE__.setIntensity("high");
+        expect(events).toEqual(["boredom-engine:intensitychange"]);
     });
 
     test("enable/disable toggles persist per script id", () => {

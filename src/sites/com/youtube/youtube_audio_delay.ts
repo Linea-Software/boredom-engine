@@ -1,15 +1,10 @@
 /**
  * @id youtube_audio_delay
  * @name YouTube Audio Delay
- * @description Adds a 2-second delay to the audio to make the video more frustrating to watch. Works with both YouTube Shorts and regular videos.
- * @version 1.0.0
+ * @description Adds an intensity-scaled audio delay to YouTube Shorts and regular videos.
+ * @version 1.1.0
  */
-import {
-    currentIntensityHigherThan,
-    getIntensity,
-    Intensity,
-    onDOMLoaded,
-} from "$common";
+import { getIntensity, Intensity, onDOMLoaded } from "$common";
 
 const AUDIO_DELAY_MAP: Record<Intensity, number> = {
     [Intensity.None]: 0,
@@ -20,52 +15,50 @@ const AUDIO_DELAY_MAP: Record<Intensity, number> = {
 };
 
 onDOMLoaded(() => {
-    if (!currentIntensityHigherThan(Intensity.None)) {
-        return;
-    }
-
     let context: AudioContext | null = null;
     let delayNode: DelayNode | null = null;
     let source: MediaElementAudioSourceNode | null = null;
     let attachedVideo: HTMLVideoElement | null = null;
 
     const attachDelay = () => {
+        const intensity = getIntensity();
+        // Keep a previously attached video responsive to intensity changes.
+        // "None" restores zero delay instead of leaving audio lag active.
+        if (delayNode) delayNode.delayTime.value = AUDIO_DELAY_MAP[intensity];
+        if (intensity === Intensity.None) return;
+
         const video = document.querySelector("video");
         if (!video) return;
-        // If we attached to a previous video element that is no longer in DOM or changed
         if (video === attachedVideo) return;
 
         try {
             if (!context) {
                 const AudioContextClass =
                     window.AudioContext || (window as any).webkitAudioContext;
-                if (AudioContextClass) {
-                    context = new AudioContextClass();
-                } else {
-                    return;
-                }
+                if (!AudioContextClass) return;
+                context = new AudioContextClass();
             }
-
             if (context.state === "suspended") {
                 context.resume().catch(() => {});
             }
+            // YouTube replaces its video element on some SPA navigations.
+            // Disconnect the old pipeline before connecting a new one.
+            source?.disconnect();
+            delayNode?.disconnect();
 
-            // Create media source from the video element.
-            // This captures the audio and re-routes it through the audio context,
-            // effectively removing it from the default output path.
             source = context.createMediaElementSource(video);
-
             delayNode = context.createDelay(5.0);
-            delayNode.delayTime.value = AUDIO_DELAY_MAP[getIntensity()];
-
+            delayNode.delayTime.value = AUDIO_DELAY_MAP[intensity];
             source.connect(delayNode);
             delayNode.connect(context.destination);
-
             attachedVideo = video;
-        } catch (e) {
-            // CORS or EME restrictions may prevent capturing audio from the video element.
+        } catch {
+            // Browser media/CORS restrictions may reject source capture.
+            // Retry on the next tick without crashing the other scripts.
         }
     };
 
-    setInterval(attachDelay, 2000);
+    // The player may be present immediately or appear after SPA navigation.
+    attachDelay();
+    setInterval(attachDelay, 1000);
 });

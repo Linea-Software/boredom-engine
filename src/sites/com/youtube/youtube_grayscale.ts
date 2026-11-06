@@ -1,25 +1,45 @@
 /**
  * @id youtube_grayscale
  * @name YouTube Grayscale
- * @description Turns the YouTube video player and Shorts grayscale to reduce visual stimulation.
- * @version 1.1.0
+ * @description Turns YouTube video players and Shorts grayscale to reduce visual stimulation.
+ * @version 1.2.0
  */
-import { onDOMLoaded, applyMediaDesaturation, setGrayscale, getIntensity, currentIntensityHigherThan, Intensity } from "$common";
+import { onDOMLoaded, applyMediaDesaturation, injectCss, getIntensity, Intensity } from "$common";
+
+const VIDEO_GRAYSCALE: Record<Intensity, number> = {
+    [Intensity.None]: 0,
+    [Intensity.Low]: 30,
+    [Intensity.Medium]: 50,
+    [Intensity.High]: 80,
+    [Intensity.Extreme]: 100,
+};
+const MEDIA_SATURATION: Record<Intensity, number> = {
+    [Intensity.None]: 100,
+    [Intensity.Low]: 70,
+    [Intensity.Medium]: 50,
+    [Intensity.High]: 20,
+    [Intensity.Extreme]: 0,
+};
 
 onDOMLoaded(() => {
-        if(!currentIntensityHigherThan(Intensity.None)){
-            return;
-        }
-
+    // The shared rule desaturates thumbnails. An inline style.filter does NOT
+    // override its !important rule, so the old setGrayscale(video) loop never
+    // achieved grayscale on the actual player. Use a later !important rule.
     applyMediaDesaturation();
-    if (window.location.href.includes("/watch")) {
-        // Enforce grayscale on the video element specifically
-        // We use an interval or just check because the video element might be re-created or style reset
-        setInterval(() => {
-            const video = document.querySelector("video");
-            if (video) {
-                setGrayscale(video, getIntensity());
-            }
-        }, 1000);
-    }
+    injectCss(`
+        video {
+            filter: grayscale(var(--boredom-youtube-grayscale, 0%)) !important;
+        }
+    `);
+
+    const refresh = () => {
+        const root = document.documentElement;
+        if (!root) return;
+        const intensity = getIntensity();
+        root.style.setProperty("--boredom-saturate", `${MEDIA_SATURATION[intensity]}%`);
+        root.style.setProperty("--boredom-youtube-grayscale", `${VIDEO_GRAYSCALE[intensity]}%`);
+    };
+
+    refresh();
+    window.addEventListener("boredom-engine:intensitychange", refresh);
 });
