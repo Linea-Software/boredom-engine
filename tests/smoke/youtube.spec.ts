@@ -104,18 +104,52 @@ test("youtube shorts remove hides Shorts surfaces without detaching them", async
     await expect(page.locator("div#items a[title='Home']")).toBeVisible();
     await expect(page.locator("div#items").nth(1).locator("yt-formatted-string.title")).toBeHidden();
     await expect(page.locator("div#items").nth(2).locator("yt-formatted-string.title")).toBeVisible();
+    await expect(page.locator("#modern-guide-shorts")).toBeHidden();
+    await expect(page.locator("#modern-mini-shorts")).toBeHidden();
+    await expect(page.locator("#modern-mini-home")).toBeVisible();
+    await expect(page.locator("#modern-grid-shorts")).toBeHidden();
+    await expect(page.locator("#modern-grid-regular")).toBeVisible();
+    await expect(page.locator("#modern-search-shorts")).toBeHidden();
+    await expect(page.locator("#modern-lockup-shorts")).toBeHidden();
+    await expect(page.locator("#modern-mobile-shorts")).toBeHidden();
 });
 
 test("youtube shorts remove redirects away from /shorts pages", async ({ page }) => {
     await setIntensity(page, "high");
     await loadScript(page, SRC("com/youtube/youtube_shorts_remove.ts"));
-    // Intercept the redirect target so no real network is involved.
-    await page.route("https://youtube.com/**", (route) =>
-        route.fulfill({ status: 200, contentType: "text/html", body: "<html><body>stub</body></html>" }),
-    );
     await openFixtureAt(page, "youtube/remove-shorts.html", "http://boredom-fixture.test/shorts/abc");
 
-    await expect(page).toHaveURL(/^https:\/\/youtube\.com\/?$/, { timeout: 10_000 });
+    await expect(page).toHaveURL("http://boredom-fixture.test/", { timeout: 10_000 });
+});
+
+test("youtube shorts remove catches SPA navigation to Shorts", async ({ page }) => {
+    await setIntensity(page, "high");
+    await loadScript(page, SRC("com/youtube/youtube_shorts_remove.ts"));
+    await openFixtureAt(page, "youtube/remove-shorts.html", "http://boredom-fixture.test/watch?v=abc");
+
+    await page.evaluate(() => {
+        history.pushState(null, "", "/shorts/abc");
+        window.dispatchEvent(new Event("yt-navigate-finish"));
+    });
+    await expect(page).toHaveURL("http://boredom-fixture.test/");
+});
+
+test("youtube shorts remove reacts to live intensity changes", async ({ page }) => {
+    await setIntensity(page, "none");
+    await loadScript(page, SRC("com/youtube/youtube_shorts_remove.ts"));
+    await openFixture(page, "youtube/remove-shorts.html");
+
+    await expect(page.locator("#modern-mini-shorts")).toBeVisible();
+    await page.evaluate(() => {
+        (window as unknown as Record<string, unknown>).__BOREDOM_INTENSITY__ = "high";
+        window.dispatchEvent(new Event("boredom-engine:intensitychange"));
+    });
+    await expect(page.locator("#modern-mini-shorts")).toBeHidden();
+    await page.evaluate(() => {
+        (window as unknown as Record<string, unknown>).__BOREDOM_INTENSITY__ = "none";
+        window.dispatchEvent(new Event("boredom-engine:intensitychange"));
+    });
+    await expect(page.locator("#modern-mini-shorts")).toBeVisible();
 });
 
 test("youtube video buffer delay pauses playback and shows the buffering spinner", async ({ page }) => {

@@ -34,6 +34,31 @@
                 <div class="nav-item"><yt-formatted-string class="title">Home</yt-formatted-string></div>
             </div>
         </nav>
+        <!-- Modern YouTube surfaces, including the collapsed/mini guide. -->
+        <ytd-guide-entry-renderer id="modern-guide-shorts">
+            <a href="/shorts/" aria-label="Shorts">Shorts</a>
+        </ytd-guide-entry-renderer>
+        <ytd-mini-guide-entry-renderer id="modern-mini-shorts">
+            <a href="/shorts/" aria-label="Shorts">Shorts</a>
+        </ytd-mini-guide-entry-renderer>
+        <ytd-mini-guide-entry-renderer id="modern-mini-home">
+            <a href="/" aria-label="Home">Home</a>
+        </ytd-mini-guide-entry-renderer>
+        <grid-shelf-view-model id="modern-grid-shorts">
+            <a href="/shorts/abc">Short card</a>
+        </grid-shelf-view-model>
+        <grid-shelf-view-model id="modern-grid-regular">
+            <a href="/watch?v=abc">Regular card</a>
+        </grid-shelf-view-model>
+        <ytd-grid-video-renderer id="modern-search-shorts">
+            <a href="/shorts/abc">Short video</a>
+        </ytd-grid-video-renderer>
+        <yt-lockup-view-model id="modern-lockup-shorts">
+            <a href="/shorts/abc">Short lockup</a>
+        </yt-lockup-view-model>
+        <ytm-shorts-lockup-view-model-v2 id="modern-mobile-shorts">
+            Mobile short
+        </ytm-shorts-lockup-view-model-v2>
     </main>
 </body>
 </html>

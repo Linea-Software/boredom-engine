@@ -231,6 +231,11 @@ export function generateBootstrapScript(catalog: Catalog): string {
 
     function applyIntensity(intensity) {
         window.__BOREDOM_INTENSITY__ = intensity;
+        // Notify scripts with route-scoped CSS or live intensity handling.
+        // The guard also supports the minimal DOM used by unit tests.
+        if (typeof window.dispatchEvent === "function" && typeof Event === "function") {
+            window.dispatchEvent(new Event("boredom-engine:intensitychange"));
+        }
     }
 
     function reloadPage() {
