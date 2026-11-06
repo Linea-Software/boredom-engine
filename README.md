@@ -95,6 +95,16 @@ The site scripts are delivered through Tampermonkey's `@require` at
 install/update time, so no server needs to serve them at runtime — injected
 `<script>` tags are subject to the page's CSP, `@require` is not.
 
+**Chrome/Tampermonkey permission prerequisite (2026):** Tampermonkey
+5.5.1+ requires the browser to authorize userscript execution separately.
+In Chrome 138+, open `chrome://extensions` → Tampermonkey → **Details**,
+then turn on **Allow User Scripts**. Older Chrome-based browsers may require
+**Developer mode** in `chrome://extensions`. See the
+[official Tampermonkey FAQ](https://www.tampermonkey.net/faq.php?q=Q209).
+If the 🧠 menu and `[boredom-engine] ready` console message are both missing,
+check this permission, the userscript's Enabled state and site access **before**
+debugging individual YouTube selectors or media APIs.
+
 **Auto-connect through file inclusion:**
 
 1. Give Tampermonkey access to local files: chrome://extensions →

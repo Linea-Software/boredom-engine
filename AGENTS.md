@@ -22,7 +22,7 @@ This project contains a set of site-specific scripts aimed at transforming addic
 
 ## Tampermonkey Development
 
-- **Auto-Loading**: The project is configured to automatically reload the Tampermonkey script in the browser whenever \`bun run build\` is executed. This allows for a fast development cycle without manual script updates in the Tampermonkey dashboard.
+- **Build and reload**: `bun run build` regenerates `dist/tampermonkey/`, but Tampermonkey caches `@require` files at userscript install/update time. Re-import or reinstall the generated `boredom-engine.user.js` after every build; reloading only the website does not pick up changed files. On Chrome, enable **Allow User Scripts** for Tampermonkey as described in the README.
 - **Menu UI**: The Boredom Engine menu is built with Lit and is accessible via the FAB (Floating Action Button) on supported sites.
 
 ## Development Guidelines

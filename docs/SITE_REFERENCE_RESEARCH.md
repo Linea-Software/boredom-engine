@@ -40,3 +40,24 @@ documentation and regression tests; it does not replace them.
 
 Do not commit downloaded extension archives, vendor bundles, copies of
 third-party scripts, or account data merely to document research.
+
+## YouTube: research notes (2026-11-06)
+
+Downloaded and reviewed source in a temporary, untracked directory:
+
+- [YouTube Hidden Shorts](https://github.com/jeffersongoncalves/youtube-hidden-shorts)
+  (Chrome Manifest V3, MIT): inspected `manifest.json`,
+  `hide-shorts.css` and `content.js`. Relevant ideas: site-scoped CSS
+  using `:has()`, modern guide/grid/card selectors, and
+  `yt-navigate-finish` for YouTube SPA navigation.
+- [No Shorts](https://github.com/mithatakbulut/noshorts)
+  (userscript, MIT): inspected `noshorts.user.js`. Relevant ideas:
+  both bare and subdomain host matches, `document-start`, CSS
+  matching newly inserted items and route redirects.
+
+Implementation in Boredom Engine is original and keeps the existing
+`blockInterface` abstraction. Against a logged-out real YouTube home
+page in Chromium, the new Shorts CSS hides the modern mini-guide entry
+without hiding Home or Subscriptions. The player quality API was also
+observed on a real `/watch` page; that observation is not a guarantee
+that YouTube will keep this undocumented desktop player API stable.
