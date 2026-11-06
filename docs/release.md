@@ -3,7 +3,10 @@
 Release packaging and publication to **GitHub Releases** is automated by
 `.github/workflows/release.yml`. The ace-blocker-site admin controls when
 a published GitHub archive is imported to BunnyCDN and when it becomes
-downloadable by Ace Engine clients.
+downloadable by Ace Engine clients. **A push to `main` is not a new ACE
+Blocker bundle.** ACE injects the contents of its downloaded
+`resistance-scripts.zip` directly through the MITM proxy; the Tampermonkey
+adapter is unrelated to the product's production injection path.
 
 ## 1. Publish a GitHub Release
 
@@ -43,10 +46,12 @@ different SHA-256 for an existing version.
 ```bash
 cd boredom-engine
 bun install
+bun run check          # TypeScript validation; required by the release workflow
 bun run build          # fails on metadata/catalog contract violations
 bun run test           # unit tests: metadata, contract, host matching
 bun run deploy         # creates dist/resistance-scripts.zip
 bun run test:artifact  # end-to-end: rebuild + validate zip root layout/catalog
+bun run test:smoke --grep 'ACE direct injection'  # direct JS tags with YouTube-style CSP
 ```
 
 Record the SHA-256 of the artifact:
@@ -86,13 +91,24 @@ initiated by the site, not by GitHub Actions.
 
 On a machine with a Pro account linked:
 
-1. Restart the engine (or wait for the 24 h content-update cycle; in debug
-   builds `POST /system/update/content` triggers it immediately).
-2. Check the engine log for the new version:
-   `Resistance scripts extracted to ...` and no SHA-256 mismatch retries.
-3. `GET /resistance-mode/settings` must report the new `scriptsVersion` and
-   `enforcementStatus: "operational"` (after enabling Resistance Mode with a
-   non-`none` intensity).
+1. Refresh content from ACE's UI or its authenticated **typed remoc RPC**
+   (`triggerContentUpdate` / `downloadResistanceScripts`), or wait for the
+   scheduled content update. The engine no longer exposes the old local REST
+   route `POST /system/update/content`.
+2. Check the engine log for a successful resistance-script download/verify,
+   extraction and catalog reload, with no SHA-256 mismatch.
+3. Use the **Resistance Mode** page (or remoc
+   `getResistanceModeSettings`) to verify the newly published
+   `scriptsVersion`, `scriptsLoaded`, a nonzero `scriptsEnabled` count,
+   `proEligible`, `enabled`, a non-`none` `currentIntensity`, and
+   `enforcementStatus: "operational"`. This replaces the obsolete
+   `GET /resistance-mode/settings` REST route.
+4. Fully navigate/reload YouTube and inspect ACE Engine's proxy logs for
+   injection of the site's enabled scripts into the **top-level** document.
+   A new GitHub tag or source push alone does not prove that a client has
+   downloaded the new ZIP. ACE uses neither the Tampermonkey bootstrap nor
+   a browser-extension content script. Test actual proxy/TLS routing on the
+   intended OS/browser separately from the fixture smoke tests.
 
 ## Retention policy
 

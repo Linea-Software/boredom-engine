@@ -77,7 +77,41 @@ bun run test:artifact   # end-to-end: real build + deploy + zip/catalog validati
 | `bun run dev` | Rebuild on source change and serve `dist/` on `http://localhost:48325` | no |
 | `bun run dev-chrome` | Launch Chrome with remote debugging on port 9222 | **opt-in only** — pass `--kill-chrome` (or set `BOREDOM_KILL_CHROME=1`) to force-kill running Chrome instances |
 
-### Test in a browser with Tampermonkey
+### ACE Blocker direct injection (production)
+
+**ACE Blocker does not use Tampermonkey.** The production build is
+`dist/normal/` plus `dist/scripts-data.json`, packaged by `bun run deploy`
+into `dist/resistance-scripts.zip`. ACE Engine loads the script tree and
+uses its MITM proxy to insert each enabled site's JavaScript as nonce-bearing
+inline `<script>` tags in the top-level HTML. It injects
+`window.__BOREDOM_INTENSITY__` **before** the site scripts, and rewrites
+response-header and HTML-meta CSP where needed. There is no Tampermonkey
+bootstrap, `@require`, or `window.__BOREDOM_ENGINE__` control API in ACE.
+
+Run the ACE-shaped browser regression tests (direct bundles, strict CSP,
+including YouTube's Trusted Types policy) with:
+
+```bash
+bun run check
+bun run test:smoke --grep "ACE direct injection"
+bun run test:artifact
+```
+
+This is a **browser simulation of the ACE injection format**, not a full test
+of the actual privileged MITM proxy, TLS routing, entitlement, installed
+content version or site-account state. For the latter, verify the downloaded
+`scriptsVersion`, Pro entitlement, resistance master switch, enabled script
+IDs and non-`none` intensity in ACE Engine; then inspect proxy logs for
+injection into the top-level YouTube document. Intensity is set when the
+document is injected; changing ACE's desktop intensity may require a full
+navigation/reload to inject an updated value.
+
+**Important release distinction:** pushing source to `main` does *not*
+update ACE Blocker. Publish a new GitHub Release, import it in the
+ace-blocker-site admin, mark it available, then have ACE Engine refresh its
+content. See [release procedure](docs/release.md).
+
+### Optional Tampermonkey test loader (not used by ACE Blocker)
 
 `bun run build` (and `bun run deploy`) also generates a **Tampermonkey test
 loader** under `dist/tampermonkey/`:

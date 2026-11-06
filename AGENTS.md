@@ -20,7 +20,22 @@ This project contains a set of site-specific scripts aimed at transforming addic
     - Run scripts: `bun run build`
     - Add packages: \`bun add <package>\`
 
-## Tampermonkey Development
+## ACE Blocker production runtime
+
+The primary consumer is **ACE Engine's MITM direct injection**, not
+Tampermonkey. `bun run build` bundles browser IIFEs in `dist/normal/` and
+generates `dist/scripts-data.json`; `bun run deploy` packages the
+`resistance-scripts.zip` that ACE downloads after a new published/imported
+release. ACE adds nonce-bearing inline scripts to top-level HTML and sets
+`window.__BOREDOM_INTENSITY__` before the bundles execute; do not assume
+Tampermonkey's bootstrap, `@require` or per-page control API exists.
+
+Test with `bun run test:smoke --grep "ACE direct injection"` and
+`bun run test:artifact`. These tests are not a substitute for an installed
+proxy + new content-version end-to-end test. A source push alone does not
+deploy scripts to ACE clients.
+
+## Tampermonkey Development (optional test adapter only)
 
 - **Build and reload**: `bun run build` regenerates `dist/tampermonkey/`, but Tampermonkey caches `@require` files at userscript install/update time. Re-import or reinstall the generated `boredom-engine.user.js` after every build; reloading only the website does not pick up changed files. On Chrome, enable **Allow User Scripts** for Tampermonkey as described in the README.
 - **Menu UI**: The Boredom Engine menu is built with Lit and is accessible via the FAB (Floating Action Button) on supported sites.
