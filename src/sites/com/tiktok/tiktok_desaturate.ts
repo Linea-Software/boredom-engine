@@ -4,20 +4,10 @@
  * @description Desaturates media on TikTok to reduce dopamine stimulation.
  * @version 1.0.0
  */
-import {
-    onDOMLoaded,
-    applyMediaDesaturation,
-    injectCss,
-    enforceCssVariables,
-    setCssVariablesToGray,
-    currentIntensityHigherThan,
-    Intensity,
-} from "$common";
+import { onDOMLoaded, applyMediaDesaturation, injectCss, enforceCssVariables, setCssVariablesToGray } from "$common";
 
 onDOMLoaded(() => {
-    if (!currentIntensityHigherThan(Intensity.None)) {
-        return;
-    }
+    
 
     // Enforce specific color values. Runs inside onDOMLoaded (not at module
     // scope): document.documentElement may not exist yet at document-start,

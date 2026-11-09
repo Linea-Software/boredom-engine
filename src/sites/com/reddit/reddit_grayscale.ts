@@ -4,19 +4,10 @@
  * @description Makes Reddit media and vibrant UI colors grayscale to reduce dopamine.
  * @version 1.0.1
  */
-import {
-    onDOMLoaded,
-    applyMediaDesaturation,
-    setCssVariablesToGray,
-    currentIntensityHigherThan,
-    Intensity,
-    getIntensity
-} from "$common";
+import { onDOMLoaded, applyMediaDesaturation, setCssVariablesToGray } from "$common";
 
 onDOMLoaded(() => {
-    if (!currentIntensityHigherThan(Intensity.None)) {
-        return;
-    }
+    
 
     // Apply grayscale to media elements and remaining vibrant UI icons/badges
     applyMediaDesaturation([
@@ -68,15 +59,9 @@ onDOMLoaded(() => {
         "--color-global-admin"
     ];
 
-    const GRAY_LEVELS: Record<Intensity, string> = {
-        [Intensity.None]: "", // Not used
-        [Intensity.Low]: "#aaaaaa",
-        [Intensity.Medium]: "#888888",
-        [Intensity.High]: "#666666",
-        [Intensity.Extreme]: "#444444",
-    };
+    const GRAY_LEVELS = "#888888";
 
-    const targetGray = GRAY_LEVELS[getIntensity()];
+    const targetGray = GRAY_LEVELS;
 
     setCssVariablesToGray(vibrantVariables, targetGray);
 });

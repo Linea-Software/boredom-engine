@@ -4,9 +4,9 @@
  * @description Hides the Threads For You tab and switches to Following when the algorithmic tab is selected.
  * @version 1.0.0
  */
-import { blockInterface, currentIntensityHigherThan, Intensity, onDOMLoaded } from "$common";
+import { blockInterface, onDOMLoaded } from "$common";
 
-if (currentIntensityHigherThan(Intensity.Medium)) {
+{
     blockInterface({
         id: "threads_block_for_you",
         selectors: ['a[href="/for_you"]', '[role="tab"][href="/for_you"]'],

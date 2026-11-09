@@ -1,4 +1,3 @@
-import { getIntensity, Intensity } from "$common";
 
 // Configuration State
 const CONFIG = {
@@ -328,16 +327,9 @@ function startObserver() {
  * Turns existing images into low-res versions.
  */
 export function downgradeImages(): void {
-    const IMAGE_QUALITY_MAP: Record<Intensity, number> = {
-        [Intensity.None]: 0,
-        [Intensity.Low]: 0.75,
-        [Intensity.Medium]: 0.5,
-        [Intensity.High]: 0.15,
-        [Intensity.Extreme]: 0.05,
-    };
 
     CONFIG.images.enabled = true;
-    CONFIG.images.quality = IMAGE_QUALITY_MAP[getIntensity()];
+    CONFIG.images.quality = 0.5;
 
     // Process existing
     document.querySelectorAll("img").forEach(degradeImage);
@@ -349,16 +341,9 @@ export function downgradeImages(): void {
  * Overlays pixelated canvas on videos and adds audio lag.
  */
 export function downgradeVideos(): void {
-    const VIDEO_QUALITY_MAP = {
-        [Intensity.None]: 1,
-        [Intensity.Low]: 0.75,
-        [Intensity.Medium]: 0.5,
-        [Intensity.High]: 0.15,
-        [Intensity.Extreme]: 0.05,
-    };
 
     CONFIG.videos.enabled = true;
-    CONFIG.videos.quality = VIDEO_QUALITY_MAP[getIntensity()];
+    CONFIG.videos.quality = 0.5;
 
     // Process existing
     document.querySelectorAll("video").forEach(degradeVideo);

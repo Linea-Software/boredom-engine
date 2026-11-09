@@ -4,20 +4,11 @@
  * @description Applies a grayscale filter to Twitch thumbnails and images.
  * @version 1.0.0
  */
-import {
-    onDOMLoaded,
-    applyMediaDesaturation,
-    setCssVariablesToGray,
-    getIntensity,
-    currentIntensityHigherThan,
-    Intensity,
-} from "$common";
+import { onDOMLoaded, applyMediaDesaturation, setCssVariablesToGray } from "$common";
 
 
 onDOMLoaded(() => {
-    if (!currentIntensityHigherThan(Intensity.None)) {
-        return;
-    }
+    
 
     // Apply grayscale to media elements and key UI components
     applyMediaDesaturation([
@@ -54,14 +45,8 @@ onDOMLoaded(() => {
         }
     }
 
-    const GRAY_LEVELS: Record<Intensity, string> = {
-        [Intensity.None]: "",
-        [Intensity.Low]: "#aaaaaa",
-        [Intensity.Medium]: "#888888",
-        [Intensity.High]: "#666666",
-        [Intensity.Extreme]: "#444444",
-    };
+    const GRAY_LEVELS = "#888888";
 
-    setCssVariablesToGray(vibrantVariables, GRAY_LEVELS[getIntensity()]);
+    setCssVariablesToGray(vibrantVariables, GRAY_LEVELS);
 });
 

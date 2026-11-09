@@ -4,9 +4,9 @@
  * @description Hides explicit recommendation modules while leaving Netflix's core title browsing surfaces intact.
  * @version 1.0.0
  */
-import { blockInterface, currentIntensityHigherThan, Intensity } from "$common";
+import { blockInterface } from "$common";
 
-if (currentIntensityHigherThan(Intensity.Low)) {
+{
     blockInterface({
         id: "netflix_hide_recommendations",
         selectors: [

@@ -4,18 +4,12 @@
  * @description Adds a one-time intensity-scaled delay when intentional watch-page playback starts.
  * @version 1.0.0
  */
-import { currentIntensityHigherThan, getIntensity, Intensity, onDOMLoaded } from "$common";
+import { onDOMLoaded } from "$common";
 
-const DELAY_MS: Record<Intensity, number> = {
-    [Intensity.None]: 0,
-    [Intensity.Low]: 750,
-    [Intensity.Medium]: 1500,
-    [Intensity.High]: 3000,
-    [Intensity.Extreme]: 5000,
-};
+const DELAY_MS = 1500;
 
 onDOMLoaded(() => {
-    if (!currentIntensityHigherThan(Intensity.None)) return;
+    
 
     const delayed = new WeakSet<HTMLVideoElement>();
     const resuming = new WeakSet<HTMLVideoElement>();
@@ -34,7 +28,7 @@ onDOMLoaded(() => {
                 if (!video.isConnected) return;
                 resuming.add(video);
                 video.play().catch(() => undefined).finally(() => resuming.delete(video));
-            }, DELAY_MS[getIntensity()]);
+            }, DELAY_MS);
         },
         true,
     );

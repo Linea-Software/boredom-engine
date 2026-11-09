@@ -5,9 +5,9 @@
  * @version 1.0.0
  */
 
-import { currentIntensityHigherThan, injectCss, Intensity } from "$common";
+import { injectCss } from "$common";
 
-if (currentIntensityHigherThan(Intensity.None)) {
+{
     injectCss(`
         [role="group"] button[data-testid="reply"] span,
         [role="group"] button[data-testid$="retweet"] span,

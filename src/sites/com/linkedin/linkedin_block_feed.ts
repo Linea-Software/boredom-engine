@@ -5,9 +5,9 @@
  * @version 1.0.0
  */
 
-import { blockInterface, currentIntensityHigherThan, Intensity } from "$common";
+import { blockInterface } from "$common";
 
-if (currentIntensityHigherThan(Intensity.Medium)) {
+{
     blockInterface({
         id: "linkedin_block_feed",
         activeWhen: (url) => url.pathname === "/" || url.pathname.startsWith("/feed"),

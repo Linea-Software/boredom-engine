@@ -1,25 +1,10 @@
-import { Intensity, getIntensity } from "./intensity";
 import { onDOMLoaded } from "./dom";
 
-const DEFAULT_LIMITS: Record<Intensity, number> = {
-    [Intensity.None]: Infinity,
-    [Intensity.Low]: 5,
-    [Intensity.Medium]: 3,
-    [Intensity.High]: 1.5,
-    [Intensity.Extreme]: 0.5,
-};
-
-/**
- * Limits scrolling depth by intensity, including live changes from/to None.
- * The rAF loop is suspended while the tab is hidden.
- */
-export function limitScrolling(
-    vhMultiplierMap?: Partial<Record<Intensity, number>>,
-): void {
+/** Limit scrolling to three viewport heights when this action is enabled. */
+export function limitScrolling(vhMultiplier = 3): void {
     onDOMLoaded(() => {
-        const multiplier = () =>
-            vhMultiplierMap?.[getIntensity()] ?? DEFAULT_LIMITS[getIntensity()];
-        let maxScroll = window.innerHeight * multiplier();
+
+        let maxScroll = window.innerHeight * vhMultiplier;
         let isScrollingBack = false;
         let animationId: number | null = null;
         let isVisible = !document.hidden;
@@ -57,10 +42,9 @@ export function limitScrolling(
 
         const refreshLimit = () => {
             const previousMax = maxScroll;
-            maxScroll = window.innerHeight * multiplier();
+            maxScroll = window.innerHeight * vhMultiplier;
 
-            // Relaxation or disablement must restore page overflow. The old
-            // style otherwise keeps the page locked even at intensity None.
+            // Keep the cap consistent when the viewport changes.
             if (!Number.isFinite(maxScroll) || maxScroll > previousMax) {
                 removeLimit();
             } else if (limitReached) {
@@ -101,7 +85,6 @@ export function limitScrolling(
 
         window.addEventListener("scroll", enforceLimit, { passive: true });
         window.addEventListener("touchmove", enforceLimit, { passive: true });
-        window.addEventListener("boredom-engine:intensitychange", refreshLimit);
         window.addEventListener("resize", refreshLimit);
 
         document.addEventListener("visibilitychange", () => {

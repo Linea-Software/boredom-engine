@@ -4,15 +4,9 @@
  * @description Adds an intensity-scaled audio delay to YouTube Shorts and regular videos.
  * @version 1.1.0
  */
-import { getIntensity, Intensity, onDOMLoaded } from "$common";
+import { onDOMLoaded } from "$common";
 
-const AUDIO_DELAY_MAP: Record<Intensity, number> = {
-    [Intensity.None]: 0,
-    [Intensity.Low]: 1,
-    [Intensity.Medium]: 2,
-    [Intensity.High]: 3,
-    [Intensity.Extreme]: 5,
-};
+const AUDIO_DELAY_MAP = 2;
 
 onDOMLoaded(() => {
     let context: AudioContext | null = null;
@@ -21,11 +15,8 @@ onDOMLoaded(() => {
     let attachedVideo: HTMLVideoElement | null = null;
 
     const attachDelay = () => {
-        const intensity = getIntensity();
-        // Keep a previously attached video responsive to intensity changes.
-        // "None" restores zero delay instead of leaving audio lag active.
-        if (delayNode) delayNode.delayTime.value = AUDIO_DELAY_MAP[intensity];
-        if (intensity === Intensity.None) return;
+        // Use a fixed two-second delay whenever this intervention is enabled.
+        if (delayNode) delayNode.delayTime.value = AUDIO_DELAY_MAP;
 
         const video = document.querySelector("video");
         if (!video) return;
@@ -48,7 +39,7 @@ onDOMLoaded(() => {
 
             source = context.createMediaElementSource(video);
             delayNode = context.createDelay(5.0);
-            delayNode.delayTime.value = AUDIO_DELAY_MAP[intensity];
+            delayNode.delayTime.value = AUDIO_DELAY_MAP;
             source.connect(delayNode);
             delayNode.connect(context.destination);
             attachedVideo = video;

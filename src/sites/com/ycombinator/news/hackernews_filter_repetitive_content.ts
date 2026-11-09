@@ -4,15 +4,9 @@
  * @description Caps repeated front-page stories from the same domain using a simple local intensity-based limit.
  * @version 1.0.0
  */
-import { currentIntensityHigherThan, getIntensity, Intensity, onDOMLoaded } from "$common";
+import { onDOMLoaded } from "$common";
 
-const DOMAIN_LIMIT: Record<Intensity, number> = {
-    [Intensity.None]: Number.POSITIVE_INFINITY,
-    [Intensity.Low]: 5,
-    [Intensity.Medium]: 3,
-    [Intensity.High]: 2,
-    [Intensity.Extreme]: 1,
-};
+const DOMAIN_LIMIT = 3;
 
 function hideStory(story: HTMLElement): void {
     story.style.setProperty("display", "none", "important");
@@ -25,8 +19,8 @@ function hideStory(story: HTMLElement): void {
 }
 
 onDOMLoaded(() => {
-    if (!currentIntensityHigherThan(Intensity.None)) return;
-    const maxPerDomain = DOMAIN_LIMIT[getIntensity()];
+    
+    const maxPerDomain = DOMAIN_LIMIT;
     const seen = new Map<string, number>();
 
     document.querySelectorAll<HTMLElement>("tr.athing").forEach((story) => {

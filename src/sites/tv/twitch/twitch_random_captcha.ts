@@ -5,17 +5,11 @@
  * @version 1.0.0
  */
 
-import {
-    currentIntensityHigherThan,
-    Intensity,
-    onDOMLoaded,
-} from "$common";
+import { onDOMLoaded } from "$common";
 import { FakeCaptcha } from "$common/captcha";
 
 onDOMLoaded(() => {
-    if (!currentIntensityHigherThan(Intensity.Medium)) {
-        return;
-    }
+    
 
     const minInterval = 2 * 60 * 1000; // 2 minutes
     const maxInterval = 5 * 60 * 1000; // 5 minutes

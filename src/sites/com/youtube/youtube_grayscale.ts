@@ -4,22 +4,10 @@
  * @description Turns YouTube video players and Shorts grayscale to reduce visual stimulation.
  * @version 1.2.0
  */
-import { onDOMLoaded, applyMediaDesaturation, injectCss, getIntensity, Intensity } from "$common";
+import { onDOMLoaded, applyMediaDesaturation, injectCss } from "$common";
 
-const VIDEO_GRAYSCALE: Record<Intensity, number> = {
-    [Intensity.None]: 0,
-    [Intensity.Low]: 30,
-    [Intensity.Medium]: 50,
-    [Intensity.High]: 80,
-    [Intensity.Extreme]: 100,
-};
-const MEDIA_SATURATION: Record<Intensity, number> = {
-    [Intensity.None]: 100,
-    [Intensity.Low]: 70,
-    [Intensity.Medium]: 50,
-    [Intensity.High]: 20,
-    [Intensity.Extreme]: 0,
-};
+const VIDEO_GRAYSCALE = 50;
+const MEDIA_SATURATION = 50;
 
 onDOMLoaded(() => {
     // The shared rule desaturates thumbnails. An inline style.filter does NOT
@@ -35,11 +23,9 @@ onDOMLoaded(() => {
     const refresh = () => {
         const root = document.documentElement;
         if (!root) return;
-        const intensity = getIntensity();
-        root.style.setProperty("--boredom-saturate", `${MEDIA_SATURATION[intensity]}%`);
-        root.style.setProperty("--boredom-youtube-grayscale", `${VIDEO_GRAYSCALE[intensity]}%`);
+        root.style.setProperty("--boredom-saturate", `${MEDIA_SATURATION}%`);
+        root.style.setProperty("--boredom-youtube-grayscale", `${VIDEO_GRAYSCALE}%`);
     };
 
     refresh();
-    window.addEventListener("boredom-engine:intensitychange", refresh);
 });

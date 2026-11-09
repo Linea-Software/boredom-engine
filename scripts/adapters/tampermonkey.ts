@@ -14,7 +14,7 @@
  *   `@match` for every covered host and `@require`s (in order) the bootstrap
  *   and every wrapped site script via absolute `file://` URLs.
  * - `bootstrap.js` — loader core: reads persisted state, sets
- *   `window.__BOREDOM_INTENSITY__` and `window.__BOREDOM_STATE__` BEFORE the
+ *   `window.__BOREDOM_STATE__` BEFORE the
  *   site scripts execute, exposes `window.__BOREDOM_ENGINE__`, and builds the
  *   🧠 control menu.
  * - `scripts/<site-path>` — each dist/normal bundle wrapped in a guard that
@@ -22,11 +22,9 @@
  *   is enabled.
  *
  * Features:
- * - intensity selector (none/low/medium/high/extreme), applied live and
- *   persisted to localStorage;
  * - per-script enable/disable toggles, persisted to localStorage (reload to
  *   fully apply — @require'd scripts execute at load time);
- * - `window.__BOREDOM_ENGINE__` API: getState/getScripts/setIntensity/
+ * - `window.__BOREDOM_ENGINE__` API: getState/getScripts/
  *   enableScript/disableScript/toggleScript/reload.
  *
  * It is NOT part of the engine artifact: `resistance-scripts.zip` (the thing
@@ -51,7 +49,7 @@ const SCRIPT_VERSION = "3.0.0";
 interface TreeScriptNode {
     /** Site path (e.g. "com/youtube") — set on nodes that carry scripts. */
     site?: string;
-    scripts: { id: string; name: string; path: string }[];
+    scripts: { id: string; name: string; path: string; defaultEnabled?: boolean }[];
     children: Record<string, TreeScriptNode>;
 }
 
@@ -86,6 +84,7 @@ function collectSiteTree(
                 id: entry.id,
                 name: entry.name,
                 path: entry.path,
+                defaultEnabled: entry.defaultEnabled,
             })),
             children: {},
         };
@@ -160,7 +159,7 @@ export function wrapScript(original: string, scriptId: string, sitePath: string)
 
 /**
  * Pure generation: catalog → bootstrap loader core (the FIRST `@require`). It
- * runs before the site scripts and sets the state + intensity + API + menu.
+ * runs before the site scripts and sets per-script state + API + menu.
  */
 export function generateBootstrapScript(catalog: Catalog): string {
     const { root } = buildTree(catalog);
@@ -169,13 +168,7 @@ export function generateBootstrapScript(catalog: Catalog): string {
     return `(function () {
     "use strict";
 
-    var CONFIG = {
-        // Default intensity when nothing is stored yet.
-        DEFAULT_INTENSITY: "medium",
-        // localStorage key for { intensity, enabled } state.
-        STORAGE_KEY: "boredom-engine:state",
-        VALID_INTENSITIES: ["none", "low", "medium", "high", "extreme"]
-    };
+    var CONFIG = { STORAGE_KEY: "boredom-engine:state" };
 
     // Reverse-domain tree of supported sites → scripts [{id, name, path}].
     // Nodes that carry scripts also carry their site path (e.g. "com/youtube").
@@ -183,10 +176,6 @@ export function generateBootstrapScript(catalog: Catalog): string {
 
     // In-memory fallback so state works even where localStorage is unavailable.
     var memoryState = null;
-
-    function isValidIntensity(value) {
-        return CONFIG.VALID_INTENSITIES.indexOf(value) !== -1;
-    }
 
     function readState() {
         var saved = null;
@@ -197,8 +186,13 @@ export function generateBootstrapScript(catalog: Catalog): string {
         }
         if (saved === null || saved === undefined) saved = memoryState;
         var state = saved && typeof saved === "object" ? saved : {};
-        if (!isValidIntensity(state.intensity)) state.intensity = CONFIG.DEFAULT_INTENSITY;
         if (!state.enabled || typeof state.enabled !== "object") state.enabled = {};
+        var node = nodeForHost(location.hostname);
+        if (node) node.scripts.forEach(function (script) {
+            if (state.enabled[script.id] === undefined) {
+                state.enabled[script.id] = script.defaultEnabled !== false;
+            }
+        });
         return state;
     }
 
@@ -227,15 +221,6 @@ export function generateBootstrapScript(catalog: Catalog): string {
 
     function isEnabled(state, id) {
         return state.enabled[id] !== false;
-    }
-
-    function applyIntensity(intensity) {
-        window.__BOREDOM_INTENSITY__ = intensity;
-        // Notify scripts with route-scoped CSS or live intensity handling.
-        // The guard also supports the minimal DOM used by unit tests.
-        if (typeof window.dispatchEvent === "function" && typeof Event === "function") {
-            window.dispatchEvent(new Event("boredom-engine:intensitychange"));
-        }
     }
 
     function reloadPage() {
@@ -277,21 +262,6 @@ export function generateBootstrapScript(catalog: Catalog): string {
                 state.currentSite = node ? node.site : null;
                 state.scripts = api.getScripts();
                 return state;
-            },
-            setIntensity: function (intensity) {
-                if (!isValidIntensity(intensity)) {
-                    throw new Error(
-                        "Invalid intensity: " + intensity +
-                            " (expected one of " + CONFIG.VALID_INTENSITIES.join(", ") + ")",
-                    );
-                }
-                var state = readState();
-                state.intensity = intensity;
-                writeState(state);
-                applyIntensity(intensity);
-                window.__BOREDOM_STATE__.intensity = intensity;
-                console.debug("[boredom-engine] intensity set to " + intensity);
-                return api.getState();
             },
             enableScript: function (id) {
                 return setScriptEnabled(id, true);
@@ -335,9 +305,6 @@ export function generateBootstrapScript(catalog: Catalog): string {
             ".be-panel{position:fixed;right:16px;bottom:72px;z-index:2147483001;width:280px;max-height:70vh;overflow:auto;background:#111;color:#eee;border:1px solid #444;border-radius:8px;font:13px/1.4 system-ui,sans-serif;box-shadow:0 4px 20px rgba(0,0,0,.6);display:none}",
             ".be-panel.open{display:block}",
             ".be-panel h2{margin:0;padding:10px 12px;font-size:14px;border-bottom:1px solid #333}",
-            ".be-intensity{padding:10px 12px;border-bottom:1px solid #333}",
-            ".be-intensity button{margin:2px;padding:4px 8px;border:1px solid #555;background:#222;color:#ccc;border-radius:4px;cursor:pointer;font:inherit}",
-            ".be-intensity button.on{background:#2d6cdf;color:#fff;border-color:#2d6cdf}",
             ".be-scripts{padding:6px 12px 10px}",
             ".be-scripts label{display:flex;gap:8px;align-items:center;padding:3px 0;cursor:pointer}",
             ".be-scripts input{accent-color:#2d6cdf}",
@@ -358,26 +325,6 @@ export function generateBootstrapScript(catalog: Catalog): string {
         var title = document.createElement("h2");
         title.textContent = "Boredom Engine";
         panel.appendChild(title);
-
-        var intensityRow = document.createElement("div");
-        intensityRow.className = "be-intensity";
-        var initial = api.getState();
-        CONFIG.VALID_INTENSITIES.forEach(function (level) {
-            var b = document.createElement("button");
-            b.textContent = level.charAt(0).toUpperCase() + level.slice(1);
-            if (level === initial.intensity) b.className = "on";
-            b.addEventListener("click", function () {
-                api.setIntensity(level);
-                Array.prototype.forEach.call(
-                    intensityRow.querySelectorAll("button"),
-                    function (btn) {
-                        btn.className = btn === b ? "on" : "";
-                    },
-                );
-            });
-            intensityRow.appendChild(b);
-        });
-        panel.appendChild(intensityRow);
 
         var scriptsRow = document.createElement("div");
         scriptsRow.className = "be-scripts";
@@ -488,7 +435,7 @@ export function generateBootstrapScript(catalog: Catalog): string {
         hint.className = "be-hint";
         hint.appendChild(
             document.createTextNode(
-                "Toggles persist and reload to apply; intensity applies live — ",
+                "Toggles persist and reload to apply — ",
             ),
         );
         var reloadLink = document.createElement("a");
@@ -516,9 +463,7 @@ export function generateBootstrapScript(catalog: Catalog): string {
     window.__BOREDOM_STATE__ = {
         currentSite: currentSite,
         enabled: state.enabled,
-        intensity: state.intensity,
     };
-    applyIntensity(state.intensity);
     window.__BOREDOM_ENGINE__ = makePublicApi(node);
     window.__BOREDOM_EVAL__ = window.__BOREDOM_ENGINE__.evalJs;
     console.debug(

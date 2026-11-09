@@ -5,27 +5,11 @@
  * @version 1.0.5
  */
 
-import {
-    getIntensity,
-    Intensity,
-    onDOMLoaded,
-} from "$common";
+import { onDOMLoaded } from "$common";
 
-const BUFFER_DELAY_DURATION_MAP: Record<Intensity, number> = {
-    [Intensity.None]: 0,
-    [Intensity.Low]: 750,
-    [Intensity.Medium]: 1500,
-    [Intensity.High]: 3000,
-    [Intensity.Extreme]: 5000,
-};
+const BUFFER_DELAY_DURATION_MAP = 1500;
 
-const BUFFER_DELAY_RANDOM_MAP: Record<Intensity, number> = {
-    [Intensity.None]: 0,
-    [Intensity.Low]: 0.05,
-    [Intensity.Medium]: 0.1,
-    [Intensity.High]: 0.2,
-    [Intensity.Extreme]: 0.4,
-};
+const BUFFER_DELAY_RANDOM_MAP = 0.1;
 
 onDOMLoaded(() => {
     
@@ -58,13 +42,13 @@ onDOMLoaded(() => {
         // Check local state or global state
         if (document.body.dataset.boredomCaptchaActive === "true") return;
 
-        if (Math.random() < BUFFER_DELAY_RANDOM_MAP[getIntensity()]) {
+        if (Math.random() < BUFFER_DELAY_RANDOM_MAP) {
             isBuffering = true;
             document.body.dataset.boredomBufferingActive = "true";
 
             // Determine duration (3-6 seconds)
             const duration =
-                BUFFER_DELAY_DURATION_MAP[getIntensity()] * (1 + Math.random());
+                BUFFER_DELAY_DURATION_MAP * (1 + Math.random());
 
             // Pause the video to simulate buffering
             video.pause();

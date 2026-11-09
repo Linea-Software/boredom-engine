@@ -1,10 +1,9 @@
 import { FakeCaptcha } from "./captcha";
 import { onDOMLoaded } from "./dom";
-import { currentIntensityHigherThan, Intensity } from "./intensity";
+
 
 export interface RandomCaptchaOptions {
     siteName: string;
-    minimumIntensity?: Intensity;
     minIntervalMs?: number;
     maxIntervalMs?: number;
     initialDelayMs?: number;
@@ -17,13 +16,11 @@ export interface RandomCaptchaOptions {
  */
 export function scheduleRandomCaptcha({
     siteName,
-    minimumIntensity = Intensity.Medium,
     minIntervalMs = 2 * 60 * 1000,
     maxIntervalMs = 5 * 60 * 1000,
     initialDelayMs = 15_000,
 }: RandomCaptchaOptions): void {
     onDOMLoaded(() => {
-        if (!currentIntensityHigherThan(minimumIntensity)) return;
 
         const captcha = new FakeCaptcha();
         let active = false;

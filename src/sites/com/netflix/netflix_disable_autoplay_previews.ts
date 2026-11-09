@@ -4,9 +4,9 @@
  * @description Pauses and mutes autoplaying browse previews without interfering with intentional watch-page playback.
  * @version 1.0.0
  */
-import { blockInterface, currentIntensityHigherThan, Intensity } from "$common";
+import { blockInterface } from "$common";
 
-if (currentIntensityHigherThan(Intensity.None)) {
+{
     blockInterface({
         id: "netflix_disable_autoplay_previews",
         media: {

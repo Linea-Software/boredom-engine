@@ -5,9 +5,9 @@
  * @version 1.1.0
  */
 
-import { blockInterface, currentIntensityHigherThan, Intensity } from "$common";
+import { blockInterface } from "$common";
 
-if (currentIntensityHigherThan(Intensity.None)) {
+{
     blockInterface({
         id: "facebook_block_feed",
         selectors: [

@@ -5,16 +5,11 @@
  * @version 1.1.0
  */
 
-import {
-    blockInterface,
-    currentIntensityHigherThan,
-    getIntensity,
-    Intensity,
-} from "$common";
+import { blockInterface } from "$common";
 
 if (
-    currentIntensityHigherThan(Intensity.None) &&
-    getIntensity() !== Intensity.Low
+    true &&
+    true
 ) {
     blockInterface({
         id: "tiktok_remove_sidebar_buttons",

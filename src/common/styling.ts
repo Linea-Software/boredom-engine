@@ -1,4 +1,3 @@
-import { getIntensity, Intensity } from "./intensity";
 
 /**
  * Injects a CSS string into the document head.
@@ -25,21 +24,9 @@ export function injectCss(css: string): HTMLStyleElement {
     return style;
 }
 
-/**
- * Sets the grayscale filter on a given HTML element.
- * @param element The HTML element to apply the filter to.
- * @param intensity The intensity level to apply.
- */
-export function setGrayscale(element: HTMLElement, intensity: Intensity): void {
-    const GRAYSCALE_MAP: Record<Intensity, number> = {
-        [Intensity.None]: 0,
-        [Intensity.Low]: 30,
-        [Intensity.Medium]: 50,
-        [Intensity.High]: 80,
-        [Intensity.Extreme]: 100,
-    };
-
-    element.style.filter = `grayscale(${GRAYSCALE_MAP[intensity]}%)`;
+/** Applies complete grayscale when this intervention is enabled. */
+export function setGrayscale(element: HTMLElement): void {
+    element.style.filter = "grayscale(100%)";
 }
 
 // Shared filter string to allowing stacking of effects (saturation + blur)
@@ -53,17 +40,10 @@ export const COMMON_MEDIA_FILTER =
 export function applyMediaDesaturation(
     additionalSelectors: string[] = [],
 ): void {
-    const DESATURATION_MAP: Record<Intensity, number> = {
-        [Intensity.None]: 100,
-        [Intensity.Low]: 70,
-        [Intensity.Medium]: 50,
-        [Intensity.High]: 20,
-        [Intensity.Extreme]: 0,
-    };
     const selectors = ["video", "img", ...additionalSelectors];
     const css = `
         :root {
-            --boredom-saturate: ${DESATURATION_MAP[getIntensity()]}%;
+            --boredom-saturate: 0%;
         }
         ${selectors.join(",\n        ")} {
             filter: ${COMMON_MEDIA_FILTER} !important;

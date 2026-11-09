@@ -4,9 +4,9 @@
  * @description Hides YouTube Shorts surfaces and redirects away from Shorts routes.
  * @version 1.2.0
  */
-import { blockInterface, currentIntensityHigherThan, Intensity } from "$common";
+import { blockInterface } from "$common";
 
-const shortsEnabled = () => currentIntensityHigherThan(Intensity.None);
+const shortsEnabled = () => true;
 const isShortsRoute = (url: URL) =>
     url.pathname === "/shorts" || url.pathname.startsWith("/shorts/");
 

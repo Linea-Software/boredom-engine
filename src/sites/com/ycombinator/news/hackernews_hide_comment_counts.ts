@@ -4,10 +4,10 @@
  * @description Hides comment-count and discuss links while preserving story age and author links.
  * @version 1.0.0
  */
-import { currentIntensityHigherThan, Intensity, onDOMLoaded } from "$common";
+import { onDOMLoaded } from "$common";
 
 onDOMLoaded(() => {
-    if (!currentIntensityHigherThan(Intensity.None)) return;
+    
     document.querySelectorAll<HTMLAnchorElement>(".subtext a").forEach((link) => {
         const label = (link.textContent ?? "").trim().toLowerCase();
         if (label === "discuss" || /\bcomments?$/.test(label)) {

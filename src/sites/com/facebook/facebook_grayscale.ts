@@ -4,19 +4,10 @@
  * @description Desaturates Facebook media to reduce visual stimulation and dopamine response.
  * @version 1.0.0
  */
-import {
-    onDOMLoaded,
-    applyMediaDesaturation,
-    setGrayscale,
-    getIntensity,
-    currentIntensityHigherThan,
-    Intensity,
-} from "$common";
+import { onDOMLoaded, applyMediaDesaturation, setGrayscale } from "$common";
 
 onDOMLoaded(() => {
-    if (!currentIntensityHigherThan(Intensity.None)) {
-        return;
-    }
+    
 
     applyMediaDesaturation();
 
@@ -29,7 +20,7 @@ onDOMLoaded(() => {
         setInterval(() => {
             const video = document.querySelector("video");
             if (video) {
-                setGrayscale(video, getIntensity());
+                setGrayscale(video);
             }
         }, 1000);
     }

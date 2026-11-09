@@ -4,18 +4,12 @@
  * @description Makes Instagram media grayscale to reduce dopamine.
  * @version 1.0.0
  */
-import {
-    onDOMLoaded,
-    applyMediaDesaturation,
-    currentIntensityHigherThan,
-    Intensity,
-    enforceCssVariables,
-} from "$common";
+import { onDOMLoaded, applyMediaDesaturation, enforceCssVariables } from "$common";
 
 onDOMLoaded(() => {
     applyMediaDesaturation();
 
-    if (currentIntensityHigherThan(Intensity.None)) {
+    {
         // Enforce the badge color to be gray
         enforceCssVariables({
             "--ig-badge": "156, 156, 156",

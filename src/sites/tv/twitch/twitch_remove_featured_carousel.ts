@@ -5,9 +5,9 @@
  * @version 1.3.0
  */
 
-import { blockInterface, currentIntensityHigherThan, Intensity } from "$common";
+import { blockInterface } from "$common";
 
-if (currentIntensityHigherThan(Intensity.None)) {
+{
     const carouselSelectors = [
         '[data-a-target="front-page-carousel"]',
         ".front-page-carousel",

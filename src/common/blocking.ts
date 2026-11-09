@@ -40,9 +40,7 @@ function installNavigationEvents(): void {
 
     window.addEventListener("popstate", dispatchNavigation);
     window.addEventListener("hashchange", dispatchNavigation);
-    // Tampermonkey's control menu can change intensity without reloading.
     // Refresh route-scoped CSS when this happens too.
-    window.addEventListener("boredom-engine:intensitychange", dispatchNavigation);
 
     for (const method of ["pushState", "replaceState"] as const) {
         const original = history[method];

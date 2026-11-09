@@ -4,9 +4,9 @@
  * @description Hides Discover/Explore navigation and redirects those recommendation routes to the web client.
  * @version 1.0.0
  */
-import { blockInterface, currentIntensityHigherThan, Intensity } from "$common";
+import { blockInterface } from "$common";
 
-if (currentIntensityHigherThan(Intensity.Medium)) {
+{
     blockInterface({
         id: "snapchat_block_discover",
         selectors: ['a[href*="/discover"]', 'a[href*="/explore"]'],

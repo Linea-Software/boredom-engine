@@ -5,14 +5,9 @@
  * @version 1.0.0
  */
 
-import {
-    blockInterface,
-    currentIntensityHigherThan,
-    Intensity,
-    onDOMLoaded,
-} from "$common";
+import { blockInterface, onDOMLoaded } from "$common";
 
-if (currentIntensityHigherThan(Intensity.Medium)) {
+{
     const homeRoute = (url: URL) => url.pathname === "/" || url.pathname === "/home";
 
     blockInterface({

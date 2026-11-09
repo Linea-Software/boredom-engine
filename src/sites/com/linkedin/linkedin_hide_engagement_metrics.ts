@@ -5,9 +5,9 @@
  * @version 1.0.0
  */
 
-import { currentIntensityHigherThan, injectCss, Intensity } from "$common";
+import { injectCss } from "$common";
 
-if (currentIntensityHigherThan(Intensity.None)) {
+{
     injectCss(`
         .social-details-social-counts,
         [data-view-name="feed-full-update-social-counts"],

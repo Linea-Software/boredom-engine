@@ -4,9 +4,9 @@
  * @description Hides like, reply, repost, and quote counts while preserving Threads action buttons.
  * @version 1.0.0
  */
-import { currentIntensityHigherThan, injectCss, Intensity } from "$common";
+import { injectCss } from "$common";
 
-if (currentIntensityHigherThan(Intensity.None)) {
+{
     injectCss(`
         button[aria-label*="like" i] span:not(:first-child),
         button[aria-label*="reply" i] span:not(:first-child),

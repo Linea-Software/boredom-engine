@@ -5,12 +5,7 @@
  * @version 1.1.0
  */
 
-import {
-    currentIntensityHigherThan,
-    getIntensity,
-    Intensity,
-    onDOMLoaded,
-} from "$common";
+import { onDOMLoaded } from "$common";
 import { FakeCaptcha } from "$common/captcha";
 
 onDOMLoaded(() => {
@@ -52,13 +47,6 @@ onDOMLoaded(() => {
         setTimeout(async () => {
             // If we're already active (edge case), skip
             if (isCaptchaActive) return;
-
-            // A live intensity change from None/Medium to High must activate
-            // this script without a page reload. Do not show captchas below High.
-            if (!currentIntensityHigherThan(Intensity.Medium)) {
-                scheduleNextCaptcha(5000);
-                return;
-            }
 
             // Synchronization: If buffering is active, defer captcha
             if (document.body.dataset.boredomBufferingActive === "true") {

@@ -26,6 +26,7 @@ interface ScriptData {
     name: string;
     description: string;
     version: string;
+    defaultEnabled: boolean;
 }
 
 interface SiteNode {
@@ -117,6 +118,7 @@ export async function buildDefault() {
             name: metadata.name!,
             description: metadata.description!,
             version: metadata.version!,
+            defaultEnabled: !/(captcha|delay|buffer|friction|wait|slow|grayscale|desaturat|low_quality|media_quality|downgrade)/.test(metadata.id!),
         };
 
         try {

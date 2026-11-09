@@ -22,6 +22,8 @@
  */
 
 export interface ScriptData {
+    /** Opt-in for interruptions and visual degradation; deterministic per script. */
+    defaultEnabled?: boolean;
     id: string;
     path: string;
     name: string;
