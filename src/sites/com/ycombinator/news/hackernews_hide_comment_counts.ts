@@ -7,7 +7,7 @@
 import { onDOMLoaded } from "$common";
 
 onDOMLoaded(() => {
-    
+
     document.querySelectorAll<HTMLAnchorElement>(".subtext a").forEach((link) => {
         const label = (link.textContent ?? "").trim().toLowerCase();
         if (label === "discuss" || /\bcomments?$/.test(label)) {

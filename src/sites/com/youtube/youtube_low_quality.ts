@@ -1,12 +1,12 @@
 /**
  * @id youtube_low_quality
  * @name YouTube Low Quality
- * @description Forces YouTube video quality based on intensity setting to reduce engagement and make the experience less enjoyable.
+ * @description Forces YouTube video quality to a fixed low setting to reduce engagement and make the experience less enjoyable.
  * @version 1.1.0
  */
 import { onDOMLoaded } from "$common";
 
-const QUALITY_MAP = "large";
+const FIXED_PLAYBACK_QUALITY = "small";
 
 interface YouTubePlayer extends HTMLElement {
     setPlaybackQualityRange?: (min: string, max: string) => void;
@@ -34,7 +34,7 @@ onDOMLoaded(() => {
         const player = document.getElementById("movie_player") as YouTubePlayer | null;
         if (!player) return;
 
-        const target = QUALITY_MAP;
+        const target = FIXED_PLAYBACK_QUALITY;
         const actual = player.getPlaybackQuality?.();
         // Avoid repeatedly toggling YouTube's player when it already uses
         // the desired quality; reassert when it adapts away from that level.

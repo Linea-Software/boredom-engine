@@ -53,8 +53,6 @@ function aceDocument(body: string, siteScript = ""): string {
     return [
         "<!doctype html><html lang=\"en\"><head>",
         makeTag(SITE_NONCE, `window.__SITE_BOOTSTRAP_RAN__ = true; ${siteScript}`),
-        // ACE injects setup before the site-specific scripts.
-        makeTag(ACE_NONCE, "window.__BOREDOM_INTENSITY__ = 'high';"),
         ...directBundles.map((bundle) => makeTag(ACE_NONCE, bundle)),
         "</head><body>",
         body,
@@ -82,7 +80,7 @@ test("ACE direct injection runs YouTube Shorts CSS under CSP without Tampermonke
     await page.goto("https://www.youtube.com/", { waitUntil: "domcontentloaded" });
 
     expect(await page.evaluate(() => (window as any).__SITE_BOOTSTRAP_RAN__)).toBe(true);
-    expect(await page.evaluate(() => (window as any).__BOREDOM_INTENSITY__)).toBe("high");
+    expect(await page.evaluate(() => (window as any).__BOREDOM_INTENSITY__)).toBeUndefined();
     expect(await page.evaluate(() => (window as any).__BOREDOM_ENGINE__)).toBeUndefined();
     await expect(page.locator("#shorts")).toBeHidden();
     await expect(page.locator("#home")).toBeVisible();
@@ -110,7 +108,7 @@ test("ACE direct injection applies video grayscale and quality on YouTube watch"
 
     await expect.poll(() =>
         page.locator("#video-player").evaluate((element) => getComputedStyle(element).filter),
-    ).toContain("grayscale(0.8)");
+    ).toContain("grayscale(1)");
     await expect.poll(() =>
         page.evaluate(() => (window as any).__QUALITY_CALLS__ as string[][]),
         { timeout: 5_000 },

@@ -9,7 +9,7 @@ addictive nature.
 The built artifacts are consumed by **ace-engine**: the engine downloads
 `resistance-scripts.zip` (SHA-256 verified), extracts it, loads
 `scripts-data.json` into its `InjectableScriptTree`, and injects the matched
-scripts into covered sites together with the configured intensity.
+scripts into covered sites only when each intervention is enabled.
 
 ## Development
 
@@ -83,9 +83,9 @@ bun run test:artifact   # end-to-end: real build + deploy + zip/catalog validati
 `dist/normal/` plus `dist/scripts-data.json`, packaged by `bun run deploy`
 into `dist/resistance-scripts.zip`. ACE Engine loads the script tree and
 uses its MITM proxy to insert each enabled site's JavaScript as nonce-bearing
-inline `<script>` tags in the top-level HTML. It injects
-`window.__BOREDOM_INTENSITY__` **before** the site scripts, and rewrites
-response-header and HTML-meta CSP where needed. There is no Tampermonkey
+inline `<script>` tags in the top-level HTML, and rewrites response-header
+and HTML-meta CSP where needed. Each intervention has its own enabled state;
+visual degradation and deliberate interruptions default to opt-in. There is no Tampermonkey
 bootstrap, `@require`, or `window.__BOREDOM_ENGINE__` control API in ACE.
 
 Run the ACE-shaped browser regression tests (direct bundles, strict CSP,
@@ -101,10 +101,8 @@ This is a **browser simulation of the ACE injection format**, not a full test
 of the actual privileged MITM proxy, TLS routing, entitlement, installed
 content version or site-account state. For the latter, verify the downloaded
 `scriptsVersion`, Pro entitlement, resistance master switch, enabled script
-IDs and non-`none` intensity in ACE Engine; then inspect proxy logs for
-injection into the top-level YouTube document. Intensity is set when the
-document is injected; changing ACE's desktop intensity may require a full
-navigation/reload to inject an updated value.
+IDs in ACE Engine; then inspect proxy logs for injection into the top-level
+YouTube document. Changes to interventions affect newly loaded documents.
 
 **Important release distinction:** pushing source to `main` does *not*
 update ACE Blocker. Publish a new GitHub Release, import it in the
@@ -119,9 +117,8 @@ loader** under `dist/tampermonkey/`:
 - `boredom-engine.user.js` — the userscript to install. It runs only on the
   sites covered by the catalog (its `@match` list) and `@require`s the loader
   and the site scripts as **local `file://` files** (baked-in absolute paths).
-- `bootstrap.js` — loader core: publishes `window.__BOREDOM_STATE__` and
-  `window.__BOREDOM_INTENSITY__` **before** the site scripts run, exposes
-  `window.__BOREDOM_ENGINE__`, and builds the 🧠 control menu.
+- `bootstrap.js` — loader core: publishes per-script `window.__BOREDOM_STATE__`
+  before the site scripts run, exposes `window.__BOREDOM_ENGINE__`, and builds the 🧠 control menu.
 - `scripts/...` — each site script wrapped in a guard so it only executes on
   its own site and only while enabled.
 
@@ -167,13 +164,11 @@ its own install.
 Every supported page gets a floating **🧠** button (bottom-right). Clicking it
 opens a panel with:
 
-- an **intensity selector** (`None / Low / Medium / High / Extreme`) — applied
-  live, no reload needed;
-- a **checkbox per script** of the current site — toggles persist; because
+- a **checkbox per intervention** of the current site — toggles persist; because
   `@require` scripts execute at load time, a toggle applies on the next page
   load (use the *reload now* link in the panel).
 
-Both settings are persisted in `localStorage` (`boredom-engine:state`, keyed by
+Intervention selections are persisted in `localStorage` (`boredom-engine:state`, keyed by
 script `id`), so they survive page reloads and browser restarts.
 
 ### Control API (for LLMs / automation)
@@ -181,9 +176,8 @@ script `id`), so they survive page reloads and browser restarts.
 The loader exposes `window.__BOREDOM_ENGINE__` with a small, deterministic API:
 
 ```js
-window.__BOREDOM_ENGINE__.getState()                    // { intensity, currentSite, enabled, scripts[] }
+window.__BOREDOM_ENGINE__.getState()                    // { currentSite, enabled, scripts[] }
 window.__BOREDOM_ENGINE__.getScripts()                  // [{ id, name, path, enabled }]
-window.__BOREDOM_ENGINE__.setIntensity("high")          // live; none|low|medium|high|extreme
 window.__BOREDOM_ENGINE__.enableScript("youtube_grayscale")   // persists; reload to apply
 window.__BOREDOM_ENGINE__.disableScript("youtube_grayscale")  // persists; reload to apply
 window.__BOREDOM_ENGINE__.toggleScript("youtube_grayscale")
@@ -192,15 +186,15 @@ window.__BOREDOM_ENGINE__.reload()                      // reload to apply a tog
 
 `getState()` returns the persisted state; `getScripts()` reports the current
 host's scripts with their enabled flag. Script ids are the catalog's stable
-`@id` values (the same keys ace-engine persists by). Invalid intensities throw.
+`@id` values (the same keys ace-engine persists by).
 Every mutation logs a `[boredom-engine]` line to the console.
 
 ### Config
 
 `bootstrap.js` has a small `CONFIG` block at the top:
 
-- `DEFAULT_INTENSITY` — used until the user picks an intensity.
-- `STORAGE_KEY` — the `localStorage` key for the persisted state.
+- `STORAGE_KEY` — the `localStorage` key for the persisted per-intervention state.
+- `defaultEnabled` (catalog entry) — controls a script's default on/off state; explicit user preferences override it.
 
 Notes:
 

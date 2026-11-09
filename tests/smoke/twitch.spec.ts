@@ -3,26 +3,24 @@ import { join } from "node:path";
 import {
     loadScript,
     openFixture,
-    setIntensity,
     stubMathRandom,
 } from "./harness";
 
 const SRC = (relative: string) => join(process.cwd(), "src/sites", relative);
 
 test("twitch grayscale desaturates media and grays the brand colors", async ({ page }) => {
-    await setIntensity(page, "high"); // DESATURATION_MAP[High] = 20%, gray #666666
     await loadScript(page, SRC("tv/twitch/twitch_grayscale.ts"));
     await openFixture(page, "twitch/grayscale.html");
 
     await expect
         .poll(() => page.locator("#thumbnail").evaluate((el) => getComputedStyle(el).filter))
-        .toContain("saturate(0.2)");
+        .toContain("saturate(0)");
 
     await expect
         .poll(() =>
             page.evaluate(() => document.documentElement.style.getPropertyValue("--color-twitch-purple")),
         )
-        .toBe("#666666");
+        .toBe("#888888");
 
     await expect
         .poll(() => page.locator("#chat").evaluate((el) => getComputedStyle(el).filter))
@@ -30,7 +28,6 @@ test("twitch grayscale desaturates media and grays the brand colors", async ({ p
 });
 
 test("twitch media quality overlays a canvas on video and pixelates images", async ({ page }) => {
-    await setIntensity(page, "medium");
     await loadScript(page, SRC("tv/twitch/twitch_media_quality.ts"));
     await openFixture(page, "twitch/media-quality.html");
 
@@ -51,8 +48,7 @@ test("twitch media quality overlays a canvas on video and pixelates images", asy
         .toBe("pixelated");
 });
 
-test("twitch random captcha shows the overlay at high intensity", async ({ page }) => {
-    await setIntensity(page, "high"); // gate: > Medium
+test("twitch random captcha shows the overlay when enabled", async ({ page }) => {
     await loadScript(page, SRC("tv/twitch/twitch_random_captcha.ts"));
     await openFixture(page, "twitch/random-captcha.html");
 
@@ -71,7 +67,6 @@ test("twitch random captcha shows the overlay at high intensity", async ({ page 
 });
 
 test("twitch remove featured carousel hides the carousel without detaching it", async ({ page }) => {
-    await setIntensity(page, "high");
     await loadScript(page, SRC("tv/twitch/twitch_remove_featured_carousel.ts"));
     await openFixture(page, "twitch/remove-featured-carousel.html");
 
@@ -94,7 +89,6 @@ test("twitch remove featured carousel hides the carousel without detaching it", 
 });
 
 test("twitch remove sidebar hides the navigation sidebar", async ({ page }) => {
-    await setIntensity(page, "high");
     await loadScript(page, SRC("tv/twitch/twitch_remove_sidebar.ts"));
     await openFixture(page, "twitch/remove-sidebar.html");
 
@@ -104,7 +98,6 @@ test("twitch remove sidebar hides the navigation sidebar", async ({ page }) => {
 });
 
 test("twitch video delay pauses playback on a buffering roll", async ({ page }) => {
-    await setIntensity(page, "medium"); // 10% roll chance
     await stubMathRandom(page, 0); // force every chance roll to succeed
     await loadScript(page, SRC("tv/twitch/twitch_video_delay.ts"));
     await openFixture(page, "twitch/video-delay.html");

@@ -8,7 +8,6 @@ import { onDOMLoaded, applyMediaDesaturation, setCssVariablesToGray } from "$com
 
 
 onDOMLoaded(() => {
-    
 
     // Apply grayscale to media elements and key UI components
     applyMediaDesaturation([
@@ -45,8 +44,8 @@ onDOMLoaded(() => {
         }
     }
 
-    const GRAY_LEVELS = "#888888";
+    const GRAY_COLOR = "#888888";
 
-    setCssVariablesToGray(vibrantVariables, GRAY_LEVELS);
+    setCssVariablesToGray(vibrantVariables, GRAY_COLOR);
 });
 

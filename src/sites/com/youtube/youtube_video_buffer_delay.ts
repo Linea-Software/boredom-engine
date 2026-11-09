@@ -7,12 +7,12 @@
 
 import { onDOMLoaded } from "$common";
 
-const BUFFER_DELAY_DURATION_MAP = 1500;
+const BUFFER_DELAY_DURATION_MS = 1500;
 
-const BUFFER_DELAY_RANDOM_MAP = 0.1;
+const BUFFER_DELAY_PROBABILITY = 0.1;
 
 onDOMLoaded(() => {
-    
+
     let isBuffering = false;
 
     // Enforce buffering state
@@ -42,13 +42,13 @@ onDOMLoaded(() => {
         // Check local state or global state
         if (document.body.dataset.boredomCaptchaActive === "true") return;
 
-        if (Math.random() < BUFFER_DELAY_RANDOM_MAP) {
+        if (Math.random() < BUFFER_DELAY_PROBABILITY) {
             isBuffering = true;
             document.body.dataset.boredomBufferingActive = "true";
 
             // Determine duration (3-6 seconds)
             const duration =
-                BUFFER_DELAY_DURATION_MAP * (1 + Math.random());
+                BUFFER_DELAY_DURATION_MS * (1 + Math.random());
 
             // Pause the video to simulate buffering
             video.pause();

@@ -1,12 +1,12 @@
 /**
  * @id hackernews_limit_front_page
  * @name Hacker News Limit Front Page
- * @description Limits the number of visible Hacker News front-page stories based on intensity.
+ * @description Limits the number of visible Hacker News front-page stories to a fixed cap.
  * @version 1.0.0
  */
 import { onDOMLoaded } from "$common";
 
-const STORY_LIMIT = 15;
+const STORY_LIMIT = 10;
 
 function hideStoryRow(story: Element): void {
     if (story instanceof HTMLElement) story.style.setProperty("display", "none", "important");
@@ -19,14 +19,14 @@ function hideStoryRow(story: Element): void {
 }
 
 onDOMLoaded(() => {
-    
+
     if (window.location.pathname !== "/" && window.location.pathname !== "/news") return;
 
     const stories = Array.from(document.querySelectorAll("tr.athing"));
     stories.slice(STORY_LIMIT).forEach(hideStoryRow);
 
     const more = document.querySelector("a.morelink");
-    if (more instanceof HTMLElement && true) {
+    if (more instanceof HTMLElement) {
         more.style.setProperty("display", "none", "important");
     }
 });

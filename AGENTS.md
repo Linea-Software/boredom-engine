@@ -26,8 +26,9 @@ The primary consumer is **ACE Engine's MITM direct injection**, not
 Tampermonkey. `bun run build` bundles browser IIFEs in `dist/normal/` and
 generates `dist/scripts-data.json`; `bun run deploy` packages the
 `resistance-scripts.zip` that ACE downloads after a new published/imported
-release. ACE adds nonce-bearing inline scripts to top-level HTML and sets
-`window.__BOREDOM_INTENSITY__` before the bundles execute; do not assume
+release. ACE adds nonce-bearing inline scripts to top-level HTML for each
+independently enabled intervention; there is no global severity level.
+Visual effects and interruptions default to opt-in in the catalog. Do not assume
 Tampermonkey's bootstrap, `@require` or per-page control API exists.
 
 Test with `bun run test:smoke --grep "ACE direct injection"` and

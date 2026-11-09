@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { join } from "node:path";
-import { loadScript, openFixture, setIntensity } from "./harness";
+import { loadScript, openFixture } from "./harness";
 
 const SITE_SCRIPTS: Record<string, string[]> = {
     x: [
@@ -68,7 +68,6 @@ for (const [site, scripts] of Object.entries(SITE_SCRIPTS)) {
     test(`${site} scripts tolerate missing target elements`, async ({ page }) => {
         const errors: string[] = [];
         page.on("pageerror", (error) => errors.push(error.message));
-        await setIntensity(page, "high");
         for (const relative of scripts) {
             await loadScript(page, join(process.cwd(), "src/sites", relative));
         }

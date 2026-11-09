@@ -111,6 +111,7 @@ function buildTree(catalog: Catalog): { hosts: Set<string>; root: TreeScriptNode
                 id: entry.id,
                 name: entry.name,
                 path: entry.path,
+                defaultEnabled: entry.defaultEnabled,
             })),
             children: {},
         };
@@ -187,6 +188,8 @@ export function generateBootstrapScript(catalog: Catalog): string {
         if (saved === null || saved === undefined) saved = memoryState;
         var state = saved && typeof saved === "object" ? saved : {};
         if (!state.enabled || typeof state.enabled !== "object") state.enabled = {};
+        // Discard any persisted legacy global level rather than re-exposing it.
+        delete state.intensity;
         var node = nodeForHost(location.hostname);
         if (node) node.scripts.forEach(function (script) {
             if (state.enabled[script.id] === undefined) {
@@ -199,7 +202,7 @@ export function generateBootstrapScript(catalog: Catalog): string {
     function writeState(state) {
         memoryState = state;
         try {
-            localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(state));
+            localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify({ enabled: state.enabled }));
         } catch (e) {
             /* ignore: in-memory state still applies for this session */
         }

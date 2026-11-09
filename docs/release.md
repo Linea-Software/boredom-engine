@@ -100,7 +100,7 @@ On a machine with a Pro account linked:
 3. Use the **Resistance Mode** page (or remoc
    `getResistanceModeSettings`) to verify the newly published
    `scriptsVersion`, `scriptsLoaded`, a nonzero `scriptsEnabled` count,
-   `proEligible`, `enabled`, a non-`none` `currentIntensity`, and
+   `proEligible`, `enabled`, and at least one enabled intervention, plus
    `enforcementStatus: "operational"`. This replaces the obsolete
    `GET /resistance-mode/settings` REST route.
 4. Fully navigate/reload YouTube and inspect ACE Engine's proxy logs for

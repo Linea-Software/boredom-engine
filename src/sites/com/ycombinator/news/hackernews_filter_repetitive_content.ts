@@ -1,12 +1,12 @@
 /**
  * @id hackernews_filter_repetitive_content
  * @name Hacker News Filter Repetitive Content
- * @description Caps repeated front-page stories from the same domain using a simple local intensity-based limit.
+ * @description Caps repeated front-page stories from the same domain using a simple fixed limit.
  * @version 1.0.0
  */
 import { onDOMLoaded } from "$common";
 
-const DOMAIN_LIMIT = 3;
+const DOMAIN_LIMIT = 1;
 
 function hideStory(story: HTMLElement): void {
     story.style.setProperty("display", "none", "important");
@@ -19,7 +19,7 @@ function hideStory(story: HTMLElement): void {
 }
 
 onDOMLoaded(() => {
-    
+
     const maxPerDomain = DOMAIN_LIMIT;
     const seen = new Map<string, number>();
 

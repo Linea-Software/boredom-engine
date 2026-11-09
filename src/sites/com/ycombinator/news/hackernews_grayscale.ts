@@ -7,6 +7,6 @@
 import { onDOMLoaded, setGrayscale } from "$common";
 
 onDOMLoaded(() => {
-    
+
     setGrayscale(document.documentElement);
 });

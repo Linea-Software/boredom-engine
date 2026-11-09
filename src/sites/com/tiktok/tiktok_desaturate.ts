@@ -7,7 +7,6 @@
 import { onDOMLoaded, applyMediaDesaturation, injectCss, enforceCssVariables, setCssVariablesToGray } from "$common";
 
 onDOMLoaded(() => {
-    
 
     // Enforce specific color values. Runs inside onDOMLoaded (not at module
     // scope): document.documentElement may not exist yet at document-start,

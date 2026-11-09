@@ -43,6 +43,13 @@ export interface Catalog {
     sites: Record<string, SiteNode>;
 }
 
+/** Defaults are reviewable and stable across interfaces. Disruptive
+ * interventions must be explicitly selected; ordinary distraction removals
+ * may start enabled. User choices stored by ID always override defaults. */
+export function defaultEnabledForIntervention(id: string): boolean {
+    return !/(captcha|delay|buffer|friction|wait|slow|grayscale|desaturat|quality|downgrade|limit_scrolling|scroll_limit|limit_front_page|pause|restrict)/.test(id);
+}
+
 export const CATALOG_SCHEMA_VERSION = 1;
 
 export interface CatalogIssue {

@@ -42,7 +42,7 @@ const sampleCatalog = makeCatalog({
     com: node([], {
         youtube: node([
             script({ id: "youtube_grayscale", name: "YouTube Grayscale", path: "com/youtube/youtube_grayscale.js" }),
-            script({ id: "youtube_audio_delay", name: "YouTube Audio Delay", path: "com/youtube/youtube_audio_delay.js" }),
+            script({ id: "youtube_audio_delay", name: "YouTube Audio Delay", path: "com/youtube/youtube_audio_delay.js", defaultEnabled: false }),
         ]),
     }),
     tv: node([], {
@@ -140,7 +140,8 @@ describe("generateBootstrapScript", () => {
         const { win } = runScript(source, "www.youtube.com");
 
         expect(win.__BOREDOM_STATE__.currentSite).toBe("com/youtube");
-        expect(win.__BOREDOM_INTENSITY__).toBe("medium");
+        expect(win.__BOREDOM_STATE__.intensity).toBeUndefined();
+        expect(win.__BOREDOM_INTENSITY__).toBeUndefined();
 
         const api = win.__BOREDOM_ENGINE__;
         expect(typeof api.getState).toBe("function");
@@ -148,28 +149,19 @@ describe("generateBootstrapScript", () => {
             "youtube_grayscale",
             "youtube_audio_delay",
         ]);
-        expect(api.getScripts().every((s: { enabled: boolean }) => s.enabled)).toBe(true);
+        expect(api.getScripts().map((s: { enabled: boolean }) => s.enabled)).toEqual([true, false]);
     });
 
-    test("setIntensity applies live and persists", () => {
-        const source = generateBootstrapScript(sampleCatalog);
-        const { win } = runScript(source, "youtube.com");
-
-        const api = win.__BOREDOM_ENGINE__;
-        expect(api.getState().intensity).toBe("medium");
-        const next = api.setIntensity("extreme");
-        expect(next.intensity).toBe("extreme");
-        expect(win.__BOREDOM_INTENSITY__).toBe("extreme");
-        expect(api.getState().intensity).toBe("extreme");
-        expect(() => api.setIntensity("insane")).toThrow(/Invalid intensity/);
-    });
-
-    test("setIntensity emits a browser event for live site-script updates", () => {
+    test("keeps independent opt-in defaults and has no severity API", () => {
         const { win } = runScript(generateBootstrapScript(sampleCatalog), "youtube.com");
-        const events: string[] = [];
-        win.dispatchEvent = (event: Event) => events.push(event.type);
-        win.__BOREDOM_ENGINE__.setIntensity("high");
-        expect(events).toEqual(["boredom-engine:intensitychange"]);
+        const api = win.__BOREDOM_ENGINE__;
+        expect(api.getState().intensity).toBeUndefined();
+        expect(api.setIntensity).toBeUndefined();
+        expect(api.getScripts().find((s: { id: string }) => s.id === "youtube_audio_delay").enabled).toBe(false);
+        api.enableScript("youtube_audio_delay");
+        expect(api.getScripts().find((s: { id: string }) => s.id === "youtube_audio_delay").enabled).toBe(true);
+        api.disableScript("youtube_audio_delay");
+        expect(api.getScripts().find((s: { id: string }) => s.id === "youtube_audio_delay").enabled).toBe(false);
     });
 
     test("enable/disable toggles persist per script id", () => {
@@ -180,9 +172,9 @@ describe("generateBootstrapScript", () => {
         api.disableScript("youtube_grayscale");
         const after = api.getScripts();
         expect(after.find((s: { id: string }) => s.id === "youtube_grayscale").enabled).toBe(false);
-        expect(after.find((s: { id: string }) => s.id === "youtube_audio_delay").enabled).toBe(true);
+        expect(after.find((s: { id: string }) => s.id === "youtube_audio_delay").enabled).toBe(false);
         api.enableScript("youtube_grayscale");
-        expect(api.getScripts().every((s: { enabled: boolean }) => s.enabled)).toBe(true);
+        expect(api.getScripts().map((s: { enabled: boolean }) => s.enabled)).toEqual([true, false]);
     });
 
     test("reports no site/scripts for unsupported hosts", () => {

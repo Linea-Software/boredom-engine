@@ -7,7 +7,6 @@
 import { onDOMLoaded, applyMediaDesaturation, setGrayscale } from "$common";
 
 onDOMLoaded(() => {
-    
 
     applyMediaDesaturation();
 

@@ -1,3 +1,5 @@
+> **Historical audit (pre-independent-intervention architecture).** Notes concerning intensity and legacy APIs are superseded by the current README and catalog contract. This report is retained for its original audit trail.
+
 # Boredom Engine — Refactoring Audit
 
 **Date:** 2026-10-23  

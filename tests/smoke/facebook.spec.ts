@@ -4,14 +4,12 @@ import {
     loadScript,
     openFixture,
     openFixtureAt,
-    setIntensity,
     stubReplaceState,
 } from "./harness";
 
 const SRC = (relative: string) => join(process.cwd(), "src/sites", relative);
 
 test("facebook block feed hides the feed and blocks feed requests", async ({ page }) => {
-    await setIntensity(page, "high");
     await loadScript(page, SRC("com/facebook/facebook_block_feed.ts"));
     await openFixture(page, "facebook/block-feed.html");
 
@@ -29,7 +27,6 @@ test("facebook block feed hides the feed and blocks feed requests", async ({ pag
 });
 
 test("facebook block reels hides reels navigation links", async ({ page }) => {
-    await setIntensity(page, "high");
     await loadScript(page, SRC("com/facebook/facebook_block_reels.ts"));
     await openFixture(page, "facebook/block-reels.html");
 
@@ -40,7 +37,6 @@ test("facebook block reels hides reels navigation links", async ({ page }) => {
 });
 
 test("facebook block reels redirects away from reels pages", async ({ page }) => {
-    await setIntensity(page, "high");
     await loadScript(page, SRC("com/facebook/facebook_block_reels.ts"));
     await page.route("https://www.facebook.com/**", (route) =>
         route.fulfill({ status: 200, contentType: "text/html", body: "<html><body>stub</body></html>" }),
@@ -51,7 +47,6 @@ test("facebook block reels redirects away from reels pages", async ({ page }) =>
 });
 
 test("facebook block sidebar hides navigation sidebars but keeps the main menu", async ({ page }) => {
-    await setIntensity(page, "high");
     await loadScript(page, SRC("com/facebook/facebook_block_sidebar.ts"));
     await openFixture(page, "facebook/block-sidebar.html");
 
@@ -63,7 +58,6 @@ test("facebook block sidebar hides navigation sidebars but keeps the main menu",
 });
 
 test("facebook block stories hides the stories tray but keeps the feed", async ({ page }) => {
-    await setIntensity(page, "high");
     await loadScript(page, SRC("com/facebook/facebook_block_stories.ts"));
     await openFixture(page, "facebook/block-stories.html");
 
@@ -72,13 +66,12 @@ test("facebook block stories hides the stories tray but keeps the feed", async (
 });
 
 test("facebook grayscale desaturates media", async ({ page }) => {
-    await setIntensity(page, "high"); // DESATURATION_MAP[High] = 20%
     await loadScript(page, SRC("com/facebook/facebook_grayscale.ts"));
     await openFixture(page, "facebook/grayscale.html");
 
     await expect
         .poll(() => page.locator("#thumbnail").evaluate((el) => getComputedStyle(el).filter))
-        .toContain("saturate(0.2)");
+        .toContain("saturate(0)");
 
     // Non-media elements must stay untouched.
     await expect
@@ -87,7 +80,6 @@ test("facebook grayscale desaturates media", async ({ page }) => {
 });
 
 test("facebook hide comments hides the comment area but keeps the post", async ({ page }) => {
-    await setIntensity(page, "high");
     await loadScript(page, SRC("com/facebook/facebook_hide_comments.ts"));
     await openFixture(page, "facebook/hide-comments.html");
 
@@ -100,7 +92,6 @@ test("facebook hide comments hides the comment area but keeps the post", async (
 });
 
 test("facebook hide reactions hides reaction counts but keeps unrelated text", async ({ page }) => {
-    await setIntensity(page, "high");
     await loadScript(page, SRC("com/facebook/facebook_hide_reactions.ts"));
     await openFixture(page, "facebook/hide-reactions.html");
 
@@ -110,8 +101,7 @@ test("facebook hide reactions hides reaction counts but keeps unrelated text", a
     await expect(page.locator('div[role="button"][aria-label="Comment"]')).toBeVisible();
 });
 
-test("facebook random captcha shows the overlay at high intensity", async ({ page }) => {
-    await setIntensity(page, "high"); // gate: > Medium
+test("facebook random captcha shows the overlay when enabled", async ({ page }) => {
     await stubReplaceState(page); // file:// pages reject cross-path replaceState
     await loadScript(page, SRC("com/facebook/facebook_random_captcha.ts"));
     await openFixture(page, "facebook/random-captcha.html");

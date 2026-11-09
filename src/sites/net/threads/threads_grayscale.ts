@@ -7,6 +7,6 @@
 import { applyMediaDesaturation, onDOMLoaded } from "$common";
 
 onDOMLoaded(() => {
-    
+
     applyMediaDesaturation();
 });

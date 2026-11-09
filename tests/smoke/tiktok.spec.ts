@@ -3,14 +3,12 @@ import { join } from "node:path";
 import {
     loadScript,
     openFixture,
-    setIntensity,
     stubMathRandom,
 } from "./harness";
 
 const SRC = (relative: string) => join(process.cwd(), "src/sites", relative);
 
 test("tiktok block main content hides the FYP container and mutes its media", async ({ page }) => {
-    await setIntensity(page, "medium"); // gate: > None but skips Low
     await loadScript(page, SRC("com/tiktok/tiktok_block_main_content.ts"));
     await openFixture(page, "tiktok/block-main-content.html");
 
@@ -24,13 +22,12 @@ test("tiktok block main content hides the FYP container and mutes its media", as
 });
 
 test("tiktok desaturate desaturates media and grays the UI colors", async ({ page }) => {
-    await setIntensity(page, "high"); // DESATURATION_MAP[High] = 20%
     await loadScript(page, SRC("com/tiktok/tiktok_desaturate.ts"));
     await openFixture(page, "tiktok/desaturate.html");
 
     await expect
         .poll(() => page.locator("#thumbnail").evaluate((el) => getComputedStyle(el).filter))
-        .toContain("saturate(0.2)");
+        .toContain("saturate(0)");
 
     // Module-scope enforceCssVariables (runs before DOMContentLoaded).
     await expect
@@ -47,7 +44,6 @@ test("tiktok desaturate desaturates media and grays the UI colors", async ({ pag
 });
 
 test("tiktok downgrade media quality overlays a canvas on video and pixelates images", async ({ page }) => {
-    await setIntensity(page, "medium");
     await loadScript(page, SRC("com/tiktok/tiktok_downgrade_media_quality.ts"));
     await openFixture(page, "tiktok/downgrade-media-quality.html");
 
@@ -72,7 +68,6 @@ test("tiktok downgrade media quality overlays a canvas on video and pixelates im
 });
 
 test("tiktok remove sidebar buttons hides the more/explore/live entries", async ({ page }) => {
-    await setIntensity(page, "medium"); // gate: > None but skips Low
     await loadScript(page, SRC("com/tiktok/tiktok_remove_sidebar_buttons.ts"));
     await openFixture(page, "tiktok/remove-sidebar-buttons.html");
 
@@ -87,7 +82,6 @@ test("tiktok remove sidebar buttons hides the more/explore/live entries", async 
 });
 
 test("tiktok video delay shows the buffering spinner and pauses playback", async ({ page }) => {
-    await setIntensity(page, "medium"); // 10% roll chance
     await stubMathRandom(page, 0); // force every chance roll to succeed
     await loadScript(page, SRC("com/tiktok/tiktok_video_delay.ts"));
     await openFixture(page, "tiktok/video-delay.html");

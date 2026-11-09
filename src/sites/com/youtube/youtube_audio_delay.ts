@@ -1,12 +1,12 @@
 /**
  * @id youtube_audio_delay
  * @name YouTube Audio Delay
- * @description Adds an intensity-scaled audio delay to YouTube Shorts and regular videos.
+ * @description Adds a fixed audio delay to YouTube Shorts and regular videos.
  * @version 1.1.0
  */
 import { onDOMLoaded } from "$common";
 
-const AUDIO_DELAY_MAP = 2;
+const AUDIO_DELAY_SECONDS = 2;
 
 onDOMLoaded(() => {
     let context: AudioContext | null = null;
@@ -16,7 +16,7 @@ onDOMLoaded(() => {
 
     const attachDelay = () => {
         // Use a fixed two-second delay whenever this intervention is enabled.
-        if (delayNode) delayNode.delayTime.value = AUDIO_DELAY_MAP;
+        if (delayNode) delayNode.delayTime.value = AUDIO_DELAY_SECONDS;
 
         const video = document.querySelector("video");
         if (!video) return;
@@ -39,7 +39,7 @@ onDOMLoaded(() => {
 
             source = context.createMediaElementSource(video);
             delayNode = context.createDelay(5.0);
-            delayNode.delayTime.value = AUDIO_DELAY_MAP;
+            delayNode.delayTime.value = AUDIO_DELAY_SECONDS;
             source.connect(delayNode);
             delayNode.connect(context.destination);
             attachedVideo = video;

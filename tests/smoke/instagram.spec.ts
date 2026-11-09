@@ -4,14 +4,12 @@ import {
     loadScript,
     openFixture,
     openFixtureAt,
-    setIntensity,
     stubReplaceState,
 } from "./harness";
 
 const SRC = (relative: string) => join(process.cwd(), "src/sites", relative);
 
 test("instagram block explore hides explore navigation links", async ({ page }) => {
-    await setIntensity(page, "high");
     await loadScript(page, SRC("com/instagram/instagram_block_explore.ts"));
     await openFixture(page, "instagram/block-explore.html");
 
@@ -31,7 +29,6 @@ test("instagram block explore hides explore navigation links", async ({ page }) 
 });
 
 test("instagram block explore redirects away from /explore pages", async ({ page }) => {
-    await setIntensity(page, "high");
     await loadScript(page, SRC("com/instagram/instagram_block_explore.ts"));
     await page.route("https://instagram.com/**", (route) =>
         route.fulfill({ status: 200, contentType: "text/html", body: "<html><body>stub</body></html>" }),
@@ -42,7 +39,6 @@ test("instagram block explore redirects away from /explore pages", async ({ page
 });
 
 test("instagram block explore redirects after SPA navigation", async ({ page }) => {
-    await setIntensity(page, "high");
     await loadScript(page, SRC("com/instagram/instagram_block_explore.ts"));
     await page.route("https://instagram.com/**", (route) =>
         route.fulfill({ status: 200, contentType: "text/html", body: "<html><body>stub</body></html>" }),
@@ -54,7 +50,6 @@ test("instagram block explore redirects after SPA navigation", async ({ page }) 
 });
 
 test("instagram block reels hides reels navigation links", async ({ page }) => {
-    await setIntensity(page, "high");
     await loadScript(page, SRC("com/instagram/instagram_block_reels.ts"));
     await openFixture(page, "instagram/block-reels.html");
 
@@ -63,7 +58,6 @@ test("instagram block reels hides reels navigation links", async ({ page }) => {
 });
 
 test("instagram block reels redirects away from /reels pages", async ({ page }) => {
-    await setIntensity(page, "high");
     await loadScript(page, SRC("com/instagram/instagram_block_reels.ts"));
     await page.route("https://instagram.com/**", (route) =>
         route.fulfill({ status: 200, contentType: "text/html", body: "<html><body>stub</body></html>" }),
@@ -74,7 +68,6 @@ test("instagram block reels redirects away from /reels pages", async ({ page }) 
 });
 
 test("instagram block stories hides the stories tray but keeps the feed", async ({ page }) => {
-    await setIntensity(page, "high");
     await loadScript(page, SRC("com/instagram/instagram_block_stories.ts"));
     await openFixture(page, "instagram/block-stories.html");
 
@@ -88,7 +81,6 @@ test("instagram block stories hides the stories tray but keeps the feed", async 
 });
 
 test("instagram block suggestions hides posts after the suggestions separator", async ({ page }) => {
-    await setIntensity(page, "high");
     await loadScript(page, SRC("com/instagram/instagram_block_suggestions.ts"));
     await openFixture(page, "instagram/block-suggestions.html");
 
@@ -98,7 +90,6 @@ test("instagram block suggestions hides posts after the suggestions separator", 
 });
 
 test("instagram grayscale desaturates media and grays the badge color", async ({ page }) => {
-    await setIntensity(page, "high"); // DESATURATION_MAP[High] = 20%
     await loadScript(page, SRC("com/instagram/instagram_grayscale.ts"));
     await openFixture(page, "instagram/grayscale.html");
 
@@ -106,7 +97,7 @@ test("instagram grayscale desaturates media and grays the badge color", async ({
         .poll(() =>
             page.locator("#thumbnail").evaluate((el) => getComputedStyle(el).filter),
         )
-        .toContain("saturate(0.2)");
+        .toContain("saturate(0)");
 
     // Badge color enforced via CSS variable on the document element.
     await expect
@@ -122,7 +113,6 @@ test("instagram grayscale desaturates media and grays the badge color", async ({
 });
 
 test("instagram hide comments hides the comment button and comments list", async ({ page }) => {
-    await setIntensity(page, "high");
     await loadScript(page, SRC("com/instagram/instagram_hide_comments.ts"));
     await openFixture(page, "instagram/hide-comments.html");
 
@@ -137,7 +127,6 @@ test("instagram hide comments hides the comment button and comments list", async
 });
 
 test("instagram hide likes hides like counts and liked-by links", async ({ page }) => {
-    await setIntensity(page, "high");
     await loadScript(page, SRC("com/instagram/instagram_hide_likes.ts"));
     await openFixture(page, "instagram/hide-likes.html");
 
@@ -151,8 +140,7 @@ test("instagram hide likes hides like counts and liked-by links", async ({ page 
     await expect(page.locator('div[role="button"][aria-label="Share"]')).toBeVisible();
 });
 
-test("instagram random captcha shows the overlay at high intensity", async ({ page }) => {
-    await setIntensity(page, "high"); // gate: > Medium
+test("instagram random captcha shows the overlay when enabled", async ({ page }) => {
     await stubReplaceState(page); // file:// pages reject cross-path replaceState
     await loadScript(page, SRC("com/instagram/instagram_random_captcha.ts"));
     await openFixture(page, "instagram/random-captcha.html");

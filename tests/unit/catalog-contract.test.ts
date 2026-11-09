@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
     CATALOG_SCHEMA_VERSION,
+    defaultEnabledForIntervention,
     CatalogValidationError,
     flattenCatalog,
     sortCatalog,
@@ -224,5 +225,18 @@ describe("treeMatchesHost", () => {
         expect(treeMatchesHost(catalogWithGeneric, "anything.example")).toBe(true);
         expect(treeMatchesHost(catalogWithGeneric, "")).toBe(true);
         expect(treeMatchesHost(catalog, "anything.example")).toBe(false);
+    });
+});
+
+describe("intervention catalog defaults", () => {
+    test("disruptions and visual degradation are opt-in", () => {
+        for (const id of ["youtube_random_captcha", "youtube_audio_delay", "youtube_low_quality", "reddit_grayscale", "youtube_limit_scrolling", "hackernews_limit_front_page"]) {
+            expect(defaultEnabledForIntervention(id)).toBe(false);
+        }
+    });
+    test("ordinary distraction removal can be a recommended default", () => {
+        for (const id of ["youtube_shorts_remove", "reddit_hide_recommendations", "x_hide_trends"]) {
+            expect(defaultEnabledForIntervention(id)).toBe(true);
+        }
     });
 });

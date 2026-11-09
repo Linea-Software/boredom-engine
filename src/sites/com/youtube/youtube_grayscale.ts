@@ -6,8 +6,8 @@
  */
 import { onDOMLoaded, applyMediaDesaturation, injectCss } from "$common";
 
-const VIDEO_GRAYSCALE = 50;
-const MEDIA_SATURATION = 50;
+const VIDEO_GRAYSCALE = 100;
+const MEDIA_SATURATION = 0;
 
 onDOMLoaded(() => {
     // The shared rule desaturates thumbnails. An inline style.filter does NOT

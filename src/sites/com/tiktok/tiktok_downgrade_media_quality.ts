@@ -7,7 +7,7 @@
 import { onDOMLoaded, downgradeVideos, downgradeImages } from "$common";
 
 onDOMLoaded(() => {
-    
+
     downgradeVideos();
     downgradeImages();
 });

@@ -4,6 +4,7 @@ import { join, dirname } from "node:path";
 import {
     CATALOG_SCHEMA_VERSION,
     sortCatalog,
+    defaultEnabledForIntervention,
     validateCatalog,
     type Catalog,
 } from "../catalog-contract.ts";
@@ -118,7 +119,7 @@ export async function buildDefault() {
             name: metadata.name!,
             description: metadata.description!,
             version: metadata.version!,
-            defaultEnabled: !/(captcha|delay|buffer|friction|wait|slow|grayscale|desaturat|low_quality|media_quality|downgrade)/.test(metadata.id!),
+            defaultEnabled: defaultEnabledForIntervention(metadata.id!),
         };
 
         try {

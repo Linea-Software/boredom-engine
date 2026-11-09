@@ -7,7 +7,6 @@
 import { onDOMLoaded, applyMediaDesaturation, setCssVariablesToGray } from "$common";
 
 onDOMLoaded(() => {
-    
 
     // Apply grayscale to media elements and remaining vibrant UI icons/badges
     applyMediaDesaturation([
@@ -59,9 +58,9 @@ onDOMLoaded(() => {
         "--color-global-admin"
     ];
 
-    const GRAY_LEVELS = "#888888";
+    const GRAY_COLOR = "#888888";
 
-    const targetGray = GRAY_LEVELS;
+    const targetGray = GRAY_COLOR;
 
     setCssVariablesToGray(vibrantVariables, targetGray);
 });

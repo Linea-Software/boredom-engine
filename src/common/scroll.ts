@@ -1,7 +1,7 @@
 import { onDOMLoaded } from "./dom";
 
-/** Limit scrolling to three viewport heights when this action is enabled. */
-export function limitScrolling(vhMultiplier = 3): void {
+/** Limit scrolling to one and a half viewport heights when this action is enabled. */
+export function limitScrolling(vhMultiplier = 1.5): void {
     onDOMLoaded(() => {
 
         let maxScroll = window.innerHeight * vhMultiplier;

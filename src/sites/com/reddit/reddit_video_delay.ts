@@ -7,13 +7,13 @@
 
 import { onDOMLoaded } from "$common";
 
-const BUFFER_DELAY_DURATION_MAP = 1500;
+const BUFFER_DELAY_DURATION_MS = 1500;
 
-const BUFFER_DELAY_RANDOM_MAP = 0.1;
+const BUFFER_DELAY_PROBABILITY = 0.1;
 
 onDOMLoaded(() => {
-    
-    
+
+
     const processedVideos = new WeakSet<HTMLVideoElement>();
 
     setInterval(() => {
@@ -28,11 +28,11 @@ onDOMLoaded(() => {
             const triggerBuffer = () => {
                 if (isBuffering || video.paused) return;
 
-                if (Math.random() < BUFFER_DELAY_RANDOM_MAP) {
+                if (Math.random() < BUFFER_DELAY_PROBABILITY) {
                     isBuffering = true;
                     video.pause();
 
-                    const delay = BUFFER_DELAY_DURATION_MAP * (1 + Math.random());
+                    const delay = BUFFER_DELAY_DURATION_MS * (1 + Math.random());
                     setTimeout(async () => {
                         try {
                             await video.play();

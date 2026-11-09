@@ -1,7 +1,7 @@
 /**
  * @id netflix_playback_delay
  * @name Netflix Playback Delay
- * @description Adds a one-time intensity-scaled delay when intentional watch-page playback starts.
+ * @description Adds a one-time fixed delay when intentional watch-page playback starts.
  * @version 1.0.0
  */
 import { onDOMLoaded } from "$common";
@@ -9,7 +9,6 @@ import { onDOMLoaded } from "$common";
 const DELAY_MS = 1500;
 
 onDOMLoaded(() => {
-    
 
     const delayed = new WeakSet<HTMLVideoElement>();
     const resuming = new WeakSet<HTMLVideoElement>();
