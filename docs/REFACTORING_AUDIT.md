@@ -1,80 +1,239 @@
-> **Historical audit (pre-independent-intervention architecture).** Notes concerning intensity and legacy APIs are superseded by the current README and catalog contract. This report is retained for its original audit trail.
+> **Historical audit:** This report describes the architecture before independent interventions.
+> Notes about intensity and old APIs no longer define current behavior.
+> Use the current README and catalog contract for current behavior.
+> Keep this report as a record of the original audit.
 
-# Boredom Engine — Refactoring Audit
+# Boredom Engine Refactoring Audit
 
-**Date:** 2026-10-23  
-**Status:** read-only source audit; no product code changes  
-**Method:** `C:\Projects\ace-project\ace-blocker\docs\ai\REFACTORING_PLAYBOOK.md` (authoritative workflow). The local `AGENTS.md` governs repository tooling and code conventions. Other refactoring guidance was not used to override the playbook.
+**Date:** 2026-10-23
+**Status:** Read-only source audit. No product code changes.
+**Method:** `C:\Projects\ace-project\ace-blocker\docs\ai\REFACTORING_PLAYBOOK.md` was the required workflow.
+The local `AGENTS.md` supplied repository tooling and code rules.
+Other refactoring guidance did not take precedence over the playbook.
 
-## Scope and baseline
+## Scope and Baseline
 
-Reviewed the Bun build/deploy pipeline, catalog contract, Tampermonkey loader, common browser utilities, representative site scripts, test coverage, and the Ace Engine artifact boundary. The produced `resistance-scripts.zip` must continue to carry the current validated `scripts-data.json` and reverse-domain JS paths; script IDs and current injection/intensity behavior must not be changed incidentally.
+The audit inspected these areas:
 
-- `bun run test`: **PASS**, 28 unit tests.
-- `bun run test:artifact`: **PASS**, 6 artifact tests, including a real build and ZIP creation.
-- `bunx tsc --noEmit`: **FAIL**, three TS2339 errors in `tests/unit/tampermonkey.test.ts:119,125,133` (mock `win.__RAN__` missing from its inferred type).
-- Playwright/browser smoke tests and Ace Engine consumption checks: **not run**. No claims about live-site or Windows proxy correctness.
+- Bun build and deployment tools
+- Catalog contract
+- Tampermonkey loader
+- Shared browser utilities
+- Representative website scripts
+- Tests
+- ZIP artifact contract with ACE Engine
 
-Priority reflects maintenance/release impact and regression risk, **not** file length or expected lines removed. Each item below is a separate, reviewable task.
+The `resistance-scripts.zip` artifact had to keep a valid `scripts-data.json` catalog.
+It also had to keep the reverse-domain JavaScript paths.
+Do not change script IDs or the historical injection and intensity behavior as incidental cleanup.
 
-## Ranked, verified findings
+The audit recorded these results:
 
-### BE-01 — P0 — Await catalog validation before writing outputs
-**Status:** verified · **Change risk:** low; release boundary is sensitive.
+- `bun run test`: **PASS**. 28 unit tests.
+- `bun run test:artifact`: **PASS**. Six artifact tests, including a real build and ZIP creation.
+- `bunx tsc --noEmit`: **FAIL**. Three TS2339 errors in `tests/unit/tampermonkey.test.ts:119,125,133`.
+  The mock `win.__RAN__` property was missing from its inferred type.
+- Playwright browser smoke tests: **NOT RUN**.
+- ACE Engine consumption tests: **NOT RUN**.
 
-`scripts/adapters/default.ts:145-154` calls the asynchronous `validateCatalog(...)` **without `await`**, then writes `dist/scripts-data.json`. `scripts/catalog-contract.ts:84-87,148-155` rejects invalid catalogs asynchronously. Thus validation is not an awaited precondition of publishing the catalog or proceeding to the Tampermonkey build. The unit/artifact tests await validation themselves (`tests/unit/catalog-contract.test.ts:75-148`; `tests/artifact.test.ts:85-100`) and do not exercise a negative build path.
+These results do not prove live-website or Windows proxy correctness.
+Priorities reflect release impact, maintenance impact, and regression risk.
+Priorities do not reflect file length or the estimated number of removed lines.
+Treat each finding as a separate task.
 
-**Task / acceptance:** await validation; test a deliberately invalid catalog in an isolated build fixture and assert a nonzero build result with no invalid artifact considered successful. Preserve the existing catalog schema and error information.
+## Verified Findings, in Priority Order
 
-### BE-02 — P1 — Eliminate stale distribution files and test ZIP completeness
-**Status:** verified · **Change risk:** medium (artifact layout).
+### BE-01 — P0 — Await Catalog Validation Before You Write Output
 
-`scripts/adapters/default.ts:55-65` bundles into `dist/normal` without clearing old outputs. `scripts/deploy.ts:17-35,61-66` recursively packages **every** file still in that directory. A deleted/renamed source can therefore leave an obsolete JS file in the distributed ZIP. `tests/artifact.test.ts:159-183` checks that referenced files exist but does **not** reject files absent from the catalog; `102-133` also only checks catalog-to-ZIP inclusion. `scripts/adapters/tampermonkey.ts:617-629` likewise leaves obsolete generated wrappers, albeit outside the engine ZIP.
+**Status:** Verified.
+**Change risk:** Low. The release boundary is sensitive.
 
-**Task / acceptance:** generate into clean output trees (or a fresh staging directory); ensure failed builds cannot publish a mixed old/new artifact. Add a regression test with a stale extra JS file and assert the ZIP contains exactly the catalog-referenced bundles plus the manifest. Retain current ZIP paths.
+**Evidence**
 
-### BE-03 — P1 — Restore TypeScript check as a reliable gate
-**Status:** verified · **Change risk:** low (test-only).
+- `scripts/adapters/default.ts:145-154` called asynchronous `validateCatalog(...)` without `await`.
+- That code then wrote `dist/scripts-data.json`.
+- `scripts/catalog-contract.ts:84-87,148-155` rejected invalid catalogs asynchronously.
+- Thus, catalog validation was not a completed condition before the catalog write or Tampermonkey build.
+- Tests awaited validation directly in `tests/unit/catalog-contract.test.ts:75-148`.
+- Artifact tests also awaited it in `tests/artifact.test.ts:85-100`.
+- The tests did not cover a build that failed because its catalog was invalid.
 
-`bunx tsc --noEmit` fails at `tests/unit/tampermonkey.test.ts:119,125,133` because `win.__RAN__` is absent from the inferred mock type, even though runtime tests pass. `tsconfig.json:7,24` enables strict type checking over tests.
+**Required change and acceptance checks**
 
-**Task / acceptance:** explicitly type the test window/mock (do not weaken `strict` or exclude tests); add or document a repeatable `typecheck` command; require `bunx tsc --noEmit` and both Bun test suites to pass.
+1. Await catalog validation before output generation.
+2. Build an intentionally invalid catalog in an isolated fixture.
+3. Confirm that the build returns a nonzero exit status.
+4. Confirm that an invalid artifact is not treated as a successful output.
+5. Keep the catalog schema and existing error information unchanged.
 
-### BE-04 — P2 — Remove unreferenced experimental utilities
-**Status:** verified (no repository call sites found) · **Change risk:** low.
+### BE-02 — P1 — Remove Old Distribution Files and Check ZIP Contents
 
-`src/common/dom.ts:1-7` exports the no-op `runAsEarlyAsPossible`. `src/common/network.ts:1-7,13-82` retains unused global-fetch/XHR monkey patches `addDelayToNetwork` and `addPacketLossToNetwork`. Repository-wide symbol searches found their declarations/comments but no consumers. Keeping invasive, unsupported experimental helpers in the shared surface increases misleading API choices.
+**Status:** Verified.
+**Change risk:** Medium. The artifact layout must remain compatible.
 
-**Task / acceptance:** delete these exports and dead implementations only after a final consumer check; retain the used `blockNetworkRequests` and actual DOM helpers. Verify `bun run build`, unit and artifact tests.
+**Evidence**
 
-### BE-05 — P2 — Report dev rebuild failure and handle edits during a build
-**Status:** verified · **Change risk:** low (dev tooling).
+- `scripts/adapters/default.ts:55-65` built files in `dist/normal` without removing old output.
+- `scripts/deploy.ts:17-35,61-66` added every remaining file in that directory to the ZIP.
+- A removed or renamed script could therefore remain in the published ZIP.
+- `tests/artifact.test.ts:159-183` checked that referenced files existed.
+- It did not reject ZIP files that were absent from the catalog.
+- `tests/artifact.test.ts:102-133` checked catalog-to-ZIP inclusion only.
+- `scripts/adapters/tampermonkey.ts:617-629` also left old generated wrappers.
+- Those wrappers were outside the engine ZIP.
 
-`scripts/dev.ts:14-24` ignores the spawned build exit code, always prints “Build complete”, and returns immediately on watched changes when `isBuilding` is true. `scripts/dev.ts:27-31` also ignores a failed initial build. Consequently development can serve stale `dist` output while reporting success, and edits can be missed during long builds.
+**Required change and acceptance checks**
 
-**Task / acceptance:** propagate/log nonzero exit status and retain one pending rebuild after events arriving during an active build; add a focused build-runner test using a failed command and a mid-build change. Do not introduce a new watcher framework.
+1. Build into clean output directories or a new staging directory.
+2. Make sure that a failed build cannot publish old and new files together.
+3. Add an extra, obsolete JavaScript file to a test fixture.
+4. Confirm that the ZIP rejects that unexpected file.
+5. Confirm that the ZIP contains exactly the catalog-referenced bundles and manifest.
+6. Keep the existing ZIP entry paths.
 
-## Candidates requiring characterization or product approval
+### BE-03 — P1 — Make the TypeScript Check Reliable
 
-### BE-06 — P2 — Evaluate continuous scroll enforcement
-**Status:** candidate · **Change risk:** medium (site behavior).
+**Status:** Verified.
+**Change risk:** Low. The required changes affect tests only.
 
-`src/common/scroll.ts:66-112` runs a perpetual `requestAnimationFrame` loop while also registering `scroll` and `touchmove` handlers. This suggests avoidable foreground work, but removing the loop may affect programmatic scroll or edge cases. First measure behavior/performance and add scroll/resize/visibility cases to `tests/smoke/limit-scrolling.spec.ts`; propose event-driven enforcement **only if** behavior is demonstrably preserved.
+**Evidence**
 
-### BE-07 — P2 — Reconcile manual dev bootloader with catalog coverage
-**Status:** candidate · **Change risk:** low (dev tooling).
+- `bunx tsc --noEmit` failed at `tests/unit/tampermonkey.test.ts:119,125,133`.
+- The mock `win.__RAN__` property was not declared in its inferred type.
+- Runtime tests passed.
+- `tsconfig.json:7,24` enabled strict type checking for tests.
 
-`scripts/bootloader.js:4-57` hand-maintains entries for six sites while `src/sites/` and `docs/roadmap.md:14-30` cover thirteen. Its only in-repository textual reference is itself; it may still be deliberately invoked manually. Confirm whether this workflow remains used, then either remove it or derive its supported scripts from the validated catalog. Do not create a second host-matching implementation merely to deduplicate a list.
+**Required change and acceptance checks**
 
-### BE-08 — Needs product decision — “live intensity” contract
-**Status:** hypothesis / behavior change, **not approved as a refactor**.
+1. Give the test window or mock an explicit type.
+2. Do not disable `strict`.
+3. Do not exclude tests from type checking.
+4. Add or document a repeatable `typecheck` command.
+5. Confirm that `bunx tsc --noEmit` passes.
+6. Confirm that both Bun test suites pass.
 
-`README.md:104-115` describes intensity changes as live. The Tampermonkey API updates the global in `scripts/adapters/tampermonkey.ts:276-289`, but some effects snapshot intensity at initialization (e.g. `src/common/scroll.ts:13-26`, `src/common/styling.ts:53-73`). Determine which scripts actually support live changes and compare this with the intended contract. Any change in applied effects or reload semantics requires separate approval and browser regression tests; a pure cleanup must preserve current behavior.
+### BE-04 — P2 — Remove Unused Experimental Utilities
 
-## Recommended next action
+**Status:** Verified. Repository searches found no consumers.
+**Change risk:** Low.
 
-**Implement BE-01 alone**, with a negative-path build regression test and an independent architecture/type review of the small diff. Then address BE-02 before the next release artifact. Do not merge these tasks with live-intensity or site-behavior changes.
+**Evidence**
 
-## Verification / safety gates for later implementation
+- `src/common/dom.ts:1-7` exported the no-op `runAsEarlyAsPossible`.
+- `src/common/network.ts:1-7,13-82` contained unused `addDelayToNetwork` and `addPacketLossToNetwork`.
+- These functions modified the global fetch or XHR behavior.
+- Symbol searches found declarations and comments but no repository consumers.
+- The unused functions made experimental code look like supported shared APIs.
 
-For artifact changes run `bun run build`, `bun run test`, `bun run test:artifact`, and `bunx tsc --noEmit`; compare ZIP contents against the current schema and verify consumption by Ace Engine. For site effects, add targeted Playwright smoke coverage rather than treating compilation as evidence of browser correctness. Keep script IDs and the resistance artifact's directory structure stable; avoid creating shared abstractions across unrelated sites.
+**Required change and acceptance checks**
+
+1. Check consumers again before deletion.
+2. Remove only the unused exports and implementations.
+3. Keep `blockNetworkRequests` and used DOM functions.
+4. Verify `bun run build`, unit tests, and artifact tests.
+
+### BE-05 — P2 — Report Failed Rebuilds and Retain Pending Changes
+
+**Status:** Verified.
+**Change risk:** Low. The change affects development tools.
+
+**Evidence**
+
+- `scripts/dev.ts:14-24` ignored the build process exit status.
+- It printed “Build complete” even when the build failed.
+- It ignored file changes while `isBuilding` was true.
+- `scripts/dev.ts:27-31` also ignored a failed first build.
+- Development could therefore use old `dist` files and report success.
+- File changes could be lost during a long build.
+
+**Required change and acceptance checks**
+
+1. Report a nonzero build exit status.
+2. Keep one pending rebuild when files change during an active build.
+3. Test the runner with a command that fails.
+4. Test a file change that occurs during a build.
+5. Do not introduce a new file-watcher framework.
+
+## Candidates That Need More Tests or Product Approval
+
+### BE-06 — P2 — Evaluate Continuous Scroll Enforcement
+
+**Status:** Candidate.
+**Change risk:** Medium. Website behavior can change.
+
+**Evidence**
+
+`src/common/scroll.ts:66-112` ran a continuous `requestAnimationFrame` loop.
+It also registered `scroll` and `touchmove` handlers.
+The loop could use unnecessary processing time.
+Removing it could change programmatic scrolling or other edge cases.
+
+**Required investigation**
+
+1. Measure behavior and performance first.
+2. Add scroll, resize, and visibility cases to `tests/smoke/limit-scrolling.spec.ts`.
+3. Propose event-driven enforcement only if tests show equivalent behavior.
+
+### BE-07 — P2 — Compare the Development Bootloader With the Catalog
+
+**Status:** Candidate.
+**Change risk:** Low. This change concerns development tools.
+
+**Evidence**
+
+`scripts/bootloader.js:4-57` contained a manually maintained list of six websites.
+At the audit date, `src/sites/` and `docs/roadmap.md:14-30` listed thirteen websites.
+The only text reference to the bootloader in the repository was the bootloader itself.
+Developers could still use it manually.
+
+**Required investigation**
+
+1. Confirm whether anyone still uses the manual bootloader.
+2. If it is unused, remove it.
+3. If it is used, derive its script list from the validated catalog.
+4. Do not add a second host-matching system just to remove the manual list.
+
+### BE-08 — Product Decision Required — Live Intensity Changes
+
+**Status:** Hypothesis. Not approved as a refactor.
+
+**Evidence**
+
+- `README.md:104-115` described intensity changes as immediate.
+- `scripts/adapters/tampermonkey.ts:276-289` updated the global intensity value.
+- Some scripts read intensity only when they started.
+- Examples were `src/common/scroll.ts:13-26` and `src/common/styling.ts:53-73`.
+
+**Required investigation**
+
+1. Identify which historical scripts respond to changes without a reload.
+2. Compare their behavior with the intended historical contract.
+3. Get separate product approval for changes to applied effects or reload behavior.
+4. Add browser regression tests for approved behavior changes.
+5. Keep behavior unchanged during a cleanup-only task.
+
+## Recommended Next Action at Audit Date
+
+Implement **BE-01 only**.
+Add a regression test for an invalid catalog build.
+Request a separate architecture and type review of that small change.
+Then address BE-02 before the next release artifact.
+Do not combine these tasks with live-intensity or website-behavior changes.
+
+## Verification and Safety Requirements for Later Work
+
+For changes to the artifact, run:
+
+- `bun run build`
+- `bun run test`
+- `bun run test:artifact`
+- `bunx tsc --noEmit`
+
+Compare ZIP contents with the current schema.
+Verify that ACE Engine can consume the artifact.
+
+For website effects, add focused Playwright smoke tests.
+Compilation alone does not prove correct browser behavior.
+
+Keep script IDs and the ZIP directory structure stable.
+Do not make shared abstractions across unrelated websites without a clear need.
