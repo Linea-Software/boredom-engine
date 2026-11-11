@@ -1,63 +1,109 @@
-# Reference-first research for site scripts
+# Research References for Website Scripts
 
-Boredom Engine development should **download and study existing Chrome
-extensions and userscripts as references** for how to perform each particular
-action on each particular website. This complements live DOM inspection,
-documentation and regression tests; it does not replace them.
+Before you change a website-specific action, find existing Chrome extensions and userscripts that perform that action.
+Download available source code and study its implementation.
+Use the references together with live DOM inspection, documentation, and regression tests.
+Do not use reference code as a substitute for these checks.
 
-## Workflow for every site-specific action
+## Procedure for Each Website-Specific Action
 
-1. **Specify the behavior and surfaces.** Record the affected host, pages,
-   routes (including SPA navigation), desktop/mobile variants, and the expected
-   result. For example: hiding YouTube Shorts shelves, sidebar navigation,
-   search results and direct `/shorts/` visits are distinct surfaces.
-2. **Find and download existing solutions.** Search for reputable Chrome
-   extensions and userscripts that implement the *same action on the same
-   website*. Prefer open-source repositories or published source packages.
-   Inspect the extension's `manifest.json`, content scripts, injection
-   timing, host permissions, selectors, CSS rules, observers, navigation
-   handling and any documented limitations. Compare multiple sources where
-   possible. Record a source URL, version/date, license, and the specific
-   technique being studied in the issue/PR or research notes.
-3. **Treat downloaded code as untrusted.** Read it before running it. Never
-   blindly execute copied scripts, install unknown extensions into a personal
-   Chrome profile, grant permissions beyond what a test needs, or expose
-   private browser/session data. Use an isolated browser profile for testing.
-   Respect licenses: learn from designs, but write original implementation
-   code; attribute and check licensing before including third-party code.
-4. **Verify against the live site.** Inspect actual DOM structure, CSS,
-   accessibility attributes, dynamic rendering, player APIs and navigation
-   behavior. Do not assume an extension's selectors still work. Prefer
-   resilient selectors and progressively enhanced fallbacks over brittle
-   hashed CSS classes or undocumented APIs.
-5. **Implement and test.** Reuse utilities in `src/common`, add fixture
-   regressions covering recent page structures and SPA transitions, and run
-   `bun run test`, `bun run test:smoke`, `bun run build` and relevant
-   artifact checks. Browser-verify on the actual site when accessible.
-6. **Report limitations.** Distinguish fixture-test passes from a verified
-   live browser run. Note access/login restrictions, uncertain external API
-   behavior, and any reference approach rejected as too invasive.
+### 1. Define the Expected Behavior
 
-Do not commit downloaded extension archives, vendor bundles, copies of
-third-party scripts, or account data merely to document research.
+Record the host, pages, and routes that the action must affect.
+Include Single-Page Application (SPA) route changes and desktop or mobile variants.
+Record the required result for each surface.
 
-## YouTube: research notes (2026-11-06)
+For YouTube Shorts, check these surfaces separately:
 
-Downloaded and reviewed source in a temporary, untracked directory:
+- Shorts shelves
+- Sidebar navigation
+- Search results
+- Direct visits to `/shorts/`
+
+### 2. Find and Inspect References
+
+Search for Chrome extensions and userscripts that perform the same action on the same website.
+Prefer open-source repositories and published source packages.
+Download available source code from more than one source when possible.
+
+Inspect these parts:
+
+- `manifest.json`
+- Content scripts and injection timing
+- Host permissions
+- Selectors and CSS rules
+- DOM observers and navigation handling
+- Documented restrictions or known problems
+
+In the issue, pull request, or research notes, record each source URL.
+Record the version or date, license, and technique you studied.
+
+### 3. Treat Downloads as Untrusted
+
+Read downloaded code before you run it.
+Do not run copied scripts without inspection.
+Do not install unknown extensions in a personal Chrome profile.
+Do not grant more permissions than a test needs.
+Do not expose browser sessions or private user data.
+Use an isolated browser profile for tests.
+
+Respect the license of each reference.
+Write original implementation code based on the behavior you studied.
+Before you include third-party code, check its license and give the required attribution.
+
+### 4. Verify the Live Website
+
+Inspect the current DOM and CSS.
+Check accessibility attributes, dynamic content, player APIs, and navigation.
+Do not assume that old selectors still work.
+Prefer stable selectors and fallback behavior.
+Avoid fragile hashed CSS classes and undocumented APIs where possible.
+
+### 5. Implement and Test
+
+Reuse functions in `src/common`.
+Add fixture regression tests for recent page structures.
+Include SPA route changes in the test cases.
+
+Run the required commands:
+
+```bash
+bun run test
+bun run test:smoke
+bun run build
+```
+
+Run relevant artifact checks.
+When you can access the live website, verify the behavior in a browser.
+
+### 6. Report Test Limits
+
+Separate fixture-test results from live browser results.
+Record login restrictions and other access problems.
+Identify uncertain external API behavior.
+Record reference methods that you rejected because they affected too much content.
+
+Do not commit downloaded extension archives, vendor bundles, or third-party script copies for research.
+Do not commit account data for research.
+
+## YouTube Research Notes (2026-11-06)
+
+The team downloaded and inspected these references in a temporary, untracked directory:
 
 - [YouTube Hidden Shorts](https://github.com/jeffersongoncalves/youtube-hidden-shorts)
-  (Chrome Manifest V3, MIT): inspected `manifest.json`,
-  `hide-shorts.css` and `content.js`. Relevant ideas: site-scoped CSS
-  using `:has()`, modern guide/grid/card selectors, and
-  `yt-navigate-finish` for YouTube SPA navigation.
+  (Chrome Manifest V3, MIT). The review covered `manifest.json`, `hide-shorts.css`, and `content.js`.
+  Useful methods include site-scoped CSS with `:has()`, current guide/grid/card selectors, and `yt-navigate-finish` for YouTube SPA routes.
 - [No Shorts](https://github.com/mithatakbulut/noshorts)
-  (userscript, MIT): inspected `noshorts.user.js`. Relevant ideas:
-  both bare and subdomain host matches, `document-start`, CSS
-  matching newly inserted items and route redirects.
+  (userscript, MIT). The review covered `noshorts.user.js`.
+  Useful methods include bare-domain and subdomain matches, `document-start`, CSS for new elements, and route redirects.
 
-Implementation in Boredom Engine is original and keeps the existing
-`blockInterface` abstraction. Against a logged-out real YouTube home
-page in Chromium, the new Shorts CSS hides the modern mini-guide entry
-without hiding Home or Subscriptions. The player quality API was also
-observed on a real `/watch` page; that observation is not a guarantee
-that YouTube will keep this undocumented desktop player API stable.
+The Boredom Engine implementation uses original code.
+It keeps the existing `blockInterface` interface.
+
+The team tested a logged-out YouTube home page in a real Chromium browser.
+The new Shorts CSS hid the current mini-guide entry.
+Home and Subscriptions remained visible.
+
+The team also observed the player quality API on a real `/watch` page.
+This desktop player API is undocumented.
+Do not assume that YouTube will keep it stable.
