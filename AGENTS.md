@@ -1,106 +1,174 @@
-# AI Instructions
+# Agent Instructions
 
-## Project Overview
+## Project Purpose
 
-This project contains a set of site-specific scripts aimed at transforming addictive websites (primarily social media) into boring or stressful experiences.
+Boredom Engine contains scripts for specific websites.
+These scripts make distracting websites less attractive or harder to use.
+The main targets are social-media websites.
 
 ## Project Structure
 
-- **/scripts**: Contains utility scripts. The most important is the **build** script, which builds the project for both Tampermonkey and generic injection.
-- **/src**: Contains the source code for the scripts.
-    - **/src/common**: Shared logic and utilities used across different sites.
-    - **/src/sites**: Site-specific scripts organized using **reverse domain notation** (e.g., `com.youtube`, `com.instagram`).
+- `/scripts`: Build and utility scripts. The build script makes bundles for Tampermonkey and direct injection.
+- `/src`: Source code for the interventions.
+- `/src/common`: Functions and utilities shared by different websites.
+- `/src/sites`: Website-specific scripts. Directories use reverse-domain names, such as `com.youtube` and `com.instagram`.
 
-## Project Setup & Package Manager
+## Setup and Package Manager
 
-- This project uses **Bun** as the package manager and runtime.
-- **ALWAYS** use `bun` instead of `npm`, `pnpm`, or `yarn`.
-- Examples:
-    - Install dependencies: `bun install`
-    - Run scripts: `bun run build`
-    - Add packages: \`bun add <package>\`
+Use **Bun** as the package manager and runtime.
+Do not use `npm`, `pnpm`, or `yarn` in this repository.
 
-## ACE Blocker production runtime
+| Task | Command |
+| --- | --- |
+| Install dependencies | `bun install` |
+| Build the project | `bun run build` |
+| Add a package | `bun add <package>` |
 
-The primary consumer is **ACE Engine's MITM direct injection**, not
-Tampermonkey. `bun run build` bundles browser IIFEs in `dist/normal/` and
-generates `dist/scripts-data.json`; `bun run deploy` packages the
-`resistance-scripts.zip` that ACE downloads after a new published/imported
-release. ACE adds nonce-bearing inline scripts to top-level HTML for each
-independently enabled intervention; there is no global severity level.
-Visual effects and interruptions default to opt-in in the catalog. Do not assume
-Tampermonkey's bootstrap, `@require` or per-page control API exists.
+## ACE Blocker Production Runtime
 
-Test with `bun run test:smoke --grep "ACE direct injection"` and
-`bun run test:artifact`. These tests are not a substitute for an installed
-proxy + new content-version end-to-end test. A source push alone does not
-deploy scripts to ACE clients.
+**ACE Engine MITM direct injection** is the main production consumer.
+Tampermonkey is not the production injection method.
 
-## Tampermonkey Development (optional test adapter only)
+`bun run build` makes browser IIFE bundles in `dist/normal/`.
+The command also makes `dist/scripts-data.json`.
+`bun run deploy` makes `resistance-scripts.zip`.
+ACE downloads this ZIP after a new release is published and imported.
 
-- **Build and reload**: `bun run build` regenerates `dist/tampermonkey/`, but Tampermonkey caches `@require` files at userscript install/update time. Re-import or reinstall the generated `boredom-engine.user.js` after every build; reloading only the website does not pick up changed files. On Chrome, enable **Allow User Scripts** for Tampermonkey as described in the README.
-- **Menu UI**: The Boredom Engine menu is built with Lit and is accessible via the FAB (Floating Action Button) on supported sites.
+ACE inserts inline scripts with a nonce into top-level HTML documents.
+ACE inserts only interventions that are enabled for the matching website.
+Each intervention has a separate enabled state.
+There is no global severity level.
+The catalog disables visual effects and interruptions by default.
 
-## Development Guidelines
+Do not depend on a Tampermonkey bootstrap in production code.
+Do not depend on Tampermonkey `@require` or its per-page control API.
 
-- **Small Units**: Avoid creating huge source files, large functions, or massive classes. These are difficult to maintain.
-- **Decomposition**: For complex problems, divide the solution into smaller sub-problems and solve them with focused classes or functions.
-- **Type Safety**: Design data structures and types such that **invalid states are unrepresentable**.
-- **Commits**: Always commit your changes using Git. Follow the Conventional Commits style. Messages must start with a prefix like `feat:`, `fix:`, `chore:`, `refactor:`, etc.
+Run these tests:
 
-## Reference-first Site Development
+- `bun run test:smoke --grep "ACE direct injection"`
+- `bun run test:artifact`
 
-For each website-specific action, research and download the source of existing
-Chrome extensions and userscripts that already implement the same action on the
-same website. Inspect their manifests, selectors, injection and SPA navigation
-techniques as references before designing our own code. Follow
-`docs/SITE_REFERENCE_RESEARCH.md`: treat downloads as untrusted, test in an
-isolated browser profile, observe licenses and verify the live DOM rather than
-copying code blindly. Apply this to repairs of existing scripts, not only new
-sites.
+These tests do not prove that an installed proxy works with a new content version.
+Do an end-to-end test with the installed proxy and the new content version.
+A source push does not deploy scripts to ACE clients.
 
-## Researching New Sites
+## Tampermonkey Development
 
-When implementing scripts for a new site, **use the browser to inspect the site live** before writing any code. This is critical for understanding the site's actual DOM structure:
+Tampermonkey is an **optional test adapter**.
 
-1. **Navigate to the site** — Open the target site in the browser using `new_page` or `navigate_page`.
-2. **Inspect the DOM** — Use `take_snapshot` and `evaluate_script` to understand the page structure, identify relevant CSS selectors, and observe how content is loaded (static vs. dynamic).
-3. **Analyze patterns** — Look for:
-   - Feed containers, video players, sidebar elements
-   - CSS classes or attributes used for targeting
-   - Network requests (feeds, recommendations, ads) using `list_network_requests`
-   - How the site behaves on scroll, navigation, and dynamic content updates
-4. **Model existing scripts** — Reference patterns from already-implemented sites (e.g., `com.instagram`, `com.youtube`) for reusable approaches.
+Run `bun run build` to make `dist/tampermonkey/`.
+Tampermonkey caches `@require` files when a userscript is installed or updated.
+After each build, import or install the generated `boredom-engine.user.js` again.
+A website reload alone does not load the new files.
 
-This ensures the scripts are accurate and resilient to DOM changes rather than relying on assumptions.
+For Chrome, enable **Allow User Scripts** for Tampermonkey.
+Follow the instructions in the README.
 
-## Policy for Sites Requiring an Account
+The Boredom Engine menu uses Lit.
+Open the menu with the Floating Action Button (FAB) on a supported website.
 
-Many addictive sites (Facebook, LinkedIn, X/Twitter, etc.) require logging in to access their main content. Since credentials are not available, follow this policy:
+## Development Rules
 
-1. **Inspect what's accessible without login** — Many sites still expose:
-   - Landing pages, login/signup screens
-   - Public profiles, pages, or groups
-   - Shared/embedded content (e.g., public posts, video embeds)
-   - Generic navigation elements (header, footer, search)
-   These often share CSS classes and DOM patterns with the logged-in experience.
+- Keep source files, functions, and classes small.
+- Divide complex work into small tasks.
+- Use one focused function or class for each responsibility.
+- Design types so that invalid states cannot be represented.
+- Commit each change with Git.
+- Use Conventional Commits.
+- Start commit messages with a type such as `feat:`, `fix:`, `chore:`, or `refactor:`.
 
-2. **Leverage similar sites** — If the target site is similar to an already-implemented one, reuse its patterns:
-   - **Facebook** is structurally similar to **Instagram** (feed, stories, reels, sidebar, notifications). Many of Instagram's selectors and approaches can be adapted.
-   - **X/Twitter** shares patterns with **Reddit** and **TikTok** (timeline feed, trending sidebar, infinite scroll).
-   - **LinkedIn** has feed and sidebar patterns similar to **Facebook**.
+## Research Existing Website Scripts First
 
-3. **Research the site's API and network layer** — Use `list_network_requests` to observe:
-   - API endpoints that serve feed data, recommendations, or notifications
-   - GraphQL/REST patterns the site uses for dynamic content
-   - Request headers or response structures that can be used for `blockNetworkRequests`
+Before each website-specific change, find existing extensions or userscripts for the same action and website.
+Download and study their available source code.
+Include repairs of existing scripts in this research.
 
-4. **Use public documentation** — Check if the site has public developer docs or open-source UI libraries (e.g., Facebook's React, LinkedIn's Ember) that reveal component structure and CSS class naming conventions.
+Check manifests, selectors, injection timing, and SPA navigation.
+Follow `docs/SITE_REFERENCE_RESEARCH.md`.
+Treat all downloaded code as untrusted.
+Use a separate browser profile for tests.
+Check licenses before you reuse third-party material.
+Verify selectors against the current live DOM.
+Do not copy reference code without review.
 
-5. **Make reasonable inferences** — Based on patterns from similar sites, common social media UI patterns, and the publicly visible parts, implement scripts using well-known selectors and DOM structures. Logged-in testing can be done later by the developer.
+## Inspect New Websites
 
-6. **When in doubt, block broadly** — If you can't verify a specific selector, prefer broader CSS class patterns or attribute selectors that are less likely to change (e.g., `[role="feed"]`, `[data-testid]`, aria labels). These are more stable across logged-in/logged-out states.
+Inspect a new website in the browser **before** you write code.
 
-## External Documentation
+1. Open the target website with `new_page` or `navigate_page`.
+2. Use `take_snapshot` and `evaluate_script` to inspect the live DOM.
+3. Identify CSS selectors and content containers.
+4. Determine whether the website loads content statically or dynamically.
+5. Identify feeds, video players, and sidebars.
+6. Record relevant classes and attributes.
+7. Use `list_network_requests` to inspect feeds, recommendations, and advertisements.
+8. Check scrolling, route changes, and dynamically added content.
+9. Compare reusable patterns in `com.instagram`, `com.youtube`, and other existing site scripts.
 
-- **Lit (lit-html)**: When working with Lit or lit-html, always refer to the local documentation stored in `docs/lit/`. These docs cover components, templates, data management, and API references.
+Use observed website behavior where possible.
+Do not assume that an unverified selector works.
+
+## Websites That Require an Account
+
+Some websites require login for their main content.
+Examples include Facebook, LinkedIn, and X/Twitter.
+Do not assume that account credentials are available.
+
+### 1. Inspect Public Content
+
+Inspect all relevant pages that are available without login:
+
+- Landing pages, login pages, and signup pages
+- Public profiles, pages, and groups
+- Shared posts and embedded videos
+- Headers, footers, search, and other public navigation
+
+These parts can use DOM patterns that also occur after login.
+Do not report a logged-in feature as verified when you cannot access it.
+
+### 2. Compare Similar Websites
+
+Use patterns from an implemented website when the pattern is applicable.
+
+- Facebook and Instagram can share feed, story, reel, sidebar, and notification patterns.
+- X/Twitter, Reddit, and TikTok can share timeline, trending, and infinite-scroll patterns.
+- LinkedIn and Facebook can share feed and sidebar patterns.
+
+Verify each adapted selector on the target website when access is possible.
+
+### 3. Inspect APIs and Network Requests
+
+Use `list_network_requests` to inspect:
+
+- Endpoints for feeds, recommendations, and notifications
+- GraphQL and REST request patterns
+- Request headers and response structures relevant to `blockNetworkRequests`
+
+Do not disclose credentials or private session data.
+
+### 4. Consult Public Documentation
+
+Read relevant public developer documentation.
+Check open-source UI libraries when they help explain the page structure.
+Facebook's React and LinkedIn's Ember are examples.
+Use documentation to understand components and CSS conventions.
+
+### 5. Make Limited Inferences
+
+Use verified public pages and known patterns from similar websites.
+Use common DOM structures when direct verification is not possible.
+Mark unverified behavior as an assumption.
+A developer can test logged-in behavior later.
+
+### 6. Use Stable Selectors
+
+If a precise selector cannot be verified, consider a broader, stable selector.
+Examples are `[role="feed"]`, `[data-testid]`, and ARIA labels.
+Prefer selectors that are less sensitive to website updates.
+Check that a broad selector does not change unrelated website functions.
+
+## Local Library Documentation
+
+For Lit or lit-html work, read the local documentation in `docs/lit/`.
+It describes components, templates, data handling, and APIs.
+Treat this directory as reference material.
