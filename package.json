@@ -19,6 +19,7 @@
         "dev-chrome": "bun scripts/dev-chrome.ts",
         "test": "bun test tests/unit",
         "test:artifact": "bun test tests/artifact.test.ts",
+        "test:live": "bun scripts/test-live.ts",
         "test:smoke": "playwright test --config tests/smoke/playwright.config.ts"
     },
     "type": "module",

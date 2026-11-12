@@ -70,6 +70,19 @@ bun run test            # fast unit tests (metadata, catalog contract, host matc
 bun run test:artifact   # end-to-end: real build + deploy + zip/catalog validation
 ```
 
+### Live website verification (opt-in)
+
+Use the production IIFE in a clean browser against the current live site:
+
+```sh
+bun run test:live --site youtube --script youtube_shorts_remove --headed
+```
+
+The runner compares baseline and script-enabled tabs. It writes local JSON and
+screenshots, and reports missing site targets as inconclusive rather than
+passing them. See [Live Site Testing](docs/LIVE_SITE_TESTING.md) for supported
+scenarios, isolated login profiles, CDP, and the separate ACE proxy release test.
+
 ### Dev tools
 
 | Command | Purpose | Machine-modifying? |

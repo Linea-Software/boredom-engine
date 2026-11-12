@@ -15,7 +15,8 @@ logs
 _.log
 report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
-# playwright smoke tests
+# playwright smoke and live-site tests
+# These reports can contain screenshots of logged-in browser pages.
 test-results
 playwright-report
 

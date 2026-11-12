@@ -43,6 +43,10 @@ The catalog disables visual effects and interruptions by default.
 Do not depend on a Tampermonkey bootstrap in production code.
 Do not depend on Tampermonkey `@require` or its per-page control API.
 
+For optional tests on real public websites, run `bun run test:live --help`.
+Read `docs/LIVE_SITE_TESTING.md`. Do not report a missing live DOM target as a pass.
+Do not make the live runner a required CI test. It does not test the installed ACE proxy.
+
 Run these tests:
 
 - `bun run test:smoke --grep "ACE direct injection"`
