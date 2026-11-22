@@ -26,6 +26,6 @@
     "dependencies": {
         "lit": "^3.3.3",
         "lucide": "^1.64.0",
-        "zip-lib": "^1.4.0"
+        "zip-lib": "^1.5.2"
     }
 }
