@@ -7,7 +7,7 @@
       "dependencies": {
         "lit": "^3.3.3",
         "lucide": "^1.64.0",
-        "zip-lib": "^1.4.0",
+        "zip-lib": "^1.5.2",
       },
       "devDependencies": {
         "@playwright/test": "^1.64.1",
@@ -153,6 +153,6 @@
 
     "yazl": ["yazl@3.3.1", "", { "dependencies": { "buffer-crc32": "^1.0.0" } }, "sha512-BbETDVWG+VcMUle37k5Fqp//7SDOK2/1+T7X8TD96M3D9G8jK5VLUdQVdVjGi8im7FGkazX7kk5hkU8X4L5Bng=="],
 
-    "zip-lib": ["zip-lib@1.4.0", "", { "dependencies": { "yauzl": "^3.4.0", "yazl": "^3.3.1" } }, "sha512-ZRdZqCUW/f9PmQXEYJZL5aI1ElWpOUG3J7TpJc4FqliT3mEUVw6lNRFZGym85+N35tTheO2B/WN/+oAY1QVyrA=="],
+    "zip-lib": ["zip-lib@1.5.2", "", { "dependencies": { "yauzl": "^3.4.0", "yazl": "^3.3.1" } }, "sha512-5kr7V++wHnYOtKqyzaJoMccO1eM+e3vdKxAnoAOhN24XM3aDLkDZ6xSfwnK9mETvenJ7ND4TyXBkYXDzQaEkVw=="],
   }
 }
