@@ -3,6 +3,7 @@
  *
  * Every script file under `src/sites/` must start with a JSDoc block
  * declaring `@id`, `@name`, `@description`, `@version`.
+ * Optional `@tier free` opts into Free; untagged scripts require Pro.
  */
 
 export interface ScriptMetadata {
@@ -10,6 +11,7 @@ export interface ScriptMetadata {
     name: string | undefined;
     description: string | undefined;
     version: string | undefined;
+    tier: "free" | "pro";
 }
 
 /** Matches the leading JSDoc block of a script file. */
@@ -20,6 +22,7 @@ export function parseScriptMetadata(content: string): ScriptMetadata {
         name: undefined,
         description: undefined,
         version: undefined,
+        tier: "pro",
     };
 
     if (!commentMatch) return metadata;
@@ -34,6 +37,17 @@ export function parseScriptMetadata(content: string): ScriptMetadata {
     metadata.name = field("name");
     metadata.description = field("description");
     metadata.version = field("version");
+    const tiers = [...commentBody.matchAll(/^[ \t]*\*[ \t]*@tier\b([^\r\n]*)$/gm)];
+    if (tiers.length > 1) {
+        throw new Error("Duplicate @tier metadata");
+    }
+    if (tiers.length === 1) {
+        const tier = tiers[0][1].trim();
+        if (tier !== "free" && tier !== "pro") {
+            throw new Error("Invalid @tier metadata: expected free or pro");
+        }
+        metadata.tier = tier;
+    }
     return metadata;
 }
 

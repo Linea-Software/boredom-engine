@@ -7,6 +7,8 @@ import {
     defaultEnabledForIntervention,
     validateCatalog,
     type Catalog,
+    type ScriptData,
+    type SiteNode,
 } from "../catalog-contract.ts";
 import { isCompleteScriptMetadata, parseScriptMetadata } from "../metadata.ts";
 
@@ -19,20 +21,6 @@ async function getFiles(dir: string): Promise<string[]> {
         })
     );
     return files.flat();
-}
-
-interface ScriptData {
-    id: string;
-    path: string;
-    name: string;
-    description: string;
-    version: string;
-    defaultEnabled: boolean;
-}
-
-interface SiteNode {
-    scripts: ScriptData[];
-    children: Record<string, SiteNode>;
 }
 
 export async function buildDefault() {
@@ -53,7 +41,7 @@ export async function buildDefault() {
     console.log(`Found ${entryPoints.length} entry points.`);
 
     // The resistance catalog is the only output: every script under
-    // `src/sites/` is a resistance script shipped in the v1 artifact.
+    // `src/sites/` is a resistance script shipped in the Resistance artifact.
     if (entryPoints.length > 0) {
         await build({
             entryPoints,
@@ -120,6 +108,7 @@ export async function buildDefault() {
             description: metadata.description!,
             version: metadata.version!,
             defaultEnabled: defaultEnabledForIntervention(metadata.id!),
+            requiresPro: metadata.tier !== "free",
         };
 
         try {
@@ -145,7 +134,7 @@ export async function buildDefault() {
     // Validate the resistance catalog against the shared contract before
     // writing anything — a broken catalog must fail the build, not ship.
     const distRoot = join(process.cwd(), "dist");
-    validateCatalog(sortedNormal, async (relativePath) => {
+    await validateCatalog(sortedNormal, async (relativePath) => {
         try {
             await access(join(distRoot, "normal", relativePath));
             return true;

@@ -2,6 +2,7 @@
  * @id reddit_block_recomandations
  * @name Reddit Block Recommendations
  * @description Hides Reddit's recommendation feed on the homepage.
+ * @tier free
  * @version 1.1.0
  */
 

@@ -5,6 +5,7 @@ import { join } from "node:path";
 import * as zip from "zip-lib";
 import {
     CATALOG_SCHEMA_VERSION,
+    flattenCatalog,
     treeMatchesHost,
     validateCatalog,
     type Catalog,
@@ -99,6 +100,19 @@ describe("production artifact", () => {
         });
     });
 
+    test("schema 2 exposes exactly the two approved Free interventions", async () => {
+        const catalog = JSON.parse(
+            await readFile(join(REPO_ROOT, "dist", "scripts-data.json"), "utf-8"),
+        ) as Catalog;
+        expect(catalog.schemaVersion).toBe(2);
+        const entries = flattenCatalog(catalog).map(({ entry }) => entry);
+        expect(entries.filter((entry) => entry.requiresPro === false).map((entry) => entry.id).sort()).toEqual([
+            "reddit_block_recomandations",
+            "youtube_shorts_remove",
+        ]);
+        expect(entries.filter((entry) => entry.requiresPro === true)).toHaveLength(entries.length - 2);
+    });
+
     test("zip root layout matches the engine contract", async () => {
         const extractDir = await mkdtemp(join(tmpdir(), "boredom-zip-"));
         try {
@@ -115,10 +129,11 @@ describe("production artifact", () => {
             expect(entries.some((e) => e.startsWith("dist/") || e.startsWith("normal/"))).toBe(false);
             expect(entries.some((e) => e.startsWith("../"))).toBe(false);
 
-            // Every catalog entry exists in the extracted zip at the exact path.
-            const catalog = JSON.parse(
-                await readFile(join(REPO_ROOT, "dist", "scripts-data.json"), "utf-8"),
-            ) as Catalog;
+            // Validate the actual shipped catalog, not just its source file.
+            const catalog = JSON.parse(await readFile(join(extractDir, "scripts-data.json"), "utf-8")) as Catalog;
+            const builtCatalog = JSON.parse(await readFile(join(REPO_ROOT, "dist", "scripts-data.json"), "utf-8"));
+            expect(catalog).toEqual(builtCatalog);
+            await validateCatalog(catalog, (relativePath) => pathExists(join(extractDir, relativePath)));
             const seen = new Set(entries);
             const walk = (node: SiteNode) => {
                 for (const entry of node.scripts) {

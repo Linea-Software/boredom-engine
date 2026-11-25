@@ -5,11 +5,10 @@
  * (producer) and ace-engine (consumer). It validates a built catalog +
  * dist tree and guarantees deterministic output.
  *
- * Contract summary (schema version 1):
+ * Contract summary (schema version 2):
  *
- * - `schemaVersion: 1` — added to the catalog root; unknown fields are
- *   ignored by the engine's serde parser, so this is a forward-compatible
- *   addition. The engine must fail loudly (it does) on incompatible shapes.
+ * - `schemaVersion: 2` — each script explicitly declares its access tier.
+ *   Older catalogs are incompatible with the current engine.
  * - `projectName`, `license` — informational.
  * - `sites` — a reverse-domain tree: `sites.com.youtube.scripts[]` covers
  *   `youtube.com` / `www.youtube.com` (the engine strips `www.` and walks
@@ -18,12 +17,13 @@
  * - Every script entry has: `id` (stable — the engine persists per-script
  *   enable state BY ID, so IDs must never be renamed casually), `path`
  *   (relative to the catalog file, forward slashes, no `..`, no absolute
- *   paths), `name`, `description`, `version`.
+ *   paths), `name`, `description`, `version`, and boolean `requiresPro`.
  */
 
 export interface ScriptData {
     /** Opt-in for interruptions and visual degradation; deterministic per script. */
     defaultEnabled?: boolean;
+    requiresPro: boolean;
     id: string;
     path: string;
     name: string;
@@ -50,7 +50,7 @@ export function defaultEnabledForIntervention(id: string): boolean {
     return !/(captcha|delay|buffer|friction|wait|slow|grayscale|desaturat|quality|downgrade|limit_scrolling|scroll_limit|limit_front_page|pause|restrict)/.test(id);
 }
 
-export const CATALOG_SCHEMA_VERSION = 1;
+export const CATALOG_SCHEMA_VERSION = 2;
 
 export interface CatalogIssue {
     message: string;
@@ -129,6 +129,10 @@ export async function validateCatalog(
         }
         if (!entry.version) {
             issues.push({ message: "script version is required", path: where });
+        }
+
+        if (typeof entry.requiresPro !== "boolean") {
+            issues.push({ message: "requiresPro must be a boolean", path: where });
         }
 
         // Path contract: relative, forward slashes, no traversal, no absolutes.

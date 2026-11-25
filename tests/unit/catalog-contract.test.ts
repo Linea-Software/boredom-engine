@@ -37,6 +37,7 @@ const script = (overrides: Record<string, unknown> = {}) => ({
     name: "Grayscale",
     description: "Dulls colors.",
     version: "1.0.0",
+    requiresPro: true,
     ...overrides,
 });
 
@@ -55,8 +56,22 @@ export function main() {}`;
             name: "YouTube Grayscale",
             description: "Dulls the colors on YouTube.",
             version: "1.2.3",
+            tier: "pro",
         });
         expect(isCompleteScriptMetadata(metadata)).toBe(true);
+    });
+
+    test("only explicit free tags grant the Free tier", () => {
+        expect(parseScriptMetadata("/**\n * @tier free\n */").tier).toBe("free");
+        expect(parseScriptMetadata("/**\n * @tier pro\n */").tier).toBe("pro");
+        expect(parseScriptMetadata("/**\n * @description Mentions @tier free\n */").tier).toBe("pro");
+        expect(parseScriptMetadata("export const x = 1;").tier).toBe("pro");
+    });
+
+    test("rejects invalid, empty and duplicate tier declarations", () => {
+        for (const tags of ["@tier paid", "@tier", "@tier Free", "@tier free\n * @tier pro", "@tier free\n * @tier free"]) {
+            expect(() => parseScriptMetadata("/**\n * " + tags + "\n */")).toThrow(/@tier/);
+        }
     });
 
     test("missing metadata fields are reported as incomplete", () => {
@@ -112,6 +127,16 @@ describe("validateCatalog", () => {
             com: node([], { youtube: node([script({ name: "" })]) }),
         });
         await expect(validateCatalog(missingName, alwaysExists)).rejects.toThrow(/name is required/);
+    });
+
+    test("rejects the legacy schema and missing or nonboolean tier fields", async () => {
+        await expect(validateCatalog({ ...makeCatalog({}), schemaVersion: 1 }, alwaysExists)).rejects.toThrow(/schemaVersion/);
+        for (const requiresPro of [undefined, null, "false", 0, 1]) {
+            await expect(validateCatalog(makeCatalog({ com: node([script({ requiresPro })]) }), alwaysExists)).rejects.toThrow(/requiresPro must be a boolean/);
+        }
+        for (const requiresPro of [true, false]) {
+            await expect(validateCatalog(makeCatalog({ com: node([script({ requiresPro })]) }), alwaysExists)).resolves.toBeUndefined();
+        }
     });
 
     test("rejects absolute paths, traversal and backslashes", async () => {

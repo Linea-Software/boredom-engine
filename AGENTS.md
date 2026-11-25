@@ -39,6 +39,9 @@ ACE inserts only interventions that are enabled for the matching website.
 Each intervention has a separate enabled state.
 There is no global severity level.
 The catalog disables visual effects and interruptions by default.
+The catalog uses schema version 2 and requires a boolean `requiresPro` for each entry.
+Only `youtube_shorts_remove` and `reddit_block_recomandations` use `@tier free`.
+All untagged scripts require Pro. ACE Engine enforces the tier, not the ZIP or the Tampermonkey adapter.
 
 Do not depend on a Tampermonkey bootstrap in production code.
 Do not depend on Tampermonkey `@require` or its per-page control API.

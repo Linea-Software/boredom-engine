@@ -2,6 +2,7 @@
  * @id youtube_shorts_remove
  * @name YouTube Shorts Remove
  * @description Hides YouTube Shorts surfaces and redirects away from Shorts routes.
+ * @tier free
  * @version 1.2.0
  */
 import { blockInterface } from "$common";

@@ -54,7 +54,12 @@ The manual version input also accepts `MAJOR.MINOR.PATCH`.
 The workflow does not overwrite an existing release.
 A manual run also rejects an existing tag.
 
-Use a new version for every build.
+Use a new version for every published build.
+Schema 2 is required by the current ACE Engine. Publish the new artifact, deploy
+the public download API, and import and activate the artifact before releasing
+the matching desktop engine and app. Do not activate schema 2 for schema 1
+clients. The current Free tier contains exactly two scripts: YouTube Shorts
+removal and Reddit recommendation hiding. All other scripts require Pro.
 ace-blocker-site treats imported versions as immutable.
 It rejects a different SHA-256 for a version that already exists.
 
@@ -107,12 +112,16 @@ No GitHub credentials or inbound callbacks are necessary.
 
 - `GET /api/v1/releases/latest` must return the new `resistance` entry.
   Check that its version, size, and SHA-256 match the values from step 1.
-- `GET /api/v1/scripts/resistance-mode` requires an engine API key for a Pro account.
-  It must return a signed URL and the same `sha256`.
+- After the matching public API is deployed, `GET /api/v1/scripts/resistance-mode`
+  must return a signed URL and the same `sha256` for anonymous, Free and Pro clients.
+  A 401 or 403 on the anonymous request blocks the Free-tier release.
 
 ## 4. Test the ACE Engine Download
 
-Use a computer that has a linked Pro account.
+Test both an unlinked Free client and a linked Pro client.
+Verify that Free can enable only the two Free scripts and cannot enable the
+Resistance Time Lock. Pro can enable all scripts and the Time Lock.
+After downgrading, verify that Pro scripts are no longer injected.
 
 1. Start a content refresh from the ACE user interface.
 2. Alternatively, use the authenticated typed remoc RPC: `triggerContentUpdate` or `downloadResistanceScripts`.
@@ -122,7 +131,7 @@ Use a computer that has a linked Pro account.
 6. Confirm that no SHA-256 mismatch occurred.
 7. Open the **Resistance Mode** page or call remoc `getResistanceModeSettings`.
 8. Check `scriptsVersion`, `scriptsLoaded`, `proEligible`, and `enabled`.
-9. Confirm that `scriptsEnabled` is greater than zero.
+9. Confirm that `scriptsEnabled` is greater than zero after enabling an eligible script.
 10. Confirm that at least one intervention is enabled.
 11. Confirm that `enforcementStatus: "operational"` is reported.
 12. Do not use the removed REST endpoint `GET /resistance-mode/settings`.

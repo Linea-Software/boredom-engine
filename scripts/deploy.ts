@@ -5,7 +5,7 @@ import { readdir, stat } from "node:fs/promises";
 /**
  * Creates the distribution ZIP archive from the built `dist/` tree.
  *
- * v1 beta output: the Resistance Mode artifact (`resistance-scripts.zip`,
+ * Production output: the Resistance Mode artifact (`resistance-scripts.zip`,
  * root layout: `scripts-data.json` + reverse-domain script folders).
  *
  * There is deliberately NO local "deploy" step: the previous code copied the

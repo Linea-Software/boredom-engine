@@ -34,6 +34,7 @@ function script(overrides: Record<string, unknown> = {}) {
         name: "Script",
         description: "A test script.",
         version: "1.0.0",
+        requiresPro: true,
         ...overrides,
     };
 }
