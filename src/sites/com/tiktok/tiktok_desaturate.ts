@@ -2,6 +2,7 @@
  * @id tiktok_desaturate
  * @name TikTok Desaturate
  * @description Desaturates media on TikTok to reduce dopamine stimulation.
+ * @tier free
  * @version 1.0.0
  */
 import { onDOMLoaded, applyMediaDesaturation, injectCss, enforceCssVariables, setCssVariablesToGray } from "$common";

@@ -237,8 +237,8 @@ with ace-engine (schema version 2). Key rules:
 
 - Each catalog entry has a required boolean `requiresPro`. A leading JSDoc
   `@tier free` tag sets it to false; untagged scripts and `@tier pro`
-  require Pro. Only YouTube Shorts removal and Reddit recommendation hiding
-  are Free in the current product contract. Invalid tier tags fail the build.
+  require Pro. Only YouTube Shorts removal, Reddit recommendation hiding and TikTok
+  desaturation are Free in the current product contract. Invalid tier tags fail the build.
 - The ACE Engine enforces tiers; the distribution ZIP is not an access-control
   boundary. Schema 1 is incompatible with the current engine.
 

@@ -58,8 +58,8 @@ Use a new version for every published build.
 Schema 2 is required by the current ACE Engine. Publish the new artifact, deploy
 the public download API, and import and activate the artifact before releasing
 the matching desktop engine and app. Do not activate schema 2 for schema 1
-clients. The current Free tier contains exactly two scripts: YouTube Shorts
-removal and Reddit recommendation hiding. All other scripts require Pro.
+clients. The current Free tier contains exactly three scripts: YouTube Shorts
+removal, Reddit recommendation hiding and TikTok desaturation. All other scripts require Pro.
 ace-blocker-site treats imported versions as immutable.
 It rejects a different SHA-256 for a version that already exists.
 
@@ -119,7 +119,7 @@ No GitHub credentials or inbound callbacks are necessary.
 ## 4. Test the ACE Engine Download
 
 Test both an unlinked Free client and a linked Pro client.
-Verify that Free can enable only the two Free scripts and cannot enable the
+Verify that Free can enable only the three Free scripts and cannot enable the
 Resistance Time Lock. Pro can enable all scripts and the Time Lock.
 After downgrading, verify that Pro scripts are no longer injected.
 

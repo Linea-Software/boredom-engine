@@ -100,7 +100,7 @@ describe("production artifact", () => {
         });
     });
 
-    test("schema 2 exposes exactly the two approved Free interventions", async () => {
+    test("schema 2 exposes exactly the three approved Free interventions", async () => {
         const catalog = JSON.parse(
             await readFile(join(REPO_ROOT, "dist", "scripts-data.json"), "utf-8"),
         ) as Catalog;
@@ -108,9 +108,10 @@ describe("production artifact", () => {
         const entries = flattenCatalog(catalog).map(({ entry }) => entry);
         expect(entries.filter((entry) => entry.requiresPro === false).map((entry) => entry.id).sort()).toEqual([
             "reddit_block_recomandations",
+            "tiktok_desaturate",
             "youtube_shorts_remove",
         ]);
-        expect(entries.filter((entry) => entry.requiresPro === true)).toHaveLength(entries.length - 2);
+        expect(entries.filter((entry) => entry.requiresPro === true)).toHaveLength(entries.length - 3);
     });
 
     test("zip root layout matches the engine contract", async () => {
